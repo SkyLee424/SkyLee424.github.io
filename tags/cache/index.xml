@@ -2,32 +2,32 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Cache on Sky_Lee 的个人博客</title>
-    <link>https://blogs.skylee.top/tags/cache/</link>
+    <link>http://localhost:1313/tags/cache/</link>
     <description>Recent content in Cache on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Sun, 10 Mar 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://blogs.skylee.top/tags/cache/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/cache/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Redis 杂项</title>
-      <link>https://blogs.skylee.top/posts/redis/%E6%9D%82%E9%A1%B9/note/</link>
+      <link>http://localhost:1313/posts/redis/%E6%9D%82%E9%A1%B9/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/redis/%E6%9D%82%E9%A1%B9/note/</guid>
+      <guid>http://localhost:1313/posts/redis/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>Redis 事务 基本使用 redis 的事务与传统关系性数据库的事务不同，没有 ACID 特性 开启事务可以使用 MULTI 命令 回滚事务可以使用 DISCARD 命令 提交事务可以使用 EXEC 命令 为了防止多客</description>
     </item>
     <item>
       <title>缓存的几种操作模式</title>
-      <link>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</link>
+      <link>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</guid>
+      <guid>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</guid>
       <description>Cache-Aside 应用代码需要首先在缓存中查找数据，如果未找到，再从数据库中加载数据，并将其添加到缓存中。 当应用程序需要修改 DB 的数据，只需要先更新 DB，再删</description>
     </item>
     <item>
       <title>缓存雪崩、缓存击穿、缓存穿透</title>
-      <link>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</link>
+      <link>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</guid>
+      <guid>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</guid>
       <description>缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定</description>
     </item>
   </channel>

@@ -2,81 +2,81 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Golang on Sky_Lee 的个人博客</title>
-    <link>https://blogs.skylee.top/categories/golang/</link>
+    <link>http://localhost:1313/categories/golang/</link>
     <description>Recent content in Golang on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 21 Mar 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://blogs.skylee.top/categories/golang/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/categories/golang/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Go: Single Flight</title>
-      <link>https://blogs.skylee.top/posts/go/singlefilght/note/</link>
+      <link>http://localhost:1313/posts/go/singlefilght/note/</link>
       <pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/singlefilght/note/</guid>
+      <guid>http://localhost:1313/posts/go/singlefilght/note/</guid>
       <description>Single Flight 是 Go pkg 中提供的一个工具，通常用于防止缓存击穿 假设这个场景： 大量客户端请求的缓存均过期了，不得不直接访问 DB，如此高的并发，很有可能将 DB 服</description>
     </item>
     <item>
       <title>Go: GC 原理</title>
-      <link>https://blogs.skylee.top/posts/go/gc/note/</link>
+      <link>http://localhost:1313/posts/go/gc/note/</link>
       <pubDate>Tue, 19 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/gc/note/</guid>
+      <guid>http://localhost:1313/posts/go/gc/note/</guid>
       <description>标记清扫法 Go 1.3 的 GC 采用标记清扫法，分为两个步骤： 标记 清扫 标记的过程很简单：从对象根节点开始 dfs，每遍历到一个节点就做标记，最后没有标记的节</description>
     </item>
     <item>
       <title>Go: Scheduler</title>
-      <link>https://blogs.skylee.top/posts/go/scheduler/note/</link>
+      <link>http://localhost:1313/posts/go/scheduler/note/</link>
       <pubDate>Mon, 18 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/scheduler/note/</guid>
+      <guid>http://localhost:1313/posts/go/scheduler/note/</guid>
       <description>前置知识 OS Scheduler 在介绍 Go Scheduler 之前，先要了解一下 OS Scheduler OS Scheduler 是在 OS 层面实现的调度器，调度的基本单位为（内核级）线程，保证在尽可能公平的条件下，充分利用 CPU</description>
     </item>
     <item>
       <title>Go: Map</title>
-      <link>https://blogs.skylee.top/posts/go/map/map/note/</link>
+      <link>http://localhost:1313/posts/go/map/map/note/</link>
       <pubDate>Sun, 17 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/map/map/note/</guid>
+      <guid>http://localhost:1313/posts/go/map/map/note/</guid>
       <description>Map 是 Go 提供的一个 key-value 数据结构，底层使用 hash，就像 std::unordered_map 一样 定义一个 Map 的语法： map[keyType]valueType 定义一个 map，初始值是 nil Map 有容量吗 Go 的 map 类型在语言规范中没有直</description>
     </item>
     <item>
       <title>Go: sync.Map</title>
-      <link>https://blogs.skylee.top/posts/go/map/sync.map/note/</link>
+      <link>http://localhost:1313/posts/go/map/sync.map/note/</link>
       <pubDate>Sun, 17 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/map/sync.map/note/</guid>
+      <guid>http://localhost:1313/posts/go/map/sync.map/note/</guid>
       <description>原生的 Map 有并发访问的安全问题： var m map[int]int = make(map[int]int, 4) func Store(key, val int) { m[key] = val } func Load(key int) (int, bool) { val, ok := m[key] return val, ok } func main() { var wg sync.WaitGroup wg.Add(100) for i := 0; i &amp;lt; 100; i++ { go func(key int) { defer wg.Done() Store(key, key) Load(key) }(i)</description>
     </item>
     <item>
       <title>Go: Channel</title>
-      <link>https://blogs.skylee.top/posts/go/channel/basic/note/</link>
+      <link>http://localhost:1313/posts/go/channel/basic/note/</link>
       <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/channel/basic/note/</guid>
+      <guid>http://localhost:1313/posts/go/channel/basic/note/</guid>
       <description>很多并发模型在涉及到线程间通信时，往往采用互斥锁来实现数据的安全性，但这种方式会消耗很多性能 Go 采用的 CSP 并发模型提倡：通过 通信共享内存 而不是通</description>
     </item>
     <item>
       <title>Go: Channel 底层机制</title>
-      <link>https://blogs.skylee.top/posts/go/channel/core/note/</link>
+      <link>http://localhost:1313/posts/go/channel/core/note/</link>
       <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/channel/core/note/</guid>
+      <guid>http://localhost:1313/posts/go/channel/core/note/</guid>
       <description>与传统的加锁控制并发的对比 在访问临界资源时，可以使用传统的加锁方式，但如果项目变得复杂，这种方式容易出现 bug，编码困难 Go 使用 channel 配合 select 来做并</description>
     </item>
     <item>
       <title>Go: Context</title>
-      <link>https://blogs.skylee.top/posts/go/context/basic/note/</link>
+      <link>http://localhost:1313/posts/go/context/basic/note/</link>
       <pubDate>Fri, 15 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/context/basic/note/</guid>
+      <guid>http://localhost:1313/posts/go/context/basic/note/</guid>
       <description>在 Go 服务中，每个传入的请求都在其自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问其他后端，如数据库和 RPC 服务。处理请求的 goroutine 通常需要访问特定于</description>
     </item>
     <item>
       <title>Go: Slice</title>
-      <link>https://blogs.skylee.top/posts/go/slice/note/</link>
+      <link>http://localhost:1313/posts/go/slice/note/</link>
       <pubDate>Wed, 13 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/slice/note/</guid>
+      <guid>http://localhost:1313/posts/go/slice/note/</guid>
       <description>与数组最大的不同，切片支持动态扩容 切片（Slice）是一个拥有相同类型元素的可变长度的序列。它是基于数组类型做的一层封装。它非常灵活，支持自</description>
     </item>
     <item>
       <title>Go: sync.Pool</title>
-      <link>https://blogs.skylee.top/posts/go/sync.pool/note/</link>
+      <link>http://localhost:1313/posts/go/sync.pool/note/</link>
       <pubDate>Wed, 13 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/go/sync.pool/note/</guid>
+      <guid>http://localhost:1313/posts/go/sync.pool/note/</guid>
       <description>介绍 Pool&amp;rsquo;s purpose is to cache allocated but unused items for later reuse, relieving pressure on the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. However, it is not suitable for all free lists. sync.Pool 是 sync 包的一个组件，用于 复用对象，避免频繁创建销毁对象带来</description>
     </item>
   </channel>

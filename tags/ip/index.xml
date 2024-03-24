@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>IP on Sky_Lee 的个人博客</title>
-    <link>https://blogs.skylee.top/tags/ip/</link>
+    <link>http://localhost:1313/tags/ip/</link>
     <description>Recent content in IP on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Wed, 31 Jan 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://blogs.skylee.top/tags/ip/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/ip/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>IP 协议基础</title>
-      <link>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</link>
+      <link>http://localhost:1313/posts/network/ip/%E5%9F%BA%E7%A1%80/</link>
       <pubDate>Wed, 31 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</guid>
+      <guid>http://localhost:1313/posts/network/ip/%E5%9F%BA%E7%A1%80/</guid>
       <description>IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C</description>
     </item>
   </channel>

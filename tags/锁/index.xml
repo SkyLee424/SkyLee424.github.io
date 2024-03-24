@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>锁 on Sky_Lee 的个人博客</title>
-    <link>https://blogs.skylee.top/tags/%E9%94%81/</link>
+    <link>http://localhost:1313/tags/%E9%94%81/</link>
     <description>Recent content in 锁 on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 22 Feb 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://blogs.skylee.top/tags/%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/tags/%E9%94%81/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>MySQL 有哪些锁？</title>
-      <link>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</link>
+      <link>http://localhost:1313/posts/mysql/%E9%94%81/note/</link>
       <pubDate>Thu, 22 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</guid>
+      <guid>http://localhost:1313/posts/mysql/%E9%94%81/note/</guid>
       <description>全局锁 全局锁就是 对整个数据库实例加锁，加锁后整个实例就处于 只读状态，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 阻塞 。 全局</description>
     </item>
   </channel>
