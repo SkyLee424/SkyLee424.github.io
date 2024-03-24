@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>并发编程 on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/</link>
+    <description>Recent content in 并发编程 on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Thu, 21 Mar 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Go: Single Flight</title>
+      <link>https://blogs.skylee.top/posts/go/singlefilght/note/</link>
+      <pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/singlefilght/note/</guid>
+      <description>Single Flight 是 Go pkg 中提供的一个工具，通常用于防止缓存击穿 假设这个场景： 大量客户端请求的缓存均过期了，不得不直接访问 DB，如此高的并发，很有可能将 DB 服</description>
+    </item>
+    <item>
+      <title>Go: Scheduler</title>
+      <link>https://blogs.skylee.top/posts/go/scheduler/note/</link>
+      <pubDate>Mon, 18 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/scheduler/note/</guid>
+      <description>前置知识 OS Scheduler 在介绍 Go Scheduler 之前，先要了解一下 OS Scheduler OS Scheduler 是在 OS 层面实现的调度器，调度的基本单位为（内核级）线程，保证在尽可能公平的条件下，充分利用 CPU</description>
+    </item>
+    <item>
+      <title>Go: sync.Map</title>
+      <link>https://blogs.skylee.top/posts/go/map/sync.map/note/</link>
+      <pubDate>Sun, 17 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/map/sync.map/note/</guid>
+      <description>原生的 Map 有并发访问的安全问题： var m map[int]int = make(map[int]int, 4) func Store(key, val int) { m[key] = val } func Load(key int) (int, bool) { val, ok := m[key] return val, ok } func main() { var wg sync.WaitGroup wg.Add(100) for i := 0; i &amp;lt; 100; i++ { go func(key int) { defer wg.Done() Store(key, key) Load(key) }(i)</description>
+    </item>
+    <item>
+      <title>Go: Channel</title>
+      <link>https://blogs.skylee.top/posts/go/channel/basic/note/</link>
+      <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/channel/basic/note/</guid>
+      <description>很多并发模型在涉及到线程间通信时，往往采用互斥锁来实现数据的安全性，但这种方式会消耗很多性能 Go 采用的 CSP 并发模型提倡：通过 通信共享内存 而不是通</description>
+    </item>
+    <item>
+      <title>Go: Channel 底层机制</title>
+      <link>https://blogs.skylee.top/posts/go/channel/core/note/</link>
+      <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/channel/core/note/</guid>
+      <description>与传统的加锁控制并发的对比 在访问临界资源时，可以使用传统的加锁方式，但如果项目变得复杂，这种方式容易出现 bug，编码困难 Go 使用 channel 配合 select 来做并</description>
+    </item>
+    <item>
+      <title>Go: sync.Pool</title>
+      <link>https://blogs.skylee.top/posts/go/sync.pool/note/</link>
+      <pubDate>Wed, 13 Mar 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/go/sync.pool/note/</guid>
+      <description>介绍 Pool&amp;rsquo;s purpose is to cache allocated but unused items for later reuse, relieving pressure on the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. However, it is not suitable for all free lists. sync.Pool 是 sync 包的一个组件，用于 复用对象，避免频繁创建销毁对象带来</description>
+    </item>
+  </channel>
+</rss>

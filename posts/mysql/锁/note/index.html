@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MySQL 有哪些锁？ - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="全局锁 全局锁就是 对整个数据库实例加锁，加锁后整个实例就处于 只读状态，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 阻塞 。 全局"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MySQL 有哪些锁？" />
+<meta property="og:description" content="简要介绍 MySQL 存在的锁，以及锁机制" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/%E9%94%81/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-22T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-22T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MySQL 有哪些锁？"/>
+<meta name="twitter:description" content="简要介绍 MySQL 存在的锁，以及锁机制"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/%E9%94%81/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/%E9%94%81/note/">MySQL 有哪些锁？</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      简要介绍 MySQL 存在的锁，以及锁机制
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/%E9%94%81/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">锁</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-22T00:00:00&#43;00:00">
+      2024-02-22
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      11 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="全局锁">全局锁</h2>
+<p>全局锁就是 <strong>对整个数据库实例加锁</strong>，加锁后整个实例就处于 <strong>只读状态</strong>，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 <strong>阻塞</strong> 。</p>
+<p>全局锁的使用场景是在对 DB 做全量备份，对所有的表进行锁定，从而获取一致性视图，保证数据的完整性。</p>
+<p>基本语法：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">flush</span><span class="w"> </span><span class="n">tables</span><span class="w"> </span><span class="k">with</span><span class="w"> </span><span class="k">read</span><span class="w"> </span><span class="k">lock</span><span class="p">;</span><span class="w"> </span><span class="c1">-- 加锁，确保当前数据库是要备份的数据库
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">unlock</span><span class="w"> </span><span class="n">tables</span><span class="p">;</span><span class="w"> </span><span class="c1">-- 解锁
+</span></span></span></code></pre></div><p>一般使用 mysqldump 工具做备份：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysqldump -h &lt;主机地址&gt; -u &lt;用户名&gt; -p &lt;待备份数据库名称&gt; &gt; &lt;路径&gt;
+</span></span></code></pre></div><p>加全局锁是一个很 <strong>重</strong> 的操作：</p>
+<ul>
+<li>主库加全局锁，整个加锁过程都不允许 insert、update、delete，业务基本停摆</li>
+<li>从库加全局锁，整个加锁过程都不允许同步主库的 binlog，会造成主从延迟</li>
+</ul>
+<p>有没有什么方式避免呢？</p>
+<p>mysqldump 提供了一个 <code>--single-transcation</code> 选项，用于 <strong>不加锁</strong> 获取数据一致性备份，</p>
+<p><code>--single-transcation</code> 选项的原理是基于 MVCC 的，在整个备份期间使用同一个 Readview，保证数据一致性</p>
+<h2 id="表级锁">表级锁</h2>
+<h3 id="表锁-table-lock">表锁 Table Lock</h3>
+<p>表锁会锁住一张特定的表，有两种类型：</p>
+<ul>
+<li>表 <strong>共享锁</strong></li>
+<li>表 <strong>独占锁</strong></li>
+</ul>
+<p>可以简单将共享锁看作读锁，独占锁看作写锁，二者之间的互斥性与读写锁是一致的</p>
+<blockquote>
+<p>由于表锁锁定粒度太大，一般不使用</p>
+</blockquote>
+<h3 id="元数据锁-mdl">元数据锁 MDL</h3>
+<p>元数据锁 MDL 主要用于锁住一张表的元数据，保证读写的正确性</p>
+<p>MDL <strong>由 MySQL 自己控制</strong>，在访问一张表的时候会自动锁上</p>
+<p>MDL 也有两种类型：</p>
+<ul>
+<li>当我们对一张表进行 CRUD 时，会加上 MDL 读锁</li>
+<li>当我们尝试修改一张表的元数据时（即 alter 操作），会加上 MDL 写锁</li>
+</ul>
+<p>二者之间的互斥性与读写锁一致</p>
+<blockquote>
+<p>注意，在同一个事务内，即使加了 MDL 读锁，也不会影响 alter 操作：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-17-39-26-862.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
+<h3 id="意向锁">意向锁</h3>
+<p>表锁与行锁之间也是满足：读读共享、读写互斥、写写互斥的</p>
+<p>假设表内有一个 X Record Lock，那么就不能加上表共享锁、表独占锁</p>
+<p>因此，在加表锁之前，需要检查表内有没有行锁</p>
+<p>但是表内可能有很多行数据，如果每一行都去判断，会浪费很多时间</p>
+<p>因此出现了意向锁：</p>
+<ul>
+<li><strong>意向共享锁</strong>：说明行内存在共享锁</li>
+<li><strong>意向独占锁</strong>：说明行内存在独占锁</li>
+</ul>
+<p>在给某一行加共享锁 <strong>之前</strong>，先加上意向共享锁；在给某一行加独占锁 <strong>之前</strong>，先加上意向独占锁；</p>
+<h3 id="auto-inc-锁">AUTO-INC 锁</h3>
+<p>在插入数据时，可以不指定主键的值，数据库会自动给主键赋值递增的值，这主要是通过 AUTO-INC 锁实现的。</p>
+<p>与其它锁不同，AUTO-INC 锁在数据 <strong>插入完毕后就会立即释放</strong>，而不是事务结束后</p>
+<h2 id="行级锁">行级锁</h2>
+<h3 id="record-lock">Record Lock</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-47-46-090.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-47-58-916.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="实验selectupdatedeleteinsert-的行锁意向锁情况">实验：select、update、delete、insert 的行锁、意向锁情况</h4>
+<p>可以使用：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">object_schema</span><span class="p">,</span><span class="w"> </span><span class="n">object_name</span><span class="p">,</span><span class="w"> </span><span class="n">index_name</span><span class="p">,</span><span class="w"> </span><span class="n">lock_type</span><span class="p">,</span><span class="w"> </span><span class="n">lock_mode</span><span class="p">,</span><span class="w"> </span><span class="n">lock_data</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">performance_schema</span><span class="p">.</span><span class="n">data_locks</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>来查看加锁情况</p>
+<p><strong>先来看看 select：</strong></p>
+<p>普通的 select 是快照读，不加锁：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-12-41-148.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><code>select ... lock in share mode</code> 会对当前行加上 <strong>行锁（共享锁 S）</strong>，并在加行锁前，给表加上 <strong>意向共享锁（IS）</strong></p>
+<p>加这个锁就好像告诉其它事务：“我要读取这行的数据了，为了保证数据一致性，你们只可以读，不要修改哈”</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-16-56-788.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>S, REC_NOT_GAP 的含义就是 Record Lock</p>
+</blockquote>
+<p><code>select ... for update</code> 会对当前行加上 <strong>行锁（独占锁 X）</strong>，并在加行锁前，给表加上 <strong>意向独占锁（IX）</strong></p>
+<p>加这个锁就好像告诉其它事务：“我读取这行的数据是为了后续的更新，也就是要写数据，为了保证数据一致性，你们既不要读，也不要修改”</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-17-11-337.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><strong>再来看看 update：</strong></p>
+<p>update 是当前读，会为当前行加上 <strong>行锁（独占锁 X）</strong>，并在加行锁前，给表加上 <strong>意向独占锁（IX）</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-19-19-401.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><strong>再来看看 delete：</strong></p>
+<p>delete 与 update 一样，也是当前读，会为当前行加上 <strong>行锁（独占锁 X）</strong>，并在加行锁前，给表加上 <strong>意向独占锁（IX）</strong></p>
+<p>这里就不再演示了</p>
+<p><strong>最后来看看 insert：</strong></p>
+<p>insert 与 delete、update 一样，也是当前读，会为当前行加上 <strong>行锁（独占锁 X）</strong>，并在加行锁前，给表加上 <strong>意向独占锁（IX）</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-11-22-27-261.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>X 锁呢？</p>
+<p>这里就涉及到之前讲的 <strong>AUTO-INC</strong> 锁了</p>
+<p>AUTO-INC 锁是特殊的表锁机制，锁 <strong>不是</strong> 在一个事务 <strong>提交后才释放</strong>，而是在 <strong>执行完插入语句后就会立即释放</strong>。</p>
+<h3 id="gap-lock">Gap Lock</h3>
+<p>间隙锁会将一个「间隙」锁住，避免其它事务在这个「间隙」插入数据，产生幻读现象</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-19-42-29-949.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>间隙锁之间是 <strong>可以</strong> 共存的，即两个事务可以同时持有包含相同范围的间隙锁，并不存在互斥关系</p>
+<blockquote>
+<p>Gap locks in InnoDB are “purely inhibitive”, which means that their only purpose is to prevent other transactions from Inserting to the gap. Gap locks can co-exist. A gap lock taken by one transaction does not prevent another transaction from taking a gap lock on the same gap. There is no difference between shared and exclusive gap locks. They do not conflict with each other, and they perform the same function.</p>
+</blockquote>
+<p><strong>间隙锁仅存在于 RR 隔离级别</strong></p>
+<h3 id="next-key-lock">Next-Key Lock</h3>
+<p>间隙锁的范围是「左开右开」区间，而临键锁的范围是「左开右闭」区间</p>
+<p>假设有一个临键锁的范围是 <code>(114, 514]</code>，那么除了不允许其它事务在这个「间隙」插入数据外，还不允许修改 <code>514</code> 这一行的数据</p>
+<p>可以将 Next-Key Lock 看作 Gap Lock + Record Lock</p>
+<h2 id="mysql-是怎么加锁的">MySQL 是怎么加锁的？</h2>
+<p>MySQL 加锁的原则：<strong>避免幻读现象的发生</strong>，保证一个 SQL 语句在一个事务期间的执行结果不受其它事务干扰</p>
+<p>因此，在分析如何加锁时，我们只需要看看加了锁以后，会不会有幻读现象发生即可</p>
+<p>下面的实验基于 MySQL8.1，RR 隔离级别</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">user</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w">       </span><span class="nb">int</span><span class="w"> </span><span class="n">auto_increment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w">     </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">  </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">sex</span><span class="w">      </span><span class="nb">char</span><span class="w">         </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">phoneNum</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w">  </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">email</span><span class="w">    </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">age</span><span class="w">      </span><span class="nb">int</span><span class="w">          </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">constraint</span><span class="w"> </span><span class="n">idx_email</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">unique</span><span class="w"> </span><span class="p">(</span><span class="n">email</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">constraint</span><span class="w"> </span><span class="n">idx_phone</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">unique</span><span class="w"> </span><span class="p">(</span><span class="n">phoneNum</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_age</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">on</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="p">(</span><span class="n">age</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">on</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="p">(</span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><h3 id="唯一索引等值查询">唯一索引等值查询</h3>
+<h4 id="记录存在">记录存在</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-07-57-570.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，只加了 Record Lock</p>
+<p>我们来分析一下：</p>
+<p>根据加锁原则：避免幻读发生</p>
+<p>对于当前这个 SQL 语句，只要不允许其它事务修改（或删除）id = 1 这一行的数据，就完全可以 <strong>避免幻读</strong> 发生了，因此，只需要加 Record Lock</p>
+<p>再来看看以二级唯一索引作为条件的情况：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-17-27-007.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，除了对二级索引加了 Record Lock 以外，还对主键索引加了 Record Lock</p>
+<p>分析一下：</p>
+<p>行锁是针对 <strong>索引</strong> 加的锁，这里为了 <strong>避免幻读</strong>，在对 idx_phone 加了 Record Lock 后，还要对查询到的记录的主键索引项加 Record Lock，避免其它事务通过 <code>where id = 1</code> 修改这一行的数据造成幻读</p>
+<h4 id="记录不存在">记录不存在</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-28-28-546.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>分析一下：</p>
+<p>由于 id = 2 这一行并不存在，为了 <strong>避免幻读</strong>，只能锁住 <code>(1,5)</code> 之间的间隙，避免其它事务插入 id = 2、3、4 的数据行</p>
+<p>因此，这里 InnoDB 加了一个 <strong>间隙锁</strong></p>
+<p>再来看看以二级唯一索引作为条件的情况：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-40-01-667.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>由于 <code>email = '15'</code> 这一行并不存在，为了 <strong>避免幻读</strong>，只能锁住 <code>('10','20')</code> 之间的间隙</p>
+<blockquote>
+<p>为什么这次没有对主键索引加行锁？</p>
+<p>因为只需要对 idx_email 加锁，其它事务就无法插入 email <code>('10','20')</code> 这个间隙，可以避免幻读</p>
+</blockquote>
+<h3 id="唯一索引范围查询">唯一索引范围查询</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-46-50-097.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>查询 id &gt; 25 的数据，为了 <strong>避免幻读</strong>，需要锁住 <code>(25, 30]</code>，<code>(30, +∞]</code> 的数据，避免其它事务插入或者删除这个区间的数据，造成幻读</p>
+<p>因此，这里 InnoDB 加了两个 <strong>临键锁</strong></p>
+<p>如果是 id &gt;= 25，还要额外加一个 <strong>记录锁</strong>，锁住 id = 25 这一行的数据，避免其它事务修改、删除，造成幻读：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-52-17-092.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>再来看看以二级唯一索引作为范围条件的情况：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-20-59-06-708.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>除了通过三个临键锁锁住 <code>('50', +∞]</code> 的间隙以外，还有两个对 <strong>主键索引</strong> 加的 <strong>记录锁</strong>，避免其它事务 <strong>通过 id</strong> 修改 id = 25、30 的数据，造成幻读</p>
+<h3 id="非唯一索引等值查询">非唯一索引等值查询</h3>
+<h4 id="记录存在-1">记录存在</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-21-25-58-105.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现，加了三个行锁：</p>
+<ul>
+<li>临键锁 <code>(10, 13]</code></li>
+<li>间隙锁 <code>(13, 16)</code></li>
+<li>记录锁 <code>id = 13</code></li>
+</ul>
+<p>为了 <strong>避免幻读</strong>，需要保证其它事务：</p>
+<ul>
+<li>不能删除 age = 13 的数据：<strong>记录锁</strong> 保证</li>
+<li>不能插入 age = 13 的数据：临键锁 + 间隙锁保证</li>
+</ul>
+<blockquote>
+<p>为什么有了临键锁还要创建间隙锁？</p>
+<p>临键锁事实上无法 <strong>完全</strong> 保证 age = 13 的数据不被插入，这点可以通过 lock_data 中的 13, <strong>5</strong> 来判断：</p>
+<ul>
+<li>如果插入的 age 对应的 id &lt; 5，不允许插入</li>
+<li>如果插入的 age 对应的 id &gt; 5，<strong>允许插入</strong></li>
+</ul>
+<p>因此，为了完全保证 age = 13 的数据不被插入，需要加一个间隙锁 <code>(13, 16)</code></p>
+</blockquote>
+<blockquote>
+<p>2024.3.3 更新</p>
+<p>对主键索引加锁的原因是：SQL 语句没有使用到覆盖索引，也就是说，还 <strong>要访问主键索引</strong> 来获取 name、sex 等字段的值</p>
+<p>为了防止幻读，就需要对主键索引加锁</p>
+<p>如果修改成 <code>select id, age from user where age = 13 lock in share mode;</code>，就不会对主键索引加锁</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-03-14-58-11-913.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但是，如果修改成 <code>select id, age from user where age = 13 for update;</code>，<strong>仍然会</strong> 对主键索引加锁</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-03-14-59-44-355.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这是因为 MySQL 会认为要修改这一行的数据，会顺便给主键索引上满足条件的行加上锁</p>
+</blockquote>
+<h4 id="记录不存在-1">记录不存在</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-21-36-26-025.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>为了 <strong>避免幻读</strong>，加上 (10, 13) 的间隙锁，避免其它事务插入 age = 11、12 的数据</p>
+<h3 id="非唯一索引范围查询">非唯一索引范围查询</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-21-34-13-190.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>加了三个临键锁和两个记录锁，基于上面的分析，这个结果也就不意外了，故不再分析</p>
+<h3 id="行锁升级">行锁升级</h3>
+<p>行锁是针对 <strong>索引</strong> 加的锁，如果不通过索引字段作为查询依据，那么 InnoDB 会为每一行加上行锁（Next-Key Lock），就好像整张表都被锁住了一样，可以理解为 <strong>行锁升级成表锁</strong></p>
+<p>例如，对于 User 表，只有 id 有主键索引，其它字段均没有索引</p>
+<p>在以 id 为检索条件下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-10-35-49-672.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>只对 <code>id = 1</code> 这一行加了 Record Lock</p>
+<p>在以 sex 为检索条件下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-22-10-36-35-108.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>对 <strong>每一行</strong> 都加了 S 型的 Next-Key Lock，可以看成行锁升级成表锁</p>
+<p>这种情况一定要避免，防止 update、insert、delete 语句被阻塞，导致业务停摆</p>
+<h4 id="如何避免">如何避免？</h4>
+<p>首先我们在执行当前读时，加上 where 条件，并且保证走了索引（用 explain 查看）</p>
+<p>如果实在怕忘记，可以将 MySQL 里的 sql_safe_updates 参数设置为 1，开启安全更新模式。</p>
+<blockquote>
+<p>If set to 1, MySQL aborts UPDATE or DELETE statements that do not use a key in the WHERE clause or a LIMIT clause. (Specifically, UPDATE statements must have a WHERE clause that uses a key or a LIMIT clause, or both. DELETE statements must have both.) This makes it possible to catch UPDATE or DELETE statements where keys are not used properly and that would probably change or delete a large number of rows. The default value is 0.</p>
+</blockquote>
+<p>翻译过来：</p>
+<p>对于 update：</p>
+<ul>
+<li>使用 where，并且 where 条件中必须有索引列；</li>
+<li>使用 limit；</li>
+<li>同时使用 where 和 limit，此时 where 条件中可以没有索引列；</li>
+</ul>
+<p>对于 delete：同时使用 where 和 limit，此时 where 条件中可以没有索引列；</p>
+<blockquote>
+<p>2024.3.3 更新：</p>
+<p>delete 的时候，尽量加上 limit，不仅可以确保数据的安全（避免删除过多的数据），还可以 <strong>减少加锁的范围</strong>，提高并发度</p>
+</blockquote>
+<h2 id="mvcc--gap-lock-是否完全解决幻读问题">MVCC + Gap Lock 是否完全解决幻读问题？</h2>
+<p>前面在「事务篇」提到过：<strong>MVCC 解决了快照读的幻读问题</strong></p>
+<p>那么幻读问题是否完全解决了呢？</p>
+<p>很遗憾，并没有</p>
+<p>经过上文的分析，我们发现 <code>Record Lock + Gap Lock + Next-Key Lock</code> 可以 <strong>避免绝大多数幻读</strong> 现象的发生</p>
+<p>但还有一种幻读，在 RR 隔离级别下，还是无法避免：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-09-42-01-125.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这种幻读的出现场景在于：快照读与当前读 <strong>混合使用</strong>，看起来二者的查询结果不一致</p>
+<p>那如何避免呢？</p>
+<p><strong>避免混合使用快照读与当前读</strong></p>
+<p>如果能保证一个事务中：</p>
+<ul>
+<li>只使用快照读，那么 MVCC 完全可以解决幻读</li>
+<li>只使用当前读，那么 <code>Record Lock + Gap Lock + Next-Key Lock</code> 也完全可以避免幻读</li>
+</ul>
+<p><strong>在开启事务后，迅速加锁</strong></p>
+<p>如果确实要混合使用，那么可以在事务开始后，立即加锁：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-09-52-46-293.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>避免其它事务插入 id &gt; 30 的数据，造成幻读</p>
+<p><strong>使用串行化隔离级别</strong></p>
+<p>实在不行，就使用串行化隔离级别吧，也可以保证避免幻读</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-09-53-57-501.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这是 MySQL 官方的文档，提到了：串行化可以阻止幻读现象的发生，而 RR、RC、RU 都允许幻读现象的发生</p>
+<h2 id="死锁">死锁</h2>
+<h3 id="insert-是怎么加行锁的">insert 是怎么加行锁的？</h3>
+<p>首先要了解一个概念：MySQL 加锁时，是 <strong>先生成锁结构，然后设置锁的状态</strong>，如果锁状态是等待状态，并不是意味着事务成功获取到了锁，只有当锁状态为正常状态时，才代表事务成功获取到了锁</p>
+<p>insert 是当前读，但是与 update、delete 不同，insert 正常执行时，<strong>不会生成锁结构</strong>，而是加一个 <strong>隐式锁</strong></p>
+<blockquote>
+<p>什么是隐式锁？</p>
+<p>当事务需要加锁时，如果这个锁 <strong>不可能发生冲突</strong>，InnoDB 会 <strong>跳过加锁环节</strong>，这种机制称为隐式锁。隐式锁是 InnoDB 实现的一种延迟加锁机制，其特点是只有在可能发生冲突时才加锁，从而减少了锁的数量，提高了系统整体性能。</p>
+</blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-11-35-22-322.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>那什么时候，insert 会将隐式锁转化为显式锁？</p>
+<ul>
+<li>如果 insert 的位置 <strong>有间隙锁</strong></li>
+<li>如果 insert <strong>冲突</strong></li>
+</ul>
+<p>来看第一种情况：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-11-41-45-834.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>当 insert 的位置 <strong>有间隙锁</strong> 时，隐式锁转换为显式锁，即 INSERT_INTENTION</p>
+<blockquote>
+<p>An Insert intention lock is a <strong>type of gap lock</strong> set by Insert operations prior to row Insertion. This lock signals the intent to Insert in such a way that <strong>multiple transactions</strong> Inserting into <strong>the same index gap</strong> need <strong>not wait for each other</strong> if they are <strong>not Inserting at the same position</strong> within the gap. Suppose that there are index records with values of 4 and 7. Separate transactions that attempt to Insert values of 5 and 6, respectively, each lock the gap between 4 and 7 with Insert intention locks prior to obtaining the exclusive lock on the Inserted row, but do not block each other because the rows are nonconflicting.</p>
+</blockquote>
+<p>insert 的显式锁是一种特殊的间隙锁，它锁住的是一个 <strong>点</strong></p>
+<p>insert 的显式锁的应用在 <strong>并发场景</strong> 下，如果有多个并发的 insert 操作，即使它们插入的是同一个「间隙」，只要 <strong>插入的点不同</strong>，<strong>无需互相等待</strong>，保证了并发性能</p>
+<p>来看第二种情况：</p>
+<p>如果 <strong>主键索引冲突</strong>，插入新记录的事务会给已存在的主键值重复的聚簇索引记录添加 <strong>S 型记录锁</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-11-49-08-100.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果 <strong>二级唯一索引冲突</strong>，插入新记录的事务会给已存在的主键值重复的聚簇索引记录添加 <strong>S 型 Next-Key 锁</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-11-59-32-743.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>为什么插入失败要加锁？</p>
+<p>感觉主要原因还是 <strong>防止「幻读」</strong></p>
+<p>插入失败，给主键 id 对应行加上 S Record Lock，可以 <strong>避免其它事务删除这一行数据</strong> ，从而避免幻读（这里的幻读指：第一次插入失败，第二次却插入成功）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-11-07-52-841.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
+<h3 id="死锁的产生">死锁的产生</h3>
+<p>来看一个产生死锁的例子：</p>
+<p>有一个 t_student 表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="o">`</span><span class="n">t_student</span><span class="o">`</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">`</span><span class="k">no</span><span class="o">`</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">`</span><span class="n">name</span><span class="o">`</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">`</span><span class="n">age</span><span class="o">`</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="o">`</span><span class="n">score</span><span class="o">`</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="k">NULL</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">  </span><span class="k">PRIMARY</span><span class="w"> </span><span class="k">KEY</span><span class="w"> </span><span class="p">(</span><span class="o">`</span><span class="n">id</span><span class="o">`</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">)</span><span class="w"> </span><span class="n">ENGINE</span><span class="o">=</span><span class="n">InnoDB</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="n">CHARSET</span><span class="o">=</span><span class="n">utf8mb4</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>表内数据如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">t_student</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="k">no</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">,</span><span class="w"> </span><span class="n">score</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0001&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Bob&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mi">24</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">18</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0002&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Alice&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="mi">77</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0003&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Jim&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">24</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0004&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Eric&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">23</span><span class="p">,</span><span class="w"> </span><span class="mi">91</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">37</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0005&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Tom&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">,</span><span class="w"> </span><span class="mi">22</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">49</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0006&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Tom&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">25</span><span class="p">,</span><span class="w"> </span><span class="mi">83</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="mi">50</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;S0007&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;Rose&#39;</span><span class="p">,</span><span class="w"> </span><span class="mi">23</span><span class="p">,</span><span class="w"> </span><span class="mi">89</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>按照如下顺序并发执行两个事务：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-12-49-16-862.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/mysql/lock/show_lock.html#%E5%BC%80%E5%A7%8B%E5%AE%9E%E9%AA%8C" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p><strong>time 1 阶段</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-13-01-47-458.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，事务 A 上了一个间隙锁 <code>(20, 30)</code></p>
+<p><strong>time 2 阶段</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-13-03-26-902.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，事务 B 也上了一个间隙锁 <code>(20, 30)</code></p>
+<blockquote>
+<p>注意：间隙锁之间互相可以共存</p>
+</blockquote>
+<p><strong>time 3 阶段</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-13-06-21-934.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>事务 A 的 insert 操作被阻塞了，因为 insert 的间隙锁与事务 B 的间隙锁冲突</p>
+<p><strong>time 4 阶段</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-13-12-30-310.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><strong>出现了死锁</strong>：事务 A 在等待事务 B 释放间隙锁，事务 B 也在等待事务 A 释放间隙锁，二者循环等待，产生死锁</p>
+<h3 id="如何避免死锁">如何避免死锁</h3>
+<p>那怎么避免死锁呢？</p>
+<p><strong>预防死锁产生</strong></p>
+<p>经过上面的示例，可以总结 MySQL 出现死锁的场景：</p>
+<ul>
+<li>两个事务都加了间隙锁</li>
+<li>两个事务分别向对方的间隙插入数据，产生 insert_intention 锁</li>
+<li>由于间隙锁与 insert_intention 锁冲突，二者循环等待，产生死锁</li>
+</ul>
+<p>因此，可以在编写 SQL 语句的时候想想有没有死锁产生的风险，特别是 <strong>加了间隙锁后，尝试 insert 数据</strong>，这个操作并发执行有可能产生死锁</p>
+<p><strong>提前释放锁</strong></p>
+<p>当死锁产生时，事务可以释放自己手中的资源，以达到解除死锁</p>
+<p>例如，当检测到死锁产生，可以回滚事务（此时会释放所有持有的锁），然后重新执行事务</p>
+<p>MySQL 有一个选项 <code>innodb_deadlock_detect</code>，开启后就会检测死锁，发现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行</p>
+<p>例如对于上面的示例，开启这个选项后，执行结果如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-23-13-22-07-295.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这样就避免了死锁，该选项默认开启：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; show variables like <span class="s1">&#39;innodb_deadlock_detect&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">+------------------------+-------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Variable_name          <span class="p">|</span> Value <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+------------------------+-------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> innodb_deadlock_detect <span class="p">|</span> ON    <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+------------------------+-------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in <span class="nb">set</span> <span class="o">(</span>0.01 sec<span class="o">)</span>
+</span></span></code></pre></div>
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

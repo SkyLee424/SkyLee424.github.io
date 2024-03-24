@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>InnoDB Buffer Pool - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="Buffer Pool 什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="InnoDB Buffer Pool" />
+<meta property="og:description" content="介绍了 InnoDB 的 Buffer Pool 的内部机制" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/buffer-pool/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-25T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-25T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="InnoDB Buffer Pool"/>
+<meta name="twitter:description" content="介绍了 InnoDB 的 Buffer Pool 的内部机制"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/buffer-pool/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/buffer-pool/note/">InnoDB Buffer Pool</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      介绍了 InnoDB 的 Buffer Pool 的内部机制
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-25T00:00:00&#43;00:00">
+      2024-02-25
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h1 id="buffer-pool">Buffer Pool</h1>
+<h2 id="什么是-buffer-pool">什么是 Buffer Pool</h2>
+<p>如果每次增删查改都要直接操作磁盘，会严重拖慢性能</p>
+<p>因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能</p>
+<p>有了 Buffer Pool 以后：</p>
+<ul>
+<li>读取数据，可以看看要读取的数据页有没有在 buffer pool，如果在，直接读取就行，不用访问磁盘</li>
+<li>写入数据，可以看看要写入的数据页有没有在 buffer pool，如果在，直接写入就行，并标记为「脏页」，不用访问磁盘</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-11-40-53-860.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="buffer-pool-缓存什么">Buffer Pool 缓存什么</h3>
+<p>Buffer Pool 主要缓存以下内容：</p>
+<ul>
+<li>数据页</li>
+<li>索引页</li>
+<li>undo 页</li>
+<li>插入缓存页</li>
+<li>自适应哈希索引</li>
+<li>锁信息</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-11-42-20-261.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#buffer-pool-%E7%BC%93%E5%AD%98%E4%BB%80%E4%B9%88" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h2 id="如何管理-buffer-pool">如何管理 Buffer Pool</h2>
+<p>为了管理众多的页面，Buffer Pool 为每一个缓存页都创建了一个 <strong>控制块</strong></p>
+<p>控制块记录了一些元数据：</p>
+<ul>
+<li>数据页信息：包括：<strong>表空间 id、页码</strong>、指向数据页的指针</li>
+<li><strong>脏标记</strong>：记录了该页是否修改过</li>
+<li>&hellip;</li>
+</ul>
+<p>分配给 Buffer Pool 的内存空间通常是 <strong>连续</strong> 的，且控制块在 Buffer Pool 的最前面：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-12-38-14-487.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="free-链表">Free 链表</h3>
+<p>起初，分配给 Buffer Pool 的内存很多都是没有使用的，也就是说，存在很多 <strong>空闲页</strong></p>
+<p>这也是为什么刚开始启动 MySQL 时，虚拟内存占用相对较高，但物理内存占用相对较低的原因</p>
+<p>如果想要缓存数据到 Buffer Pool，肯定要选择一个空闲的缓存页来存放</p>
+<p>我们不可能遍历每一块缓存页来判断是否空闲，效率太低了</p>
+<p><strong>InnoDB 使用 Free 链表来管理空闲页（free page）</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-12-53-57-895.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Free 链表记录了空闲页对应控制块的指针，这样，需要分配缓存页时，就可以遍历 Free 链表来获取可以分配的空闲页</p>
+<h3 id="flush-链表">Flush 链表</h3>
+<p>Buffer Pool 中的「脏页」是需要在「合适的时候」刷到磁盘的</p>
+<p>与空闲页的管理一样，也有一个 Flush 链表来管理等待刷到磁盘的脏页：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-12-57-19-907.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="lru-链表">LRU 链表</h3>
+<p>缓存肯定不能一直存放在内存中：如果有源源不断的数据被缓存，那么 Buffer Pool 的空闲页肯定会被用完</p>
+<p>因此，需要考虑在空闲页用完之前，<strong>淘汰一些使用频率较低的缓存数据</strong></p>
+<p>可以想到使用 LRU 算法来实现内存淘汰：</p>
+<p>基本 LRU 算法的思想：</p>
+<ul>
+<li>使用一个链表管理所有正在使用的缓存页</li>
+<li>当一个新的页面被缓存，将其插入到链表 <strong>头部</strong></li>
+<li>若要淘汰缓存页，优先淘汰链表尾部的</li>
+</ul>
+<h4 id="预读失效">预读失效</h4>
+<p>MySQL 有一种 <strong>预读机制</strong>：基于 <strong>局部性原理</strong>，当前访问的页面的接下来几个页面很有可能也会被访问</p>
+<p>于是，在从磁盘读取数据时，除了读取目标页以外，可以 <strong>预读</strong> 接下来的若干页到 Buffer Pool 中</p>
+<p>这看起来很美好，但是考虑一个场景：<strong>预读进来的页一直没有被使用</strong></p>
+<p>这种场景除了 <strong>浪费缓存空间</strong> 以外，还会 <strong>存在热点数据被淘汰</strong> 的可能：</p>
+<p>如果使用传统的 LRU 算法，就会把预读页放到 LRU 链表头部，而当 Buffer Pool 空间不够的时候，还需要把末尾的页淘汰掉。</p>
+<p>如果这些预读页如果一直不会被访问到，就会出现一个很奇怪的问题，<strong>不会被访问的预读页</strong> 却占用了 LRU 链表 <strong>前排</strong> 的位置，而末尾 <strong>淘汰的页</strong>，可能是 <strong>频繁访问</strong> 的页，这样就大大 <strong>降低了缓存命中率</strong>。</p>
+<p>为了避免这种情况，InnoDB 将 LRU 链表分为两个部分：</p>
+<ul>
+<li>young</li>
+<li>old</li>
+</ul>
+<p>old 区域占整个 LRU 链表长度的比例可以通过 innodb_old_blocks_pct 参数来设置，默认是 37，代表整个 LRU 链表中 young 区域与 old 区域比例是 63:37。</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-13-27-54-441.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>分区后，目标页还是放在 young 的头部，而 <strong>预读页放在 old 头部</strong></p>
+<p>当预读页被 <strong>第一次</strong> 访问时，就加入到 young 的头部</p>
+<p>在淘汰数据时，先淘汰的肯定是 old 区域的，只有 old 部分都淘汰完了才会淘汰 young 部分的，这样就避免了热点数据被淘汰的风险</p>
+<h4 id="缓存污染">缓存污染</h4>
+<p>当一个 SQL 语句 <strong>扫描了大量数据</strong>，在 Buffer Pool 的空间比较有限的情况下，可能会 <strong>把热点数据替换掉</strong>，大大降低缓存命中率，产生大量磁盘 IO，这就是缓存污染问题</p>
+<p>为什么会这样？</p>
+<p>如果采用上面的 young-old 分区策略，当一个 SQL 语句 <strong>扫描了大量数据</strong>：</p>
+<ul>
+<li>扫描第一页，预读接下来 2、3、4&hellip; 页</li>
+<li>扫描第二页，由于第二页已经在 old 区，<strong>提升</strong> 到 young 区，预读接下来 5、6、7 &hellip;页</li>
+<li>扫描第三页，由于第三页已经在 old 区，<strong>提升</strong> 到 young 区，预读接下来 8、9、10 &hellip;页</li>
+</ul>
+<p>可以发现，在这种情景，预读页也跑到了 young 区，可能导致热点数据被挤到 old 区，甚至淘汰</p>
+<p>而这种全表扫描的 SQL，<strong>缓存页往往就访问那么一两次</strong>，为了这么一个 SQL 淘汰热点数据太不划算了</p>
+<p>究其原因，还是预读页提升门槛太低，仅仅读一次就可以提升到 young 区</p>
+<p>InnoDB 为了提高预读页进入 young 区的门槛，是这样做的：<strong>进入到 young 区域条件增加了一个停留在 old 区域的时间判断</strong></p>
+<ul>
+<li>第一次访问，仍然在 old 区域，<strong>不提升</strong> 到 young 区</li>
+<li>第二次访问，如果与第一次访问的时间间隔 <strong>低于某个阈值</strong>，也不提升到 young 区</li>
+</ul>
+<p>全表扫描时，预读页「前后访问时间间隔」通常很短，使用这种策略，就可以避免「缓存污染」问题</p>
+<p>这个阈值可以通过 <code>innodb_old_blocks_time</code> 来修改，默认为 1000ms</p>
+<h4 id="详细说说淘汰这一过程">详细说说「淘汰」这一过程</h4>
+<p>在淘汰页面时，需要判断这个页是干净页还是脏页：</p>
+<ul>
+<li>如果是 clean page：直接淘汰即可，无需任何其它处理</li>
+<li>如果是 dirty page：需要 <strong>回写磁盘</strong> 再淘汰</li>
+</ul>
+<p>如果按照上面的逻辑，在 LRU 淘汰脏页需要涉及磁盘 IO</p>
+<p>为了尽可能少的涉及磁盘 IO，InnoDB 会优先选择淘汰干净页，迫不得已才会淘汰脏页</p>
+<p>最后再来理一下 LRU 的过程：</p>
+<ul>
+<li>Free 链表为空，说明没有空闲页，于是来 LRU 链表</li>
+<li>第一次扫描：从尾部扫描 LRU 链表，如果该页面为 clean，淘汰，将其加到 Free 链表</li>
+<li>如果第一次扫描后，剩余的空闲页还不够（第一次只扫描 100 个页），执行第二次扫描：深度扫描 LRU 链表，<strong>单页刷新</strong>（目的是尽可能快的获取足够的空闲页），淘汰，将其加到 Free 链表</li>
+</ul>
+<p>可以看出：空白页的数目与脏页数目是影响 LRU 性能的关键因素</p>
+<h3 id="脏页什么时候回写磁盘">脏页什么时候回写磁盘</h3>
+<p>从 LRU 淘汰机制可以看出：在空白页紧张的情况下，如果脏页之前没有及时回写，会影响 LRU 的性能</p>
+<p>那么脏页回写磁盘的时机是什么呢？</p>
+<ul>
+<li><strong>redo log 满了</strong>：如果 redo log 满了（write pos 追上了 checkpoint），那么 MySQL 会停下来，执行脏页回收</li>
+<li><strong>LRU 淘汰过程</strong>：如果淘汰掉所有的 clean page 还不够，那么就要触发脏页回写了</li>
+<li><strong>MySQL 认为当前空闲</strong>：如果 MySQL 认为当前比较空闲，也会将触发脏页回写</li>
+<li><strong>MySQL 退出时</strong>：正常关闭 MySQL，肯定需要将脏页回写到磁盘，保证持久性（Buffer Pool 是处于用户空间的）</li>
+</ul>
+<p>如果偶尔发现一些慢 SQL，可能就是因为脏页回写导致的「抖动」，此时可以调整 Buffer Pool 和 redo log 的大小</p>
+<blockquote>
+<p>补充：</p>
+<p>淘汰的是脏页，则此时脏页所对应的 redo log 的位置是随机的，当有多个不同的脏页需要刷，则对应的 redo log 可能在不同的位置，这样就需要把 redo log 的多个不同位置刷掉，这样对于 redo log 的处理不是就会很麻烦吗？（合并间隙，移动位置？）
+另外，redo log 的优势在于将磁盘随机写转换成了顺序写，如果需要将 redo log 的不同部分刷掉（刷脏页），不是就在 redo log 里随机读写了么？</p>
+<p>其实淘汰的时候，刷脏页过程不用动 redo log 文件的。</p>
+<p>这个有个额外的保证，是 <strong>redo log 在「重放」的时候，如果一个数据页已经是刷过的，会识别出来并跳过。</strong></p>
+<p>参考资料：<a href="https://time.geekbang.org/column/article/71806" target="_blank" rel="noopener">12 | 为什么我的 MySQL 会“抖”一下？</a>
+</p>
+</blockquote>
+<h2 id="buffer-pool-的并发性能">Buffer Pool 的并发性能</h2>
+<p>问题来了，在实际开发中，肯定有多个线程会并发访问同一个 Buffer Pool，那怎么保证多个线程之间的同步呢？</p>
+<p>InnoDB 的实现很简单：给 Buffer Pool 实例加一个锁，线程要想访问 Buffer Pool，必须持有锁</p>
+<p>可以认为：对单个 Buffer Pool 的访问是 <strong>串行</strong> 的</p>
+<blockquote>
+<p>串行的效率不会低吗？</p>
+</blockquote>
+<p>并不会，Buffer Pool 的操作几乎是纯内存操作，IO 是很快的，这点就像 Redis 一样，核心处理部分采用单线程，效率也很高</p>
+<p>当然，实际开发中，如果内存充足，可以配置 <strong>多个 Buffer Pool 实例</strong>，提高并发性能</p>
+<blockquote>
+<p>每个 Buffer Pool 缓存的数据是一样的吗？</p>
+</blockquote>
+<p>不是，如果缓存一样的数据，虽然提高了并发性能，但是内存利用率不高</p>
+<p>每个 Buffer Pool 缓存的数据是不一致的：</p>
+<ul>
+<li>在缓存一个 page 的时候：使用 hash function 计算该页应该缓存到哪个 Buffer Pool</li>
+<li>在读取一个 page 的时候：使用 hash function 计算该页在哪个 Buffer Pool</li>
+</ul>
+<h2 id="基于-buffer-pool-的数据页访问过程">基于 Buffer Pool 的数据页访问过程</h2>
+<p>使用 hash function 可以确定一个 page 在哪个 Buffer Pool，但是如何快速确定这个 page 的存储地址呢？</p>
+<p>InnoDB 为每个 Buffer Pool 实例分配了一个 hash table，以 <code>表空间号+页号</code> 为 key，<code>存储地址</code> 为 value</p>
+<p>确定了 Buffer Pool 以后，就可以根据 hash table 获取 key 对应的 <strong>控制块的存储地址</strong></p>
+<p>拿到控制块的存储地址，就可以得到这个 page 的地址了</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-16-08-12-291.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果 cache miss，就要从磁盘读取这一页的数据到 Buffer Pool：</p>
+<ul>
+<li>看看有没有足够空白页，如果有，分配即可，如果没有：</li>
+<li>基于 <a href="#%e8%af%a6%e7%bb%86%e8%af%b4%e8%af%b4%e6%b7%98%e6%b1%b0%e8%bf%99%e4%b8%80%e8%bf%87%e7%a8%8b">LRU 淘汰机制</a>
+，淘汰掉不常使用的页面，腾出空白页</li>
+</ul>
+<h2 id="buffer-pool-预热">Buffer Pool 预热</h2>
+<p>关闭 MySQL 服务时，有时需要等待较长时间才能关闭，这是为啥？</p>
+<p>除了上文提到的 MySQL 会在退出时，将 Buffer Pool 的脏页刷盘以外，还有没有其它因素？</p>
+<p>有的</p>
+<p>在刚启动 MySQL 时，Buffer Pool 为空，执行 SQL 时，由于目标页没有在 Buffer Pool，于是需要 <strong>从磁盘读取目标页</strong> 到 Buffer Pool</p>
+<p>Buffer Pool 的数据从无到业务热点数据的这个过程称为 Buffer Pool 预热</p>
+<p>如果 Buffer Pool 比较大，并且业务热点数据也比较多，那么预热的过程可能很长，这也是 MySQL 刚启动时，性能没那么好的原因</p>
+<p>为了缩短预热时间，MySQL 会在 <strong>关闭 Server 时，将 Buffer Pool 的数据保存到磁盘</strong>，这样再次启动时，就可以根据这些数据加速预热过程了</p>
+<p>可以通过配置 <code>innodb_buffer_pool_dump_at_shutdown</code> 和 <code>innodb_buffer_pool_load_at_startup</code> 来控制这个行为</p>
+<p>默认情况下，这两个选项都是开启的</p>
+<h2 id="调整-buffer-pool-大小">调整 Buffer Pool 大小</h2>
+<p>如果在运行过程中，想要将 Buffer Pool 的空间调大一点，怎么做？</p>
+<p>比如一开始 Buffer Pool 的空间为 2G，要调整成 4G，是不是需要先分配一块 4G 大小的内存空间，然后将旧数据迁移过去？</p>
+<p>InnoDB 的实现并不是这样的，效率太低了</p>
+<p>为了动态扩展 Buffer Pool 的大小，InnoDB 引入了 <strong>chunk</strong> 的概念：</p>
+<p>一个 Buffer Pool 中可以有多个 chunk，每个 chunk 有自己的控制块和缓存页</p>
+<p>多个 chunk 共享 Free 链表、Flush 链表、LRU 链表</p>
+<p>如果需要动态扩容，只需要申请新的 chunk 就行了，默认情况下，每个 chunk 的大小为 128M（可以修改 <code>innodb_buffer_pool_chunk_size</code> 来调整）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-16-43-59-838.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="innodb-buffer-pool-架构图">InnoDB Buffer Pool 架构图</h2>
+<p>最后给出一张 InnoDB Buffer Pool 的架构图（如有错误还请指出）：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-25-17-47-41-203.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+
+
+
+</body>
+</html>

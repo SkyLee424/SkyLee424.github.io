@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Redis 常见数据结构与实现原理 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="底层数据结构 SDS（简单动态字符串） 传统的 C 字符串存在以下问题： 获取 strlen 效率低 无法存储文本以外的数据（二进制不安全） 不支持动态扩容，appen"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Redis 常见数据结构与实现原理" />
+<meta property="og:description" content="底层数据结构 SDS（简单动态字符串） 传统的 C 字符串存在以下问题： 获取 strlen 效率低 无法存储文本以外的数据（二进制不安全） 不支持动态扩容，appen" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-07T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-07T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Redis 常见数据结构与实现原理"/>
+<meta name="twitter:description" content="底层数据结构 SDS（简单动态字符串） 传统的 C 字符串存在以下问题： 获取 strlen 效率低 无法存储文本以外的数据（二进制不安全） 不支持动态扩容，appen"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/">Redis 常见数据结构与实现原理</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/redis/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Redis
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/redis/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Redis</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-07T00:00:00&#43;00:00">
+      2024-03-07
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      14 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="底层数据结构">底层数据结构</h2>
+<h3 id="sds简单动态字符串">SDS（简单动态字符串）</h3>
+<p>传统的 C 字符串存在以下问题：</p>
+<ul>
+<li>获取 strlen 效率低</li>
+<li>无法存储文本以外的数据（二进制不安全）</li>
+<li>不支持动态扩容，append 字符串效率低</li>
+</ul>
+<p>Redis 为了解决 C 字符串的这些问题，对其进行了进一步封装：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// __attribute__ ((__packed__)) 的意思是让编译器不要进行内存对齐
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 进一步节省内存空间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">struct</span> <span class="nf">__attribute__</span> <span class="p">((</span><span class="n">__packed__</span><span class="p">))</span> <span class="n">sdshdr8</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint8_t</span> <span class="n">len</span><span class="p">;</span> <span class="cm">/* used */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint8_t</span> <span class="n">alloc</span><span class="p">;</span> <span class="cm">/* excluding the header and null terminator */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">flags</span><span class="p">;</span> <span class="cm">/* 3 lsb of type, 5 unused bits */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>可以看出，SDS 有以下基本字段：</p>
+<ul>
+<li>len：字符串的长度</li>
+<li>alloc：字符串已分配内存的大小</li>
+<li>flags：字符串类型</li>
+<li>buf：实际存储的数据</li>
+</ul>
+<p><strong>动态扩容</strong></p>
+<p>SDS 支持动态扩容，当 buf 的空间无法满足存储需求，会自动扩容，这点与 C++ 的 <code>std::vector</code> 是一致的</p>
+<p>动态扩容的策略如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="n">hisds</span> <span class="nf">hi_sdsMakeRoomFor</span><span class="p">(</span><span class="n">hisds</span> <span class="n">s</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">addlen</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="p">...</span> <span class="p">...</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// s目前的剩余空间已足够，无需扩展，直接返回
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">avail</span> <span class="o">&gt;=</span> <span class="n">addlen</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="n">s</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//获取目前s的长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">len</span> <span class="o">=</span> <span class="nf">hi_sdslen</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sh</span> <span class="o">=</span> <span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="p">)</span><span class="n">s</span> <span class="o">-</span> <span class="nf">hi_sdsHdrSize</span><span class="p">(</span><span class="n">oldtype</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//扩展之后 s 至少需要的长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">newlen</span> <span class="o">=</span> <span class="p">(</span><span class="n">len</span> <span class="o">+</span> <span class="n">addlen</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//根据新长度，为s分配新空间所需要的大小
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="p">(</span><span class="n">newlen</span> <span class="o">&lt;</span> <span class="n">HI_SDS_MAX_PREALLOC</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">//新长度&lt;HI_SDS_MAX_PREALLOC 则分配所需空间*2的空间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">newlen</span> <span class="o">*=</span> <span class="mi">2</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">//否则，分配长度为目前长度+1MB
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="n">newlen</span> <span class="o">+=</span> <span class="n">HI_SDS_MAX_PREALLOC</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">       <span class="p">...</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>如果扩容后的大小小于 HI_SDS_MAX_PREALLOC，那么分配当前空间的 2 倍</li>
+<li>如果扩容后的大小大于 HI_SDS_MAX_PREALLOC，那么分配当前空间 + 1M</li>
+</ul>
+<p><strong>类型</strong></p>
+<p>为了进一步减少内存占用，Redis 设计的 SDS 有五种类型：sdshdr5、sdshdr8、sdshdr16、sdshdr32、sdshdr64</p>
+<p>这五种类型的区别仅仅是 len、alloc 的类型不同</p>
+<p>sdshdr 后面的数字决定了 len、alloc 的占用的字节数，这样可以保证单个 SDS 的头不会浪费太多内存</p>
+<h3 id="list链表">List（链表）</h3>
+<p>Redis 实现的链表是双向链表，没有什么特别的</p>
+<p>List 的缺点：</p>
+<ul>
+<li>无法利用 CPU Cache</li>
+<li>存在内存浪费：每个 Node 都要保存 prev 和 next 指针</li>
+</ul>
+<h3 id="ziplist压缩列表">ZipList（压缩列表）</h3>
+<p>为了解决 List 的内存占用问题，Redis 实现了 ZipList</p>
+<p>ZipList 会分配一块连续的内存空间用于存储数据，可以充分利用 CPU Cache</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-16-46-41-830.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#%E5%8E%8B%E7%BC%A9%E5%88%97%E8%A1%A8%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1" target="_blank" rel="noopener">图片来自小林 Coding</a>
+</p>
+</blockquote>
+<p>每个 Node 保存三个数据：</p>
+<ul>
+<li>prev_len：到前一个节点头部的距离，<strong>提供从后到前的遍历能力</strong></li>
+<li>encoding：编码方式、数据长度</li>
+<li>data：存放的数据</li>
+</ul>
+<p>ZipList 在首尾插入、删除数据的时间复杂度为 O(1)，效率高，但是要获取中间节点的值，就只能和链表一样遍历了</p>
+<p><strong>连锁更新</strong></p>
+<p>压缩列表节点的 prevlen 属性会根据前一个节点的长度进行不同的空间大小分配：</p>
+<ul>
+<li>如果前一个节点的长度小于 254 字节，那么 prevlen 属性需要用 1 字节的空间来保存这个长度值；</li>
+<li>如果前一个节点的长度大于等于 254 字节，那么 prevlen 属性需要用 5 字节的空间来保存这个长度值；</li>
+</ul>
+<p>目的是为了节省内存占用</p>
+<p>但基于这种机制，ZipList 存在连锁更新的问题：来看一下这个场景：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-16-52-55-226.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#%E8%BF%9E%E9%94%81%E6%9B%B4%E6%96%B0" target="_blank" rel="noopener">图片来自小林 Coding</a>
+</p>
+<p>如果要在头部插入一个数据，且占用的内存超过 254 字节：</p>
+<ul>
+<li>e1 节点的 prev_len 无法保存头部数据的长度，只能扩容到 5 字节</li>
+<li>由于 e1 节点的 prev_len 扩容，e1 节点整体占用的字节数也超过了 254 字节</li>
+<li>e2 节点的 prev_len 无法保存头部数据的长度，只能扩容到 5 字节</li>
+<li>&hellip;</li>
+</ul>
+<p>这样，后续节点都需要扩容，直到可以保存下前一个节点的长度</p>
+<p>如果扩容的节点数较多，那么性能就会很差</p>
+<p>因此，ZipList 适用于数据量较少，这样即使发生连锁更新，也可以接受</p>
+<h3 id="quicklist">QuickList</h3>
+<p>QuickList 与普通的 List 的区别在于：</p>
+<ul>
+<li>普通的 List，节点保存的就是实际的 value</li>
+<li>QuickList，节点保存的是一个 ZipList</li>
+</ul>
+<p>因此，在插入新的数据时，不一定要创建新的 Node，如果 ZipList 可以存下，那么就直接放在 ZipList 中</p>
+<p>QuickList 相较于普通的 List，优点如下：</p>
+<ul>
+<li>插入新的数据时，平均效率较高</li>
+<li>读取数据时，局部可以使用到 CPU Cache</li>
+</ul>
+<h3 id="listpack">ListPack</h3>
+<p>为了解决 ZipList 的连锁更新问题，Redis 5.0 引入了新的数据结构 ListPack</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-17-08-09-733.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#listpack" target="_blank" rel="noopener">图片来自小林 Coding</a>
+</p>
+</blockquote>
+<p>ListPack 继承了 ZipList 的优秀设计，例如也采取连续分配内存的方式、节点采用不同的编码方式以节省内存</p>
+<p>但与 ZipList 不同的是：节点 <strong>不需要记录 prev_len 了</strong>，这样插入数据时，也不会出现连锁更新的问题</p>
+<blockquote>
+<p>不记录 prev_len，如何倒序遍历？</p>
+<p>ListPack 可以根据一个 Node 的首地址，利用位运算，逐个向左解析，得到上一个节点的起始位置：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cm">/* Decode the backlen and returns it. If the encoding looks invalid (more than
+</span></span></span><span class="line"><span class="cl"><span class="cm">* 5 bytes are used), UINT64_MAX is returned to report the problem. */</span>
+</span></span><span class="line"><span class="cl"><span class="kt">uint64_t</span> <span class="nf">lpDecodeBacklen</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint64_t</span> <span class="n">val</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint64_t</span> <span class="n">shift</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">do</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">val</span> <span class="o">|=</span> <span class="p">(</span><span class="kt">uint64_t</span><span class="p">)(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">127</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&amp;</span> <span class="mi">128</span><span class="p">))</span> <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">shift</span> <span class="o">+=</span> <span class="mi">7</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">p</span><span class="o">--</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">shift</span> <span class="o">&gt;</span> <span class="mi">28</span><span class="p">)</span> <span class="k">return</span> <span class="n">UINT64_MAX</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">val</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div></blockquote>
+<h3 id="dict">Dict</h3>
+<p>Redis 实现了哈希表数据结构</p>
+<p>Dict 整体有两个 Hash Table，第一个用于存储实际数据，第二个用于 rehash</p>
+<p>Redis 实现的哈希表使用链地址扫描法来解决哈希冲突</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-17-24-42-875.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#rehash" target="_blank" rel="noopener">图片来自小林 Coding</a>
+</p>
+</blockquote>
+<p><strong>rehash</strong></p>
+<p>整个哈希表通过 <code>负载因子</code> 来衡量冲突的程度，负载因子越大，冲突越严重</p>
+<p>如果一直这样下去，那么哈希表的查找效率就会退化为 O(n)</p>
+<p>因此，Redis 默认在负载因子：</p>
+<ul>
+<li>大于 1：如果此时没有进行 bgwriteaof 以及 bgsave，执行 rehash</li>
+<li>大于 5：强制 rehash</li>
+</ul>
+<p>rehash 的过程如下：</p>
+<ul>
+<li>给哈希表 2 分配空间</li>
+<li>将哈希表 1 的数据「迁移」到哈希表 2（迁移包括了整理数据的过程，降低负载因子）</li>
+<li>释放哈希表 1 的空间</li>
+<li>将哈希表 2 设置为哈希表 1</li>
+</ul>
+<p><strong>渐进式 rehash</strong></p>
+<p>由于数据量较大，rehash 的时间可能很长，为了避免直接 rehash 带来的性能影响，Redis 引入了渐进式 rehash，过程如下：</p>
+<ul>
+<li>给哈希表 2 分配空间</li>
+<li>当客户端执行操作时，将哈希表 1 对应索引处所有的 key-value 迁移到哈希表 2</li>
+<li>rehash 时，新增的 kv 都存在哈希表 2</li>
+</ul>
+<p>随着客户端执行的操作越多，哈希表 1 的数据会逐渐迁移到哈希表 2</p>
+<h3 id="int-set">Int Set</h3>
+<p>如果哈希表存储的全是整数，并且数据量不大，用哈希表就显得有点重了</p>
+<p>Int Set，即整数集合，用于存储一系列整数</p>
+<p>Int Set 的定义如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">intset</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">uint32_t</span> <span class="n">encoding</span><span class="p">;</span> <span class="c1">// 编码方式
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">uint32_t</span> <span class="n">length</span><span class="p">;</span>   <span class="c1">// 数组长度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">int8_t</span> <span class="n">contents</span><span class="p">[];</span> <span class="c1">// 数组，注意，元素的实际类型并不一定是 int8_t ，取决于 encoding
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span> <span class="n">intset</span><span class="p">;</span>
+</span></span></code></pre></div><p>contents 的数据是 <strong>有序</strong> 的，在查找数据时，可以使用 <strong>二分</strong></p>
+<p>为了节省内存，Int Set 的元素默认采取 int8 类型</p>
+<p>如果新插入的元素无法用 8 个字节存储，Int Set 会进行类型升级</p>
+<p>例如，假设此时 contents 的元素为 {11, 45}，那么 int8_t 的编码就能满足了</p>
+<p>如果此时插入一个新的元素，假设为 114514:</p>
+<ul>
+<li>114514 的类型为 int32_t，大于 int8_t</li>
+<li>提升 contents 的编码类型 为 int32_t（扩容实现）</li>
+<li><strong>倒序</strong> 遍历 contents，将原有数据向后移动</li>
+<li>将 114514 插入到 contents 尾部</li>
+</ul>
+<p>contents 仅支持升级不支持降级</p>
+<p>由于 intset 采取连续空间存储数据，并且要求有序，因此，仅适用于 <strong>数据量较小</strong> 的情况（插入 O(n)，查询 O(log(n))）</p>
+<h3 id="skip-list">Skip List</h3>
+<p>Skip List，跳表，是 ZSET 的底层数据结构，支持在 O(log(n)) 内查找目标元素，并支持范围查询</p>
+<p>Skip List 的结构如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-17-53-49-968.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#%E8%B7%B3%E8%A1%A8%E7%BB%93%E6%9E%84%E8%AE%BE%E8%AE%A1" target="_blank" rel="noopener">图片来自小林 Coding</a>
+</p>
+</blockquote>
+<p>可以看到，Skip List 实际上就是一个 <strong>多层</strong>、 <strong>有序</strong> 链表</p>
+<ul>
+<li>头节点保存了每一层的第一个 next 节点</li>
+<li>子节点保存了：
+<ul>
+<li>prev 指针</li>
+<li>不同 level 的 next 指针</li>
+<li>value</li>
+</ul>
+</li>
+</ul>
+<p>来看看子节点的结构：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">typedef</span> <span class="k">struct</span> <span class="n">zskiplistNode</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//Zset 对象的元素值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="n">sds</span> <span class="n">ele</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//元素权重值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">double</span> <span class="n">score</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">//prev 指针
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">zskiplistNode</span> <span class="o">*</span><span class="n">backward</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//节点的 level 数组，保存每层上的前向指针和跨度
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">struct</span> <span class="n">zskiplistLevel</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">struct</span> <span class="n">zskiplistNode</span> <span class="o">*</span><span class="n">forward</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">span</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="n">level</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">zskiplistNode</span><span class="p">;</span>
+</span></span></code></pre></div><p><strong>查询过程</strong></p>
+<ul>
+<li>一开始从最高的节点开始查询</li>
+<li>将当前节点的 score 与目标 score 比较：
+<ul>
+<li>如果当前节点的 score 大于目标 score，那么继续向右遍历</li>
+<li>如果当前节点的 score 小于目标 score，那么跳到 level - 1 层的 pre 节点，</li>
+<li>如果当前节点的 score 等于目标 score，那么向右遍历直到 score 大于目标 score</li>
+</ul>
+</li>
+</ul>
+<p>举个例子：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-17-59-10-492.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/data_struct/data_struct.html#%E8%B7%B3%E8%A1%A8%E8%8A%82%E7%82%B9%E6%9F%A5%E8%AF%A2%E8%BF%87%E7%A8%8B" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>假设要寻找的节点为 <code>member: abcd, score:4</code>:</p>
+<ul>
+<li>从 L2 开始，遍历到节点 <code>abc, 3</code></li>
+<li>由于节点 <code>abc, 3</code> 的权重小于 4，因此向右遍历</li>
+<li>向右遍历，发现为 NULL，于是跳到 level - 1 的下一个节点，即 <code>abcde, 4</code></li>
+<li>由于节点 <code>abcde, 4</code> 的权重等于 4，判断 member 是否一致</li>
+<li>不一致，于是向左遍历到 <code>abcd, 4</code>，发现与目标节点一致，结束</li>
+</ul>
+<p>可以看到整体思想也是基于二分</p>
+<p><strong>层数设置</strong></p>
+<p>跳表的查询效率与层数密切相关</p>
+<ul>
+<li>如果层数太小，退化成链表，还是得一个一个遍历</li>
+<li>如果层数太多，会占用不必要的空间，向下查询次数也会变多，效率也不高</li>
+</ul>
+<p>建议 <code>level[n - 1]的节点数 : level[n]的节点数 = 2 : 1</code>，可以获得不错的查询效率</p>
+<blockquote>
+<p>Redis 是如何维护比例为 2:1 的？</p>
+</blockquote>
+<p>Redis 在创建节点时，并没有刻意的去保证比例为 2:1</p>
+<p>在确定一个节点对应的 level 时，采取随机的策略，生成一个随机数：</p>
+<ul>
+<li>如果随机数大于 0.25，那么 level++</li>
+<li>否则 level 就确定下来</li>
+</ul>
+<p>可以发现，越大的 level，对应越低的概率：</p>
+<ul>
+<li>100% 的节点的 level 为 0</li>
+<li>50% 的节点的 level 为 1</li>
+<li>25% 的节点的 level 为 2</li>
+<li>12.5% 的节点的 level 为 3</li>
+<li>&hellip;</li>
+</ul>
+<p>这样就近似保证了 <code>level[n - 1]的节点数 : level[n]的节点数 = 2 : 1</code></p>
+<p>在 Redis7.0 中，level 的上限确定为 32</p>
+<p><strong>为什么不用 Red-Blank Tree</strong></p>
+<p>看看作者的解释：</p>
+<blockquote>
+<p>There are a few reasons:</p>
+<p>They are not very memory intensive. It&rsquo;s up to you basically. Changing parameters about the probability of a node to have a given number of levels will make then less memory intensive than btrees.</p>
+<p>A sorted set is often target of many ZRANGE or ZREVRANGE operations, that is, traversing the skip list as a linked list. With this operation the cache locality of skip lists is at least as good as with other kind of balanced trees.</p>
+<p>They are simpler to implement, debug, and so forth. For instance thanks to the skip list simplicity I received a patch (already in Redis master) with augmented skip lists implementing ZRANK in O(log(N)). It required little changes to the code.</p>
+</blockquote>
+<p>具体来说：</p>
+<ul>
+<li>相较于 AVL 树、红黑树，SkipList 在存储相同数据的情况下，占用的内存更少</li>
+<li>相较于 AVL 树、红黑树，SkipList 在范围查询时，数据的访问更加连续，可以更好的利用缓存，性能不比 AVL 树、红黑树、B 树差</li>
+<li>相较于 AVL 树、红黑树，SkipList 的维护性更好，实现简单，插入删除数据时，不需要太多操作</li>
+</ul>
+<h2 id="数据结构apis">数据结构（APIs）</h2>
+<p>在将数据结构前，先来了解一个概念</p>
+<p>Redis 无论什么数据结构，都被封装成了一个 Redis Object</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-19-34-27-812.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>每个 Object 都有自己的 <strong>编码方式</strong>，决定了底层使用什么样的数据结构</p>
+<h3 id="string">String</h3>
+<p>String 可以说是 Redis 使用最多的数据结构了</p>
+<p>String 的编码方式如下：</p>
+<ul>
+<li>当 String 存储的是整数数据，采用 INT 编码方式，直接存储一个整数，支持 Incr 操作</li>
+<li>当 String 存储的是字符串：
+<ul>
+<li>如果整个 Object 占的空间小于 64 字节（即 str 部分为 64 - 4 - 4 - 8 = 44 字节）时，采取 EMBSTR 编码方式</li>
+<li>否则，采用 RAW 编码方式</li>
+</ul>
+</li>
+</ul>
+<p>EMBSTR 编码方式与 RAW 编码方式都是基于 SDS 的，区别在于：EMBSTR 的数据部分与头部部分为一个连续的空间，只需要一次内存分配；而 RAW 需要两次分配</p>
+<h4 id="应用场景">应用场景</h4>
+<p>String 的应用场景很多，这里就说一下 Session 存储</p>
+<p>如果直接将 Session 存放在单个服务端，那么用户请求到另一个的服务端，就无法验证 Session 的正确性</p>
+<p>可以以 uid 为 key，session 为 val，存在 Redis 中，这样服务端直接请求 Redis 即可</p>
+<h3 id="list">List</h3>
+<h4 id="实现原理">实现原理</h4>
+<p>List 的编码方式：</p>
+<ul>
+<li>3.2 版本前：
+<ul>
+<li>如果存储的数据节点小于 512 个并且占用空间小于 64K，采取 ZipList 编码</li>
+<li>否则，采取 List 编码</li>
+</ul>
+</li>
+<li>3.2 版本后：采取 QuickList 编码</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-19-47-53-173.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="应用场景-1">应用场景</h4>
+<p>List 可以高效的在首尾增加和删除数据，适合用作 <strong>消息队列</strong></p>
+<p>但是 List：</p>
+<ul>
+<li>不支持消费者组</li>
+<li>不支持消息重放</li>
+<li>没有维护消费的 offset</li>
+</ul>
+<h3 id="stream">Stream</h3>
+<p>为了解决 List 的缺陷，Redis 5.0 引入了 Stream</p>
+<h4 id="实现原理-1">实现原理</h4>
+<p>Stream 底层基于 Radix Tree 和 ListPack 实现</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-06-20-22-30-005.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>每一个 Stream Entry 包含了三个部分：</p>
+<ul>
+<li>全局唯一 id：如果没有指定消息 id，Redis 会自己生成一个分布式 id</li>
+<li>key</li>
+<li>value</li>
+</ul>
+<p>生产一条消息后，如果可以将新的消息放在 ListPack 中（即 ListPack 有空闲位置），就直接存放，否则，创建一个新的 ListPack，并将 ListPack 的 id 存在 Radix Tree 中</p>
+<p>Radix Tree 的键是 Stream Entry 的 ID，值是对应的 Listpack，Radix Tree 可以根据提供的消息 id，快速定位到 ListPack，进而定位到 Stream Entry 的位置</p>
+<h4 id="api">API</h4>
+<ul>
+<li>XADD：插入消息，保证有序，可以自动生成全局唯一 ID；</li>
+<li>XLEN ：查询消息长度；</li>
+<li>XREAD：用于读取消息，可以按 ID 读取数据；</li>
+<li>XDEL ： 根据消息 ID 删除消息；</li>
+<li>DEL ：删除整个 Stream；</li>
+<li>XRANGE ：读取区间消息</li>
+<li>XREADGROUP：按消费组形式读取消息；</li>
+<li>XPENDING 和 XACK：
+<ul>
+<li>XPENDING 命令可以用来查询每个消费组内所有消费者「已读取、但尚未确认」的消息；</li>
+<li>XACK 命令用于向消息队列确认消息处理已完成</li>
+</ul>
+</li>
+</ul>
+<h4 id="概念抽象">概念抽象</h4>
+<ul>
+<li>Stream Entry：类似于 Message</li>
+<li>Stream Key：即 Stream 的 key，类似于 Partition</li>
+</ul>
+<h4 id="消费者组">消费者组</h4>
+<p>与 Kafka 不同，Redis 的消费者组消费的是同一个 key，即同一个 Partition</p>
+<p>也就是说，多个消费者消费同一个 Partition，这在 Kafka 是不允许的（存在重复消费的问题）</p>
+<p>但 Redis 保证：一条 message，只能由 Consumer Group 中的一个 consumer 消费，没有重复消费的问题</p>
+<blockquote>
+<p>Consumer groups in Redis streams may resemble in some way Kafka (TM) partitioning-based consumer groups, however note that Redis streams are, in practical terms, very different. The partitions are only logical and the messages are just put into a single Redis key, so the way the different clients are served is based on who is ready to process new messages, and not from which partition clients are reading. For instance, if the consumer C3 at some point fails permanently, Redis will continue to serve C1 and C2 all the new messages arriving, as if now there are only two logical partitions.</p>
+</blockquote>
+<p>简单来说，Redis 流中的消费者组消费消息的方式与 Kafka 不同。在 Kafka 中，消息被存储在不同的分区中，消费者组中的每个消费者负责消费特定分区的消息。而在 Redis 流中，消息被存储在一个键中，消费者组中的消费者 <strong>通过竞争</strong> 获取消息的消费权。如果一个消费者失败，其他消费者将继续消费新消息，而不会受到分区分配的影响。</p>
+<h4 id="消息持久化">消息持久化</h4>
+<p>Stream 的持久化依赖于 RDB 和 AOF</p>
+<p>在业务中使用 Stream，需要格外注意 AOF 的刷盘策略</p>
+<p>如果要保证消息 <strong>尽量</strong> 不丢，就要让 AOF 刷盘策略严格一些</p>
+<p>Redis 可以通过配置文件或运行时命令来控制 AOF（Append Only File）文件的 fsync 参数。</p>
+<p>在 Redis 的配置文件（redis.conf）中，可以使用 <code>appendfsync</code> 配置项来设置 AOF 文件的 fsync 策略。该配置项有以下三个可选值：</p>
+<ol>
+<li><code>always</code>：每次写入 AOF 文件时都会执行 fsync 操作，将数据写入磁盘。这种策略可以确保数据的持久性，但可能会降低性能。</li>
+<li><code>everysec</code>：每秒钟执行一次 fsync 操作，将数据写入磁盘。这种策略可以确保数据的持久性，同时避免频繁的磁盘操作对性能的影响。</li>
+<li><code>no</code>：不执行 fsync 操作，将数据写入内存，而不是磁盘。这种策略可以提高性能，但可能会导致数据丢失。</li>
+</ol>
+<h4 id="消息有序性保障">消息有序性保障</h4>
+<p>来看一下 Redis 官方的解释：</p>
+<blockquote>
+<p>We could say that schematically the following is true:</p>
+<ul>
+<li>If you use 1 stream -&gt; 1 consumer, you are processing messages <strong>in order</strong>.</li>
+<li>If you use N streams with N consumers, so that only a given consumer hits a subset of the N streams, you can scale the above model of 1 stream -&gt; 1 consumer.</li>
+<li>If you use 1 stream -&gt; N consumers, you are load balancing to N consumers, however in that case, messages about the same logical item may be consumed <strong>out of order</strong>, because a given consumer may process message 3 faster than another consumer is processing message 4.</li>
+</ul>
+</blockquote>
+<p>也就是说，要想保证消息消费顺序与 producer 生产顺序一致，那么 <strong>一个 Stream 就只能对应一个 Consumer</strong></p>
+<h4 id="与-kafka-的对比">与 Kafka 的对比</h4>
+<p>Redis Stream 与 Kafka 等专业消息队列，最主要的差距就在于：</p>
+<ul>
+<li>消息可靠性（保证不丢）</li>
+<li>消息是否可堆积</li>
+</ul>
+<p>对于 Redis Stream 来说，<strong>无法保证</strong> 消息的可靠性：</p>
+<ul>
+<li>AOF fsync 过程宕机</li>
+<li>主从复制是异步的，存在丢失数据的风险</li>
+</ul>
+<p>并且，由于 Redis 将数据存储在内存，决定了无法堆积太多消息</p>
+<p>详细可以看看 <a href="https://redis.io/docs/data-types/streams/#differences-with-kafka-tm-partitions" target="_blank" rel="noopener">Redis 官方文档</a>
+</p>
+<h3 id="hash">Hash</h3>
+<h4 id="实现原理-2">实现原理</h4>
+<p>编码规则：</p>
+<ul>
+<li>如果存储的数据节点小于 512 个并且占用空间小于 64K，采取 ZipList 编码</li>
+<li>否则，采取 Dict 编码</li>
+</ul>
+<p>在 Redis7.0 版本，废弃了 ZipList，采用 ListPack</p>
+<h4 id="应用场景-2">应用场景</h4>
+<p>可以使用 hash 表存储对象，例如，要存储 user 对象，可以以 user_id 为 key，序列化以后的 user 为 value</p>
+<h3 id="set">Set</h3>
+<h4 id="实现原理-3">实现原理</h4>
+<p>编码方式：</p>
+<ul>
+<li>如果元素数量小于 512 个，并且全是整数，使用 IntSet 编码</li>
+<li>否则，使用 Dict 编码</li>
+</ul>
+<h4 id="应用场景-3">应用场景</h4>
+<p>点赞场景，例如：</p>
+<ul>
+<li>记录一个文章有哪些用户点过赞，可以以 post_id 为 key，user_id 为 member</li>
+<li>记录一个用户给哪些评论点过赞，可以以 user_id 为 key，comment_id 为 member</li>
+</ul>
+<p>共同关注，例如：</p>
+<ul>
+<li>计算用户共同关注的公众号，可以以 公众号 id 为 key，user_id 为 member，然后求交集</li>
+</ul>
+<h3 id="sorted-set">Sorted Set</h3>
+<h4 id="实现原理-4">实现原理</h4>
+<p>编码方式：</p>
+<ul>
+<li>如果元素个数小于 128 个，并且占用空间小于 64 字节时，使用 ZipList 编码</li>
+<li>否则，使用 Dict + SkipList 编码</li>
+</ul>
+<blockquote>
+<p>这里使用哈希表的目的是为了保存：member 到 score 的映射关系，可以快速获取一个 member 的 score，即 ZSCORE API</p>
+</blockquote>
+<h4 id="应用场景-4">应用场景</h4>
+<p>Sorted Set 主要的应用场景就是排序了，例如排行榜功能</p>
+<h3 id="bitmap">BitMap</h3>
+<h4 id="实现原理-5">实现原理</h4>
+<p>BitMap 使用 SDS 来存储数据，具体来说，是利用 SDS 的 value 属性</p>
+<p>BitMap 提供了以下 API：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 设置值</span>
+</span></span><span class="line"><span class="cl">SETBIT key offset value
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 获取值</span>
+</span></span><span class="line"><span class="cl">GETBIT key offset
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 获取指定范围内值为 1 的个数</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># start 和 end 以字节为单位</span>
+</span></span><span class="line"><span class="cl">BITCOUNT key start end
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># result 计算的结果，会存储在该key中</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># key1 … keyn 参与运算的key，可以有多个，空格分割，not运算只能一个key</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 当 BITOP 处理不同长度的字符串时，较短的那个字符串所缺少的部分会被看作 0。返回值是保存到 destkey 的字符串的长度（以字节byte为单位），和输入 key 中最长的字符串长度相等。</span>
+</span></span><span class="line"><span class="cl">BITOP <span class="o">[</span>operations<span class="o">]</span> <span class="o">[</span>result<span class="o">]</span> <span class="o">[</span>key1<span class="o">]</span> <span class="o">[</span>keyn…<span class="o">]</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 返回指定key中第一次出现指定value(0/1)的位置</span>
+</span></span><span class="line"><span class="cl">BITPOS <span class="o">[</span>key<span class="o">]</span> <span class="o">[</span>value<span class="o">]</span>
+</span></span></code></pre></div><h4 id="应用场景-5">应用场景</h4>
+<p>BitMap 非常适合用于统计二值的场景（即 true or false），例如：</p>
+<ul>
+<li>用户签到表：以 user_id 为 key，day 为 offset，365 天的签到表，仅会占用约 60 字节的空间</li>
+<li>用户在线表：以 user:online 为 key，user_id 为 offset，如果 user_id 从 1 开始，5000w 用户仅会使用 6M 空间</li>
+</ul>
+<h3 id="hyperloglog">HyperLogLog</h3>
+<p>HyperLogLog 是一种高效的数据结构，用于 <strong>估计</strong> 集合的大小，即估算集合中元素的数量。HyperLogLog 的优点是 <strong>空间复杂度低</strong>，<strong>时间复杂度为 O(1)</strong>，并且可以处理非常大的集合。</p>
+<blockquote>
+<p>HyperLogLog 的误差通常为 0.81%</p>
+</blockquote>
+<p>HyperLogLog 的原理是利用概率算法，通过比较概率分布来估算集合的大小。具体来说，HyperLogLog 会维护一个长度为 m 的窗口，用于存储输入序列中的元素。对于每个元素，HyperLogLog 会计算其与前 m 个元素的相似度，并根据相似度计算其概率。然后，HyperLogLog 会根据概率计算该元素在集合中的大小，并更新窗口。最后，HyperLogLog 会根据窗口中的元素数量估算集合的大小。</p>
+<h4 id="apis">APIs</h4>
+<ol>
+<li><strong>PFADD</strong>：将一个或多个元素添加到 HyperLogLog 中。
+<pre tabindex="0"><code>PFADD myhll element1 element2 ...
+</code></pre></li>
+<li><strong>PFCOUNT</strong>：获取 HyperLogLog 中的基数估计值。
+<pre tabindex="0"><code>PFCOUNT myhll
+</code></pre></li>
+<li><strong>PFMERGE</strong>：合并多个 HyperLogLog 结构为一个，用于估计多个集合的联合基数。
+<pre tabindex="0"><code>PFMERGE dest-hll source-hll1 source-hll2 ...
+</code></pre></li>
+</ol>
+<h4 id="应用场景-6">应用场景</h4>
+<p>HyperLogLog 适合大量 <strong>计数</strong>，且 <strong>对数据精度要求不高</strong> 的场景，例如：网页的 UV 统计、用户活跃度</p>
+<h3 id="geospatial">Geospatial</h3>
+<p>Redis 中的 Geospatial 数据类型是一种用于存储地理空间信息的数据结构，允许存储地理位置（经度和纬度）以及与这些位置相关的其他数据（例如，商家名称、城市名称等）。</p>
+<h4 id="apis-1">APIs</h4>
+<ol>
+<li>
+<p><strong>GEOADD</strong>：将一个或多个地理位置成员添加到指定的有序集合中。</p>
+<pre tabindex="0"><code>GEOADD locations 13.361389 38.115556 &#34;Palermo&#34; 15.087269 37.502669 &#34;Catania&#34;
+</code></pre></li>
+<li>
+<p><strong>GEODIST</strong>：计算两个地理位置之间的距离。</p>
+<pre tabindex="0"><code>GEODIST locations &#34;Palermo&#34; &#34;Catania&#34; km
+</code></pre></li>
+<li>
+<p><strong>GEOPOS</strong>：获取一个或多个地理位置成员的经度和纬度。</p>
+<pre tabindex="0"><code>GEOPOS locations &#34;Palermo&#34; &#34;Catania&#34;
+</code></pre></li>
+<li>
+<p><strong>GEORADIUS</strong>：根据指定的地理位置和半径，返回范围内的成员。</p>
+<pre tabindex="0"><code>GEORADIUS locations 15 37 200 km
+</code></pre></li>
+<li>
+<p><strong>GEORADIUSBYMEMBER</strong>：根据指定的地理位置成员和半径，返回范围内的成员。</p>
+<pre tabindex="0"><code>GEORADIUSBYMEMBER locations &#34;Palermo&#34; 200 km
+</code></pre></li>
+</ol>
+<h4 id="实现原理-6">实现原理</h4>
+<p>Geo 实际上是对 Sorted Set 的进一步封装，以：</p>
+<ul>
+<li>place_name 为 key</li>
+<li><code>经度与纬度键值对</code> 为 value</li>
+</ul>
+<p>基于此，就不难理解 Geo 的 APIs 的实现了</p>
+<h4 id="应用场景-7">应用场景</h4>
+<p>Geo 的应用场景有：</p>
+<ul>
+<li>位置服务：Geo 可以用来提供位置服务，如查找附近的人、查找附近的店铺等。</li>
+<li>推荐系统：Geo 可以用来进行推荐系统，如根据用户的位置信息推荐附近的店铺、景点等。</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

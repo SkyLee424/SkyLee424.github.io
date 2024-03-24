@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MySQL 杂项 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="冷热分离 冷数据与热数据 冷数据指不经常访问，但是需要长期保存的数据 可以按照两个常见维度来区分冷数据与热数据： 时间维度：按照时间来区分冷热数据，"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MySQL 杂项" />
+<meta property="og:description" content="MySQL 的杂项知识" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-04T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-04T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MySQL 杂项"/>
+<meta name="twitter:description" content="MySQL 的杂项知识"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/%E6%9D%82%E9%A1%B9/note/">MySQL 杂项</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      MySQL 的杂项知识
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-04T00:00:00&#43;00:00">
+      2024-03-04
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      24 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="冷热分离">冷热分离</h2>
+<h3 id="冷数据与热数据">冷数据与热数据</h3>
+<p>冷数据指不经常访问，但是需要长期保存的数据</p>
+<p>可以按照两个常见维度来区分冷数据与热数据：</p>
+<ul>
+<li>时间维度：按照时间来区分冷热数据，例如，对于订单系统，1 年前的订单可以认为是冷数据</li>
+<li>访问频率维度：按照内容的访问频率来区分冷热数据，例如，对于帖子系统，可以认为很长一段时间内，浏览量很低的文章是冷数据</li>
+</ul>
+<p>当然这仅仅按照这两个维度有些时候不太适用，还是要根据业务实际情况来决定</p>
+<h3 id="为什么要冷热分离">为什么要冷热分离</h3>
+<p>如果将冷热数据均存放在一个 DB 中，随着数据的增多，检索速率会下降，用户体验差</p>
+<p>如果引入冷热分离，将冷数据和热数据分开存储，能保证大部分用户的使用体验</p>
+<h3 id="冷热分离的优缺点">冷热分离的优缺点</h3>
+<p>优点：</p>
+<ul>
+<li>热数据的查询性能提高，大部分用户的使用体验较好</li>
+<li>降低存储成本：热数据可以存储在 SSD 中，冷数据可以存储在 HDD 中</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>不稳定因素增加</li>
+<li>统计整体数据时，速度较慢</li>
+</ul>
+<h3 id="如何实现">如何实现</h3>
+<p><strong>业务层</strong></p>
+<p>业务层代码可以写一个后台任务，定期判断存在的冷数据，将其迁移到冷库，并从热库删除</p>
+<p><strong>监听 binlog</strong></p>
+<p>可以通过监听 binlog 来分析存在的冷数据，将其迁移到冷库，并从热库删除</p>
+<h2 id="深度分页">深度分页</h2>
+<h3 id="概念">概念</h3>
+<p>来看一下这个 SQL 语句：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="w">
+</span></span></span></code></pre></div><p>这种查询就叫做深度分页</p>
+<p>由于这类查询在分页的时候无法利用索引，要想获取第 1000000 ～ 1000010 条数据，就需要先 <strong>获取前 1000010 数据</strong>，然后再跳过前 1000000 条记录，再返回第 1000000 ～ 1000010 条数据</p>
+<p>可以看到效率很低，那么在无法避免深度分页的情况下，应该如何优化？</p>
+<h3 id="如何优化">如何优化</h3>
+<p>优化方式很简单：延迟关联</p>
+<ul>
+<li>使用子查询先获取第 1000000 ～ 1000010 条数据的 id</li>
+<li>然后再使用内连接</li>
+</ul>
+<p>即：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">from</span><span class="w"> </span><span class="k">user</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">     </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">1000000</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="n">tmp</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">where</span><span class="w"> </span><span class="k">user</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">tmp</span><span class="p">.</span><span class="n">id</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>优化的点在于：</p>
+<ul>
+<li>深度分页时，获取的只是 id，而不是所有数据</li>
+<li>使用到了「覆盖索引」，避免回表查询（这也是 select id 的原因所在）</li>
+</ul>
+<p>当然这里用到了子查询，需要创建一张临时表，也会产生一定的性能损失</p>
+<h2 id="普通索引和唯一索引应该如何选择">普通索引和唯一索引，应该如何选择？</h2>
+<h3 id="查询过程">查询过程</h3>
+<ul>
+<li>普通索引，查到满足条件的第一个记录后，继续查找下一个记录，直到第一个不满足条件的记录</li>
+<li>唯一索引，由于索引唯一性，查到第一个满足条件的记录后，停止检索</li>
+</ul>
+<p>实际上，二者的性能差距是很小的，因为 InnoDB 读取数据的基本单位是「页」</p>
+<p>也就是说，虽然普通索引看起来查找记录的次数较多，但是由于一次性读取了一整张页（包括许多记录），性能不会比唯一索引差</p>
+<h3 id="更新过程">更新过程</h3>
+<p>在讨论更新过程的性能差异，需要引入一个概念：<strong>change buffer</strong></p>
+<p>当需要更新一个 <strong>数据页</strong>：</p>
+<ul>
+<li>如果数据页在内存中就直接更新</li>
+<li>如果不在内存中，<strong>需要将该数据页从磁盘读取到内存</strong>，然后在内存中更新（回写操作可以在后台执行）</li>
+</ul>
+<p>可以发现，如果数据页不在磁盘中，就会涉及到 <strong>随机读 IO</strong>，这对性能的影响是很大的</p>
+<h4 id="change-buffer">change buffer</h4>
+<p>那么，引入 change buffer，在使用 <strong>普通索引</strong> 的条件下，就可以解决这个问题</p>
+<p>来看看引入 change buffer 的更新数据页的操作：</p>
+<ul>
+<li>如果数据页在内存中就直接更新</li>
+<li>如果不在内存中，在不影响数据一致性的前提下，InnoDB 会将这些更新操作 <strong>缓存在 change buffer 中</strong>。</li>
+</ul>
+<p>也就是说，使用 change buffer，<strong>避免了大量随机读 IO</strong></p>
+<p>change buffer 是 <strong>可以持久化</strong> 的数据。在内存中有拷贝，也会被写入到磁盘上</p>
+<p>change buffer 用的是 buffer pool 里的内存，change buffer 的大小，可以通过参数 <code>innodb_change_buffer_max_size</code> 来动态设置。这个参数设置为 50 的时候，表示 change buffer 的大小最多只能占用 buffer pool 的 50%。</p>
+<blockquote>
+<p>change buffer 一开始是在内存的，如果掉电，会不会导致 change buffer 丢失？</p>
+</blockquote>
+<p>不会，分两种情况讨论：</p>
+<p>change buffer 的操作会被记录到 redo log 里</p>
+<p>如果 redo log 已经落盘，那么重启可以根据 redo log 来恢复 change buffer</p>
+<p>如果 redo log 还没来得及落盘，重启后，会因为 redo log 没有落盘而回滚事务，丢失了 change buffer 也没关系</p>
+<blockquote>
+<p>change buffer 的操作会被记录到 redo log 里，有了 redo log，为什么还要将 change buffer 持久化到磁盘？</p>
+</blockquote>
+<p>其实我也不太清楚，但感觉有点类似 Linux 的 Swap 机制？</p>
+<p>如果执行更新操作以后，一直没有 merge，那么 change buffer 的剩余空间会越来越少</p>
+<p>于是可以将 change buffer 持久化到磁盘，为新的更新操作流出空间，就好像 Linux 的 Swap 一样</p>
+<blockquote>
+<p>为什么唯一索引的更新不能使用 change buffer？</p>
+</blockquote>
+<p>唯一索引在更新数据时，需要 <strong>先判断更新的数据会不会与现有数据冲突</strong>，如果待更新数据页不在内存，会 <strong>不可避免的读取磁盘到内存</strong> 来判断</p>
+<p>既然数据都已经读到内存了，也就没有使用 change buffer 的必要了</p>
+<blockquote>
+<p>使用 change buffer，什么时候更新磁盘的数据呢？</p>
+</blockquote>
+<p>我们将 change buffer 中的操作应用到原数据页上，得到最新结果的过程，称为 <strong>merge</strong></p>
+<p>merge 的时机：</p>
+<ul>
+<li>后台线程定期 merge</li>
+<li>数据库正常关闭，merge</li>
+<li><strong>访问该数据页的时候，会触发 merge</strong></li>
+</ul>
+<blockquote>
+<p>什么时候用 change buffer？</p>
+</blockquote>
+<p>在一个数据页做 merge 之前，change buffer <strong>记录的变更越多，收益就越大</strong>。</p>
+<p>对于 <strong>写多读少</strong> 的业务来说，页面在写完以后马上被访问到的概率比较小，此时 change buffer 的使用效果最好。这种业务模型常见的就是账单类、日志类的系统。</p>
+<p>反过来，假设一个业务的更新模式是 <strong>写入之后马上会做查询</strong>，那么即使满足了条件，将更新先记录在 change buffer，但之后由于马上要访问这个数据页，<strong>会立即触发 merge 过程</strong>。</p>
+<p>这样 <strong>随机访问 IO 的次数不会减少，反而增加了 change buffer 的维护代价</strong>。所以，对于这种业务模式来说，change buffer 反而起到了副作用。</p>
+<p>因此是否使用 change buffer，还需要结合业务需求</p>
+<h3 id="总结">总结</h3>
+<p>将数据从磁盘读入内存涉及随机 IO 的访问，是数据库里面成本最高的操作之一。</p>
+<p>change buffer 因为减少了随机磁盘读取，所以对更新性能的提升很明显。</p>
+<p>由于唯一索引无法使用到 change buffer 来优化，因此 <strong>唯一索引的更新性能可能会不如普通索引</strong></p>
+<p>如果业务允许的情况下，尽量使用普通索引，以提高读性能</p>
+<p>当然，使用了 change buffer，在某些场景下，不但不会提升性能，还会导致性能的下降，此时应该禁用 change buffer</p>
+<h2 id="如何给字符串建索引">如何给字符串建索引</h2>
+<p><strong>直接建立索引</strong></p>
+<p>如果单个字符串的长度不是很长，直接建立索引，方便</p>
+<p><strong>前缀索引</strong></p>
+<p>如果要考虑索引占用的空间，可以考虑建立前缀索引</p>
+<p>在建立前缀索引时，要考虑 <strong>区分度</strong>，可以给定一个可以接受的区分度，然后确定索引字符串的长度</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 看看有多少个不一样的字段
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">L</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">SUser</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 看看 L4、L5 与 L 的差距，选择一个合适的
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="k">left</span><span class="p">(</span><span class="n">email</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">L4</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="k">left</span><span class="p">(</span><span class="n">email</span><span class="p">,</span><span class="mi">5</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">L5</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="k">left</span><span class="p">(</span><span class="n">email</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">L6</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="k">distinct</span><span class="w"> </span><span class="k">left</span><span class="p">(</span><span class="n">email</span><span class="p">,</span><span class="mi">7</span><span class="p">))</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">L7</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">from</span><span class="w"> </span><span class="n">SUser</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>但是建立前缀索引，就无法用到覆盖索引的优化了，必然回表查询</p>
+<p><strong>哈希</strong></p>
+<p>可以给表加一个字段，存储字符串的哈希值</p>
+<ul>
+<li>在存储数据时，记录下这个字符串的哈希值</li>
+<li>在取出数据时，根据哈希值来取，然后 <strong>在判断字段是否完全一致</strong></li>
+</ul>
+<p>这种方式适合前缀区分度较低的场景，但是会引入一个额外字段，占用一定的存储空间</p>
+<p><strong>倒序存储</strong></p>
+<p>例如身份证，前缀的区分度低，就可以将 ID 倒序存储，然后建立前缀索引</p>
+<h2 id="redo-log-设置得太小会怎么样">redo log 设置得太小会怎么样</h2>
+<p>这里引用 <a href="https://time.geekbang.org/column/article/71806" target="_blank" rel="noopener">12 | 为什么我的 MySQL 会“抖”一下？</a>
+ 的一条评论：</p>
+<blockquote>
+<p>redo log 是关系型数据库的核心啊，保证了 ACID 里的 D。所以 redo log 是牵一发而动全身的操作</p>
+<p>按照老师说的当内存数据页跟磁盘数据页不一致的时候，把内存页称为&rsquo;脏页&rsquo;。如果 redo log 设置得太小，redo log 写满.那么会涉及到哪些操作呢，我认为是以下几点:</p>
+<ol>
+<li>把相对应的数据页中的脏页持久化到磁盘，checkpoint 往前推</li>
+<li>由于 redo log 还记录了 undo 的变化，undo log buffer 也要持久化进 undo log</li>
+<li>当 innodb_flush_log_at_trx_commit 设置为非 1，还要把内存里的 redo log 持久化到磁盘上</li>
+<li>redo log 还记录了 change buffer 的改变，那么还要把 change buffer purge 到 idb 以及 merge change buffer.merge 生成的数据页也是脏页，也要持久化到磁盘</li>
+</ol>
+<p>上述 4 种操作，都是占用系统 I/O，影响 DML，如果操作频繁，会导致&rsquo;抖&rsquo;得向现在我们过冬一样。但是对于 select 操作来说，查询时间相对会更快。因为系统脏页变少了，不用去淘汰脏页，直接复用干净页即可。还有就是对于宕机恢复，速度也更快，因为 checkpoint 很接近 LSN，恢复的数据页相对较少</p>
+<p>所以要控制刷脏的频率，频率快了，影响 DML I/O，频率慢了，会导致读操作耗时长。</p>
+</blockquote>
+<p>因此，如果 redo log 设置太小，redo 很容易写满，会导致频繁刷盘，系统锁死，触发 checkpoint 推进，导致写操作卡住。由于主机 IO 能力很强，checkpoint 推进会很快完成，卡住的写操作又很快可以执行。循环往复，现象就是 <strong>写操作每隔一小段时间执行就会变慢几秒。</strong></p>
+<p>合适的 redo log 大小非常重要</p>
+<blockquote>
+<p>此外，还有一个 <code>innodb_io_capacity</code> 选项，这个选项是告诉 InnoDB ：你的磁盘的 IO 能力，建议设置为磁盘的 IOPS</p>
+<p>InnoDB 会根据 innodb_io_capacity 来控制刷盘的速率，如果设置得太小，会导致写入速率很慢，表现就是：IO 没满，但是脏页很多，来不及写入</p>
+</blockquote>
+<h2 id="order-by-是怎么排序的">order by 是怎么排序的？</h2>
+<p>现在有一张 user 表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">user</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w">       </span><span class="nb">int</span><span class="w"> </span><span class="n">auto_increment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w">     </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">  </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">sex</span><span class="w">      </span><span class="nb">char</span><span class="w">         </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">phoneNum</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w">  </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">email</span><span class="w">    </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">age</span><span class="w">      </span><span class="nb">int</span><span class="w">          </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>且有主键索引、idx_sex</p>
+<blockquote>
+<p>注意，这里的 idx_sex 只是为了实验而创建</p>
+<p>由于 sex 的区分度太低，在实际应用不要根据 sex 创建索引</p>
+</blockquote>
+<p>执行以下 sql 语句：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">explain</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">sex</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;F&#39;</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">age</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>输出:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+---------+---------+-------+------+----------+---------------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span> <span class="p">|</span> possible_keys <span class="p">|</span> key     <span class="p">|</span> key_len <span class="p">|</span> ref   <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                                 <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+---------+---------+-------+------+----------+---------------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user  <span class="p">|</span> NULL       <span class="p">|</span> ref  <span class="p">|</span> idx_sex       <span class="p">|</span> idx_sex <span class="p">|</span> <span class="m">5</span>       <span class="p">|</span> const <span class="p">|</span>    <span class="m">6</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using index condition<span class="p">;</span> Using filesort <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+---------+---------+-------+------+----------+---------------------------------------+
+</span></span></code></pre></div><p>在 Extra 字段，提示 <code>Using filesort</code>，这是什么意思呢？</p>
+<h3 id="全字段排序">全字段排序</h3>
+<p>在对没有建立索引的字段排序时，就会出现 <code>Using filesort</code></p>
+<p>MySQL 会为每一个线程分配一个缓冲区用于存放待排序的数据，成为 sort_buffer</p>
+<p>对于上面的 SQL 语句，具体来说，MySQL 是这样做的：</p>
+<ol>
+<li>初始化 sort_buffer</li>
+<li>根据 where 条件，利用 idx_sex，定位到第一个满足 sex = &lsquo;F&rsquo; 的节点，得到主键 id</li>
+<li>根据主键 id，利用主键索引，取出 name、sex、age，<strong>将这个节点的行数据存放到 sort_buffer 中</strong></li>
+<li>定位到下一个节点，得到主键 id</li>
+<li>重复 3、4，直到遍历完所有节点</li>
+<li>对 <code>sort_buffer</code> 中的数据根据 age 字段来做 <em>快速排序</em></li>
+<li>返回数据给客户端</li>
+</ol>
+<p>sort_buffer 是有大小限制的（sort_buffer_size），如果待排序的数据在 sort_buffer 无法完全存下，MySQL 会：</p>
+<ol>
+<li>将剩余数据存放到 <strong>磁盘</strong> 上的若干临时文件中</li>
+<li>分别对这些文件的内容做 <em>归并排序</em></li>
+<li>递归地合并文件内容，直到合并成一个有序大文件</li>
+<li>合并 sort_buffer 和文件内容，返回给客户端</li>
+</ol>
+<h3 id="rowid-排序">rowid 排序</h3>
+<p>可以发现：如果待排序的数据很大，会使用到 <strong>磁盘</strong> 辅助排序，性能很差</p>
+<p>为了减少存储在 sort_buffer 的数据量，可以使用 rowid 排序</p>
+<p>与全字段排序不同，rowid 排序仅会在 sort_buffer 存储：<code>主键 id、排序字段</code></p>
+<p>对于之前的 SQL 语句，使用 rowid 排序的过程如下：</p>
+<ol>
+<li>初始化 sort_buffer</li>
+<li>根据 where 条件，利用 idx_sex，定位到第一个满足 sex = &lsquo;F&rsquo; 的节点，得到主键 id</li>
+<li>根据主键 id，利用主键索引，取出 id、age，<strong>将这个节点的行数据存放到 sort_buffer 中</strong></li>
+<li>定位到下一个节点，得到主键 id</li>
+<li>重复 3、4，直到遍历完所有节点</li>
+<li>对 sort_buffer 的数据进行快速排序</li>
+<li>遍历 sort_buffer 的数据，根据主键 id，<strong>回表查询 name、sex 字段</strong></li>
+<li>返回结果给客户端</li>
+</ol>
+<p>虽然 rowid 排序在相同的 sort_buffer 下，可以在对更多行排序的情况下，不创建临时文件，降低磁盘 IO</p>
+<p>但是与全字段排序相比，rowid <strong>多了一次回表查询</strong></p>
+<p>因此，MySQL <strong>不会优先选择 rowid 排序</strong></p>
+<p>当单行数据大小超过 <code>max_length_for_sort_data</code> ，MySQL 才会使用 rowid 排序</p>
+<h3 id="避免在-sort_buffer-排序">避免在 sort_buffer 排序</h3>
+<p>为什么要在 sort_buffer 排序呢？是因为数据是无序的</p>
+<p>这看起来是一句废话，但也表明了：如果数据本身就是有序的，那自然就不需要在 sort_buffer 排序</p>
+<p>我们可以为 sex、age 字段建立索引</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_sex_age</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="k">user</span><span class="p">(</span><span class="n">sex</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>创建索引后，order by 的执行流程如下：</p>
+<ol>
+<li>执行器发现有 idx_sex_age 联合索引，于是判断不需要使用 filesort</li>
+<li>利用 idx_sex_age 定位到第一个 sex = &lsquo;F&rsquo; 的节点，得到主键 id</li>
+<li>根据主键 id 回表查询 name</li>
+<li>由于 idx_sex_age 能保证在 sex 相同的情况下，age 有序，因此无需排序，重复 2、3 即可</li>
+<li>返回结果给客户端</li>
+</ol>
+<p>再来看看 explain 的结果：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain <span class="k">select</span> name, sex, age from user where <span class="nv">sex</span> <span class="o">=</span> <span class="s1">&#39;F&#39;</span> order by age<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------------+-------------+---------+-------+------+----------+-----------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span> <span class="p">|</span> possible_keys       <span class="p">|</span> key         <span class="p">|</span> key_len <span class="p">|</span> ref   <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                 <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------------+-------------+---------+-------+------+----------+-----------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user  <span class="p">|</span> NULL       <span class="p">|</span> ref  <span class="p">|</span> idx_sex,idx_sex_age <span class="p">|</span> idx_sex_age <span class="p">|</span> <span class="m">5</span>       <span class="p">|</span> const <span class="p">|</span>    <span class="m">6</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using index condition <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------------+-------------+---------+-------+------+----------+-----------------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>可以看到：没有 Using filesort，只有 Using index condition 了</p>
+<p>当然，可以创建联合索引 idx_sex_age_name，走覆盖索引，避免一次回表查询</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain <span class="k">select</span> name, sex, age from user where <span class="nv">sex</span> <span class="o">=</span> <span class="s1">&#39;F&#39;</span> order by age<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+--------------------------------------+------------------+---------+-------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span> <span class="p">|</span> possible_keys                        <span class="p">|</span> key              <span class="p">|</span> key_len <span class="p">|</span> ref   <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                    <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+--------------------------------------+------------------+---------+-------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user  <span class="p">|</span> NULL       <span class="p">|</span> ref  <span class="p">|</span> idx_sex,idx_sex_age,idx_sex_age_name <span class="p">|</span> idx_sex_age_name <span class="p">|</span> <span class="m">5</span>       <span class="p">|</span> const <span class="p">|</span>    <span class="m">6</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using where<span class="p">;</span> Using index <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+--------------------------------------+------------------+---------+-------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><h3 id="总结-1">总结</h3>
+<ul>
+<li>建议在待排序字段建立索引，<strong>避免 filesort</strong></li>
+<li>如果无法避免使用到 filesort，那么可以：
+<ul>
+<li>适当扩大 sort_buffer 的大小，避免在文件排序</li>
+<li>适当提高 max_length_for_sort_data 的大小，避免使用 rowid 排序，多一次回表查询</li>
+</ul>
+</li>
+</ul>
+<h2 id="基于临时表的排序机制">基于临时表的排序机制</h2>
+<p><strong>引例</strong></p>
+<p>现在有一张表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">words</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w">   </span><span class="nb">int</span><span class="w"> </span><span class="n">auto_increment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">word</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">64</span><span class="p">)</span><span class="w"> </span><span class="k">null</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 只有主键索引
+</span></span></span></code></pre></div><p>并向其插入了 10k 行数据</p>
+<p>有一个业务需求：随机获取 words 中的三个单词，返回给用户</p>
+<p>一个简单的实现方式如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rand</span><span class="p">()</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>那么这句话实际上做了什么呢？</p>
+<h3 id="内存临时表">内存临时表</h3>
+<p>执行 explain 查询计划：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain
+</span></span><span class="line"><span class="cl">    -&gt; <span class="k">select</span> word from test0.words order by rand<span class="o">()</span> limit 3<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+---------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span> <span class="p">|</span> possible_keys <span class="p">|</span> key  <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                           <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+---------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> words <span class="p">|</span> NULL       <span class="p">|</span> ALL  <span class="p">|</span> NULL          <span class="p">|</span> NULL <span class="p">|</span> NULL    <span class="p">|</span> NULL <span class="p">|</span> <span class="m">9980</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using temporary<span class="p">;</span> Using filesort <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+---------------------------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>可以发现，这句话使用到了 <strong>临时表</strong> 辅助查询，并且 <strong>需要排序</strong>，具体执行过程如下：</p>
+<ul>
+<li>创建临时表（<strong>memory 存储引擎</strong>），包含两个字段：<code>随机值，单词</code></li>
+<li>遍历 words 表，计算出每个 word 的 rand 值，插入到临时表中</li>
+<li>依据 <code>随机值</code> 对临时表进行排序（排序过程可以参考 <a href="#order-by-%e6%98%af%e6%80%8e%e4%b9%88%e6%8e%92%e5%ba%8f%e7%9a%84">order by 是怎么排序的</a>
+）</li>
+<li>取出临时表的前三行数据，返回 word 给客户端</li>
+</ul>
+<p>上述过程一共会扫描 20003 行数据（10000 + 10000 + 3），效率低，并且，随着 words 表的行数增加，执行速度会更慢</p>
+<h3 id="磁盘临时表">磁盘临时表</h3>
+<p>所有的临时表都是内存临时表吗？</p>
+<p>并不是，如果内存临时表存放不下待排序的数据，<strong>会将内存临时表转化为磁盘临时表</strong></p>
+<p>这个大小是由 <code>tmp_table_size</code> 参数控制的，默认为 16M</p>
+<p>对磁盘临时表的排序，规则与 <a href="#order-by-%e6%98%af%e6%80%8e%e4%b9%88%e6%8e%92%e5%ba%8f%e7%9a%84">order by 是怎么排序的</a>
+ 一致</p>
+<h3 id="topk-问题优先队列排序算法">Topk 问题（优先队列排序算法）</h3>
+<p>执行以下 SQL 语句：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">set</span><span class="w"> </span><span class="n">tmp_table_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">;</span><span class="w"> </span><span class="c1">-- 将当前会话的内存临时表设置为 1024 字节
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">set</span><span class="w"> </span><span class="n">sort_buffer_size</span><span class="o">=</span><span class="mi">32768</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">set</span><span class="w"> </span><span class="n">max_length_for_sort_data</span><span class="o">=</span><span class="mi">16</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cm">/* 打开 optimizer_trace，只对本线程有效 */</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">SET</span><span class="w"> </span><span class="n">optimizer_trace</span><span class="o">=</span><span class="s1">&#39;enabled=on&#39;</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cm">/* 执行语句 */</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="n">word</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">rand</span><span class="p">()</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="cm">/* 查看 OPTIMIZER_TRACE 输出 */</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="o">`</span><span class="n">information_schema</span><span class="o">`</span><span class="p">.</span><span class="o">`</span><span class="n">OPTIMIZER_TRACE</span><span class="o">`</span><span class="w"> </span><span class="err">\</span><span class="k">G</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>正常来说，<code>rand_val + word</code> 一行要占 6 + 8 = 14 字节，那么 10000 行数据应该会占用 140000 字节的空间，超过了内存临时表的大小，应该会使用磁盘临时表，做归并排序</p>
+<p>事实真的如此吗？</p>
+<p>OPTIMIZER_TRACE 有关 filesort 的输出如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-03-10-31-48-550.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>并没有使用磁盘临时表</p>
+<p>事实上，排序方式的选择还 <strong>与 limit 参数有关</strong></p>
+<p>当 limit 后的数据（对于上面的示例，就是 3 行 <code>rand_val + word</code>）如果可以存放在内存临时表，那么 MySQL 会将其优化 TopK 问题，体现在 OPTIMIZER_TRACE 的输出上，就是这两行：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-03-10-38-31-291.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>关于 TopK 问题，可以看看 <a href="https://leetcode.cn/problems/top-k-frequent-elements/description/" target="_blank" rel="noopener">这道 leetcode 题目</a>
+</p>
+</blockquote>
+<p>为什么要使用优先队列优化呢？</p>
+<p>因为 limit 后，只要元素的前 n 个有序即可，利用优先队列解决，空间复杂度低，减少排序所需空间，<strong>一定程度上避免使用磁盘辅助排序</strong></p>
+<h3 id="随机排序的实现方式">随机排序的实现方式</h3>
+<p>无论是使用内存临时表还是磁盘临时表，扫描的数据都太多了，性能不佳，如何优化？</p>
+<p><strong>方案一</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 获取 min_id、max_id
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="k">max</span><span class="p">(</span><span class="n">id</span><span class="p">),</span><span class="k">min</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="o">@</span><span class="n">M</span><span class="p">,</span><span class="o">@</span><span class="n">N</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 产生一个介于 min_id、max_id 之间的随机值
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">X</span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">((</span><span class="o">@</span><span class="n">M</span><span class="o">-@</span><span class="n">N</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">rand</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="o">@</span><span class="n">N</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 获取随机值对应的行数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="o">@</span><span class="n">X</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>这个方案效率很高，只扫描了 3 行数据，但是存在「空洞问题」</p>
+<p>如果 id 不连续，例如 1、2、6、7、8，那么选到 6、7、8 的概率会高很多，即概率分布不均匀</p>
+<p>要想解决这个问题，可以：</p>
+<ul>
+<li>保证 id 连续自增</li>
+<li>删除数据时，采用逻辑删除</li>
+</ul>
+<p>当然采取逻辑删除，查询时，需要额外判断数据是否删除，如果删除，跳过</p>
+<p><strong>方案二</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 获取行数 c
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 生成介于 1～c 之间的随机数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 获取对应行数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y1</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y2</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y3</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>总扫描行数为：C+(Y1+1)+(Y2+1)+(Y3+1)，可以利用「大表分页查询思想」进一步优化为：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 获取行数 c
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 生成介于 1～c 之间的随机数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">set</span><span class="w"> </span><span class="o">@</span><span class="n">Y3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">floor</span><span class="p">(</span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">rand</span><span class="p">());</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 获取对应行数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y1</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w">                      </span><span class="c1">-- 应用层可以保存 id1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">id1</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y2</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="o">@</span><span class="n">Y1</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="c1">-- 应用层可以保存 id2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">id2</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="o">@</span><span class="n">Y3</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="o">@</span><span class="n">Y2</span><span class="err">，</span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>总扫描行数为：C+Y3</p>
+<h3 id="为什么-limit-n-order-by-字段-会有重复值">为什么 limit n order by &lt;字段&gt; 会有重复值？</h3>
+<p>前面提到了：order by 的排序规则与 limit 的参数有关：</p>
+<ul>
+<li>如果 limit 后的数据 <strong>可以</strong> 存放在内存临时表，采用优先队列（堆）排序</li>
+<li>如果 limit 后的数据 <strong>不可以</strong> 存放在内存临时表，采用归并排序</li>
+</ul>
+<p>例如这个场景：</p>
+<ul>
+<li>第一次分页查询：<code>order by rand() limit n, a</code>，无法存放在内存临时表，采用归并排序</li>
+<li>第二次分页查询：<code>order by rand() limit n + a, a</code>，可以存放在内存临时表（最后一页，数据较少），采用优先队列（堆）排序</li>
+</ul>
+<p>就有可能出现两次分页查询包含重复值的情况，本质上还是因为 <strong>优先队列排序不是稳定的</strong></p>
+<p>如果要避免这种情况，可以在排序依据加上唯一字段（例如主键 id）</p>
+<h3 id="总结-2">总结</h3>
+<ul>
+<li>在查询使用到临时表时，如果还要排序，并且排序字段没有建立索引，会触发临时表排序机制</li>
+<li>内存临时表有大小限制，超过后，会换成磁盘临时表，采用归并排序</li>
+<li>基于临时表排序时，如果有 limit，并且 limit 后的数据 <strong>可以</strong> 存放在内存临时表，采用优先队列（堆）排序</li>
+<li>如果要避免 <code>limit n order by &lt;字段&gt; 会有重复值</code> ，可以在排序依据加上唯一字段（例如主键 id）</li>
+</ul>
+<h3 id="参考资料">参考资料</h3>
+<p><a href="https://time.geekbang.org/column/article/73795" target="_blank" rel="noopener">MySQL 实战 45 讲 | 如何正确展示随机消息</a>
+</p>
+<h2 id="如何临时提高-mysql-的性能">如何临时“提高” MySQL 的性能</h2>
+<ul>
+<li>如果连接数过多导致 MySQL 无法连接，可以关闭一些空闲连接</li>
+<li>如果是连接请求 QPS 过高，可以临时关闭 MySQL 的连接鉴权</li>
+<li>如果是单个 SQL 语句的 QPS 过高，可以重写该 SQL 语句为 <code>select 1</code>，将 QPS 降低为 0</li>
+</ul>
+<p>详细内容参考 <a href="https://time.geekbang.org/column/article/75746" target="_blank" rel="noopener">MySQL 有哪些“饮鸩止渴”提高性能的方法？</a>
+</p>
+<h2 id="误删数据如何及时补救">误删数据如何及时补救？</h2>
+<p>分情况讨论：</p>
+<p><strong>误删了某一行的数据</strong></p>
+<p>这种情况可以使用 FlashBack 来做数据恢复</p>
+<p>FlashBack 做数据恢复的原理是通过修改 binlog，然后拿到主库重放，要求 binlog 的行格式为 row</p>
+<p>对于 <code>delete</code> 语句，在 binlog event 的类型为 delete_rows event ，可以修改为 write_rows event</p>
+<p>注意：恢复数据时，应该先恢复到临时实例，确定没问题再同步到主库</p>
+<p><strong>误删了一整张表</strong></p>
+<p>删除了整张表，使用 binlog 来恢复数据就不可能了，因为仅仅记录了一个 drop</p>
+<p>这种情况，要求定期做全量备份，并且实时备份 binlog</p>
+<p>例如：</p>
+<ul>
+<li>最近的一个备份点为今天的 0:00</li>
+<li>取出这个全量备份，创建一个临时库</li>
+<li>取出今天 0:00 到现在的所有 binlog 备份</li>
+<li>使用 binlog 做增量恢复（去除误删除的语句）</li>
+</ul>
+<p>全量同步可能比较耗费时间，如果业务不允许这么长恢复时间，可以 <strong>搭建一个延迟复制的从库</strong></p>
+<p>例如，一个从库与主库的延迟为 1h，那么在这 1h 内，只要发现了有误删除，就可以使用延迟复制的从库快速恢复数据：</p>
+<ul>
+<li>发现误删除，stop slave</li>
+<li>取出最近 1h 内的 binlog，跳过误删除语句，做数据恢复</li>
+</ul>
+<p>可以看出：恢复速度与主从延迟时间相关，延迟时间越长，恢复时间越长，但允许了更长的时间来发现误删除现象</p>
+<p>无论如何，这些都是补救措施，我们需要优先思考的是如何避免，而不是如何补救</p>
+<ul>
+<li>开发的 <strong>权限控制</strong></li>
+<li>确保 SQL 语句的 <strong>where 条件</strong></li>
+<li><strong>SQL 审计</strong></li>
+<li>&hellip;</li>
+</ul>
+<blockquote>
+<p>修改生产的数据，或者添加索引优化，都要先写好四个脚本：备份脚本、执行脚本、验证脚本和回滚脚本。备份脚本是对需要变更的数据备份到一张表中，固定需要操作的数据行，以便误操作或业务要求进行回滚；执行脚本就是对数据变更的脚本，为防 Update 错数据，一般连备份表进行 Update 操作；验证脚本是验证数据变更或影响行数是否达到预期要求效果；回滚脚本就是将数据回滚到修改前的状态。</p>
+<p>虽说分四步骤写脚本可能会比较繁琐，但是这能够很大程度避免数据误操作。</p>
+<p>&mdash; 来自 <a href="https://time.geekbang.org/column/article/78658" target="_blank" rel="noopener">误删数据后除了跑路，还能怎么办？</a>
+ 下的评论</p>
+</blockquote>
+<h2 id="mysql-发送查询结果的过程">MySQL 发送查询结果的过程</h2>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-08-33-53-834.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>MySQL 是 <strong>边读边发</strong> 的，这意味着，<strong>如果客户端不及时接收 MySQL Server 的数据，MySQL 就无法读取剩余数据并发送，导致整个事务时间变长</strong></p>
+<p>有两个参数控制客户端接收数据的方式</p>
+<h3 id="mysql_store_result">mysql_store_result</h3>
+<p>启用 mysql_store_result 参数，客户端会将查询结果 <strong>暂存到本地缓存</strong> 中，直到将所有查询结果接收完毕后，才会返回给应用程序</p>
+<p>这种方式可以防止 MySQL Server 因为 Client 无法及时接收数据导致事务「阻塞」</p>
+<h3 id="mysql_use_result">mysql_use_result</h3>
+<p>如果单个查询结果集太大，客户端的内存可能不足以接收所有数据</p>
+<p>这种情况就只能启用 mysql_use_result 参数，客户端 <strong>逐行处理</strong> 查询结果</p>
+<p>但是如果单行结果的处理时间过长，会导致整个事务的时间变长，加锁时间变长，影响 MySQL Server 的并发能力</p>
+<h3 id="总结-3">总结</h3>
+<p>如果客户端的内存比较充足，尽量使用 mysql_store_result 选项，将查询结果缓存起来，减少 MySQL Server 等待 Client 接收数据的时间，进而减少单个事务的时间，提高 MySQL Server 的效率</p>
+<p>当然，如果单次返回的数据太多，那就只能用 mysql_use_result 了</p>
+<h2 id="到底能不能使用-join">到底能不能使用 join？</h2>
+<p>先创建两张表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">t0</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">a</span><span class="w">  </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">b</span><span class="w">  </span><span class="nb">int</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">key</span><span class="w"> </span><span class="n">idx_a</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">like</span><span class="w"> </span><span class="n">t0</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>假设 t0 有 100 行数据，t1 有 1000 行数据</p>
+<h3 id="被驱动表上join--on-字段有索引">被驱动表上，join &hellip; on 字段有索引</h3>
+<p>例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t0</span><span class="w"> </span><span class="n">straight_join</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">a</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>执行过程如下：</p>
+<ul>
+<li>遍历 t0 的所有行数据</li>
+<li>对 t0 的每一行数据，在 t1 根据 idx_a 去查询，看看有没有符合条件的行，如果有，扔到结果集</li>
+<li>返回结果给客户端</li>
+</ul>
+<p>总扫描行数为 100 + 100，整个过程的时间复杂度为 <code>100 * log(1000)</code></p>
+<p>如果不使用 join，而是：</p>
+<ul>
+<li>应用程序执行 <code>select * from t0;</code></li>
+<li>对于每一行数据，执行 <code>select * from t1 where t1.a = ?;</code></li>
+</ul>
+<p>总扫描行数与时间复杂度可以认为不变，但是客户端与 MySQL Server 需要 101 次交互，效率较低</p>
+<p>因此，这种情况下，使用 join 比不使用 join 会更好</p>
+<h3 id="被驱动表上join--on-字段无索引">被驱动表上，join &hellip; on 字段无索引</h3>
+<p>例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t0</span><span class="w"> </span><span class="n">straight_join</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">b</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>执行过程如下：</p>
+<ul>
+<li>遍历 t0 的所有行数据</li>
+<li>对 t0 的每一行数据，在 t1 全表查询，看看有没有符合条件的行，如果有，扔到结果集</li>
+<li>返回结果给客户端</li>
+</ul>
+<p>总扫描行数近似为 <code>100 + 100 * 1000</code>，时间复杂度为 <code>100 * 1000</code>（平方级）</p>
+<p>可以发现，在 join &hellip; on 字段无索引的情况下，执行效率极低</p>
+<p>为了提高速度，MySQL 引入了 <strong>join_buffer</strong>，用于暂存驱动表的数据</p>
+<p>执行过程如下：</p>
+<ul>
+<li>将 t0 所有行数据存到 join_buffer</li>
+<li>扫描 t1 的所有行，逐行与 join_buffer 的数据做对比，看看有没有符合条件的行，如果有，扔到结果集</li>
+<li>返回结果给客户端</li>
+</ul>
+<p>虽然总扫描行数与时间复杂度没有变化，但是在内存中比对的速度会更快</p>
+<blockquote>
+<p>如果 join_buffer 存不下 t0 的数据，会发生什么？</p>
+</blockquote>
+<p>与之前的处理方式不同，如果存不下，不会借用磁盘，而是将 t0 的数据分成多个段，存放到 join_buffer</p>
+<p>执行过程如下：</p>
+<ul>
+<li>将 t0 第 1 ～ n 行存到 join_buffer</li>
+<li>扫描 t1 的所有行，逐行与 join_buffer 的数据做对比，看看有没有符合条件的行，如果有，扔到结果集</li>
+<li>清空 join_buffer</li>
+<li>将 t0 第 n+1 ～ m 行存到 join_buffer</li>
+<li>扫描 t1 的所有行，逐行与 join_buffer 的数据做对比，看看有没有符合条件的行，如果有，扔到结果集</li>
+<li>&hellip;</li>
+<li>返回结果给客户端</li>
+</ul>
+<p>可以发现，<strong>如果分段越多，全表扫描 t1 的次数会越多，效率就越低</strong></p>
+<p><strong>注意：</strong> join_buffer 是无序的，要想知道一个 t1.b 是否与 join_buffer 中的某一行的 b 相等，需要遍历 join_buffer 的所有数据</p>
+<h3 id="join_buffer-太小会发生什么">join_buffer 太小，会发生什么</h3>
+<p>根据上面的分析，如果 join_buffer 太小，会导致分段次数增加，进而导致 <strong>全表扫描被驱动表的次数增加</strong>，会造成一系列连锁反应</p>
+<blockquote>
+<p>如果 <strong>被驱动表</strong> 是一张 <strong>大表</strong> ，并且存放的是 <strong>冷数据</strong>，会发生什么？</p>
+<p>根据上面的理论，如果 join_buffer 不足，会多次全表扫描被驱动表</p>
+<p>又因为被驱动表是一张大表，全表扫描的时间可能较长，会在 LRU 链表的 old 区域停留超过 1s，那么 LRU 的优化就不起作用了，导致大量冷数据进入 young 区，把原来的热点数据挤出来，进而<strong>导致 buffer pool 的命中率严重下降</strong>，磁盘 IO 迅速上升，给整个系统带来很大压力</p>
+<p>此外，由于系统的负载上升，所有 <strong>事务的执行都会变慢</strong>，进而导致：</p>
+<ul>
+<li>undo log 回收慢，导致 undo log 版本链过长，<strong>快照读的时间变长（这会影响许多查询）</strong></li>
+<li>需要更长的时间后，才能释放锁，系统的 <strong>并发能力下降</strong></li>
+</ul>
+</blockquote>
+<h3 id="join-时应该让小表驱动大表还是大表驱动小表">join 时，应该让小表驱动大表，还是大表驱动小表</h3>
+<p>经过上面的分析，可以总结出：</p>
+<ul>
+<li><strong>被驱动表上，join &hellip; on 字段有索引</strong>：应该让 <strong>小表驱动大表</strong>，降低时间复杂度</li>
+<li><strong>被驱动表上，join &hellip; on 字段无索引</strong>：应该让 <strong>小表驱动大表</strong>，减少 join 时的分段次数，进而减少全表扫描的次数</li>
+</ul>
+<blockquote>
+<p>小表指的就是行数少的表吗？</p>
+<p>这个说法并不绝对，例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">id</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t0</span><span class="w"> </span><span class="n">straight_join</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t0</span><span class="p">.</span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">t1</span><span class="p">.</span><span class="n">a</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>虽然 t0 只有 100 行，但是查询的是所有字段，而 t1 查询的仅仅是 id 字段，可能 1000 行 id <strong>占的总空间</strong> 还没有 100 行 <code>t0.*</code> 多</p>
+<p>在这种情况下，可以认为 t1 是小表</p>
+</blockquote>
+<h3 id="总结-4">总结</h3>
+<p>到底能不能用 join？</p>
+<p>如果被驱动表上，join &hellip; on 字段 <strong>有索引</strong>，那么就可以使用 join，效率更高</p>
+<p>相反的，如果没有索引，那么尽量不要使用 join，因为如果多次分段，代表着多次全表扫描，会引起一系列雪崩反应</p>
+<p>使用 join 时，应该让小表驱动大表，提高效率（当然 MySQL 会选择合适的表来做驱动表，如果发现不符合预期，可以使用 <code>straight_join</code> 来指定）</p>
+<h2 id="join-如何优化">join 如何优化？</h2>
+<h3 id="mrr">MRR</h3>
+<p>先来看看回表查询的一个问题：</p>
+<p>在回表查询时，<strong>是一行一行的回表，还是一批一批的回表？</strong></p>
+<p>以 <code>select * from user where age &gt;= 18;</code> 作为示例</p>
+<p>一行一行地回表，由于 id 不是连续的，每一次回表都是一次 <strong>随机 IO</strong>，效率低</p>
+<p>为了将随机 IO <strong>近似</strong> 转化为顺序 IO，MySQL 引入了 MRR（Multi-Range Read）的概念</p>
+<p>使用 MRR 优化后，执行过程如下：</p>
+<ol>
+<li>开一个 <code>read_rnd_buffer</code></li>
+<li>将符合条件的主键 id 集合放到 <code>read_rnd_buffer</code> 中</li>
+<li>对 <code>read_rnd_buffer</code> 的主键 id 排序</li>
+<li>按照排序后的主键 id 一行一行的回表，得到结果集</li>
+<li>如果 <code>read_rnd_buffer</code> 不足以存放下所有的主键 id，清空 <code>read_rnd_buffer</code>，重复 2、3、4</li>
+</ol>
+<p>MRR 的适用场景是：主键 id 是 <strong>有序</strong> 的，且是 <strong>范围查询</strong></p>
+<p>如果主键 id 是随机的，例如 UUID，那么即使对主键 id 排序，回表时也还是随机 IO，MRR 的优势就体现不出来了</p>
+<p><strong>因此，为了利用 MRR 优化，建议将主键 id 设置为自增的</strong></p>
+<h3 id="bka">BKA</h3>
+<p>前面提到：在 <em>被驱动表上，join &hellip; on 字段有索引</em> 的情况下，会先扫描驱动表，然后 <strong>一行一行</strong> 的去被驱动表查</p>
+<p>如果一行行地查，就无法使用到 MRR 的优化</p>
+<p>于是引入 BKA（Batched Key Access），一次性查一批数据，就好像范围查询一样</p>
+<p>使用 BKA 优化后，执行过程如下：</p>
+<ol>
+<li><strong>BKA 复用 join_buffer</strong></li>
+<li>将驱动表的数据放到 join_buffer</li>
+<li>将 join_buffer 的数据作为查询条件，<strong>批量地在被驱动表查询</strong>（这个过程会使用到 MRR），得到结果集</li>
+<li>如果 join_buffer 不够，重复 2、3</li>
+</ol>
+<p>根据上述分析：使用 BKA 优化的前提，是启用了 MRR 优化</p>
+<p>因此，启用 BKA 的方法如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">set</span><span class="w"> </span><span class="n">optimizer_switch</span><span class="o">=</span><span class="s1">&#39;mrr=on,mrr_cost_based=off,batched_key_access=on&#39;</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><h3 id="bnl-的优化">BNL 的优化</h3>
+<p>前面提到的 <em>被驱动表上，join &hellip; on 字段无索引</em> 这种情况，使用的算法称作 BNL（Block Nested-Loop Join）</p>
+<p>BNL 算法的性能很不理想，如果多次分段，还有可能会引起一系列雪崩反应</p>
+<p>优化 BNL 的方式，就是 <strong>将 BNL 转化为 BKA</strong>，即在被驱动表的 join on 字段 <strong>加上索引</strong></p>
+<p>但是如果被驱动表太大，并且这个 SQL 还是个低频 SQL，那么加索引的成本就太高了</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">join</span><span class="w"> </span><span class="n">t2</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="p">(</span><span class="n">t1</span><span class="p">.</span><span class="n">b</span><span class="o">=</span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="p">)</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&gt;=</span><span class="mi">1</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&lt;=</span><span class="mi">2000</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>可以创建临时表来解决这个问题：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 创建临时表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="k">like</span><span class="w"> </span><span class="n">t2</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 建索引
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_b</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t2</span><span class="p">(</span><span class="n">b</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 插入数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t2</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&gt;=</span><span class="mi">1</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&lt;=</span><span class="mi">2000</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 得到结果
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">join</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="p">(</span><span class="n">t1</span><span class="p">.</span><span class="n">b</span><span class="o">=</span><span class="n">tmp</span><span class="p">.</span><span class="n">b</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><h3 id="hash-join">hash join</h3>
+<p>使用 BNL 算法时，在查找 join_buffer 中是否包含满足条件的行，这个操作是 O(n) 的时间复杂度</p>
+<p>这是因为 join_buffer 维护的是一个无序列表（可以看成数组），查找的过程是线性的</p>
+<p>这种查找很慢，因此在 MySQL 8.0.18 版本引入了 <strong>hash join</strong>，将 join_buffer 维护成一个哈希表，这样查找效率得到大幅提高，可以大幅减少扫描行数</p>
+<p>hash join 是默认启用的</p>
+<h3 id="总结-5">总结</h3>
+<ul>
+<li>MRR 将回表查询的随机 IO 近似转化为顺序 IO</li>
+<li>BKA 使用 join_buffer 缓存驱动表的数据，保证可以利用 MRR 优化 IO，建议启用</li>
+<li>优化 BNL 算法的方式是将 BNL 转化为 BKA，即建立索引</li>
+<li>如果建立索引的成本过高，可以通过创建临时表来优化</li>
+<li>hash join 的原理是维护一个 join_buffer 哈希表，减少扫描行数</li>
+</ul>
+<h2 id="group-by-优化">group by 优化</h2>
+<h3 id="group-by-的原理">group by 的原理</h3>
+<p>以这个 SQL 语句说说 group by 的流程：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain
+</span></span><span class="line"><span class="cl">    -&gt; <span class="k">select</span> <span class="o">(</span>id % 10<span class="o">)</span> m, count<span class="o">(</span>*<span class="o">)</span> from user group by m<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+-----------------------------------------------------------------------------------+---------+---------+------+------+----------+------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span>  <span class="p">|</span> possible_keys                                                                     <span class="p">|</span> key     <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                        <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+-----------------------------------------------------------------------------------+---------+---------+------+------+----------+------------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user  <span class="p">|</span> NULL       <span class="p">|</span> index <span class="p">|</span> PRIMARY,idx_phone,idx_email,idx_name,idx_age,idx_sex,idx_sex_age,idx_sex_age_name <span class="p">|</span> idx_age <span class="p">|</span> <span class="m">5</span>       <span class="p">|</span> NULL <span class="p">|</span>    <span class="m">7</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using index<span class="p">;</span> Using temporary <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+-----------------------------------------------------------------------------------+---------+---------+------+------+----------+------------------------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>执行过程如下：</p>
+<ul>
+<li>创建内存临时表 tmp，包含两个字段：<code>m, count</code></li>
+<li>根据 idx_age 全表扫描，如果：
+<ul>
+<li>tmp 表包含 m，那么 count + 1</li>
+<li>否则，插入一条新的数据</li>
+</ul>
+</li>
+</ul>
+<h3 id="优化">优化</h3>
+<p>使用 group by，避免不了全表查询，那么，就只能 <strong>避免创建临时表</strong> 了</p>
+<p>如何避免？</p>
+<p>先要弄清楚为什么要创建临时表</p>
+<p>由于 id % 10 这个字段是 <strong>无序</strong> 的，要想统计不同的 id % 10 的 count，就只能创建一个临时表来暂存数据</p>
+<p>如果 id % 10 是有序的，那么就不用创建临时表，扫描一遍即可：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-17-31-06-233.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>因此，最直接的方法就是给 group by 的字段 <strong>创建索引</strong></p>
+<p>如果创建索引的代价太大呢？</p>
+<ul>
+<li>可以适当调大 tmp_table_size，避免转换为磁盘临时表</li>
+<li>如果数据量太大，使用 <code>SQL_BIG_RESULT</code> 提示 MySQL 直接使用磁盘临时表，避免多一次不必要的转换过程：
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">SQL_BIG_RESULT</span><span class="w"> </span><span class="p">(</span><span class="n">id</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="k">user</span><span class="w"> </span><span class="k">group</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">m</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div></li>
+</ul>
+<h2 id="有没有必要使用-memory-引擎">有没有必要使用 Memory 引擎？</h2>
+<p>Memory 引擎最大的优势是读写速度快，但缺点也有几个：</p>
+<ul>
+<li>锁的粒度比较粗，<strong>只支持表锁</strong></li>
+<li>断电丢失数据</li>
+<li>断电重启，主从数据不一致</li>
+</ul>
+<p>因此，不建议在生产环境上使用 Memory 引擎，虽然读写速度快，但是并发能力弱，断电还会丢数据</p>
+<p>此外，InnoDB 有 buffer pool 的加持，缓存命中后，读写速度也是很不错的，并发能力也比较强</p>
+<p>但是有一个例外，就是在 <a href="#bnl-%e7%9a%84%e4%bc%98%e5%8c%96">BNL 的优化</a>
+ 提到的创建临时表</p>
+<p>在这种情况，如果数据量不大，就可以使用 Memory 引擎，快速得到结果，用完删掉即可：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 创建临时表，并在字段 b 上建立 hash 索引
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">tmp</span><span class="p">(</span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="p">(</span><span class="n">b</span><span class="p">))</span><span class="n">engine</span><span class="o">=</span><span class="n">memory</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 插入数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t2</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&gt;=</span><span class="mi">1</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">t2</span><span class="p">.</span><span class="n">b</span><span class="o">&lt;=</span><span class="mi">2000</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 得到结果
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t1</span><span class="w"> </span><span class="k">join</span><span class="w"> </span><span class="n">tmp</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="p">(</span><span class="n">t1</span><span class="p">.</span><span class="n">b</span><span class="o">=</span><span class="n">tmp</span><span class="p">.</span><span class="n">b</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 删除表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">drop</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">tmp</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><h2 id="自增主键为什么不是连续的">自增主键为什么不是连续的？</h2>
+<h3 id="插入数据时出现冲突">插入数据时，出现冲突</h3>
+<p>例如：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-19-17-09-384.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>要想弄清楚原因，需要知道 MySQL 是如何申请一个 id 的</p>
+<p>以 <code>insert into t0 values (null, 5, 4);</code> 为例：</p>
+<ul>
+<li>加 AUTO_INC 锁</li>
+<li>用户没有指定主键 id，因此，读取 <strong>内存</strong> 中，表 t0 的自增值 5</li>
+<li>将自增值 + 1</li>
+<li>释放 AUTO_INC 锁</li>
+<li><strong>插入数据</strong>，冲突</li>
+</ul>
+<p>可以发现：自增值 + 1 这个操作是在插入数据 <strong>之前</strong> 的，这是导致主键不连续的第一个原因</p>
+<h3 id="事务回滚">事务回滚</h3>
+<p>例如：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-19-24-36-886.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="为什么在插入冲突事务回滚时mysql-不回滚自增-id-呢">为什么在插入冲突、事务回滚时，MySQL 不回滚自增 id 呢？</h3>
+<p>主要还是 <strong>性能因素</strong></p>
+<p>假设在插入冲突、事务回滚时，MySQL 回滚自增 id</p>
+<ul>
+<li>事务 A 申请了一个主键 id = 2</li>
+<li>事务 B 申请了一个主键 id = 3</li>
+<li>事务 B 提交</li>
+<li>事务 A 插入冲突，或者回滚，MySQL 回滚自增 id = 2（这里的回滚，相当于 id = 2 可用）</li>
+</ul>
+<p>那么下一个事务要申请新的主键 id 就有可能出现重复的问题，为了解决，有两种方案：</p>
+<ul>
+<li>方案一：在申请主键 id 时，从 1 开始申请，逐个判断有没有使用，如果没有，申请成功</li>
+<li>方案二：AUTO_INC 锁的范围扩大到整个插入语句，即事务提交才释放</li>
+</ul>
+<p>方案一的效率太低了，方案二的锁粒度大，并发能力太弱了</p>
+<p>因此，MySQL 选择不回滚自增 id 以保证性能</p>
+<h3 id="批量申请-id-策略">批量申请 id 策略</h3>
+<p>在批量插入数据时，如果插入的行数比较多，例如 10w 行，那么就要申请 10w 次 AUTO_INC 锁，并发能力不强</p>
+<p>MySQL 在申请自增 id 采取批量申请的策略，即第一次申请 1 个，第二次申请 2 个，第三次申请 4 个&hellip;</p>
+<p>如果申请的 id 没有用完，也不会回滚，原因同上</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-19-47-34-350.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="自增-id-用完了会发生什么">自增 id 用完了，会发生什么？</h2>
+<p>对于主键自增 id，如果用完了，再次申请，它的值不会发生改变，因此，插入时会报错（主键冲突）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-04-20-25-43-566.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果一张表没有主键，MySQL 会生成一个隐式的 row_id</p>
+<p>一个 row_id 占用 6 字节，如果用完了，再次申请，会 <strong>从头开始</strong>，也就是说，会产生 <strong>数据覆盖</strong></p>
+<p>简单总结一下：</p>
+<p>主键自增 id 的策略保证的是数据的可靠性，而 row_id 的策略是保证的可用性</p>
+<p><strong>生产上建议每张表都要有一个主键 id，保证数据可靠性</strong></p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

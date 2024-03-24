@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>TCP 杂项知识点 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &amp;ldquo;114514&amp;rdquo; 经过分片后，"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="TCP 杂项知识点" />
+<meta property="og:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &ldquo;114514&rdquo; 经过分片后，" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-01-28T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-01-28T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="TCP 杂项知识点"/>
+<meta name="twitter:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &ldquo;114514&rdquo; 经过分片后，"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/">TCP 杂项知识点</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/network/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Network
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/network/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Network</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/tcp/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">TCP</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-01-28T00:00:00&#43;00:00">
+      2024-01-28
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      16 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="如何理解-tcp-面向字节流">如何理解 TCP 面向字节流？</h2>
+<p>由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片</p>
+<p>举个例子：原数据为一个字符串 &ldquo;114514&rdquo;</p>
+<p>经过分片后，接收方可能收到多个 TCP 报文，假设为：</p>
+<ul>
+<li>&ldquo;11&rdquo;</li>
+<li>&ldquo;4&rdquo;</li>
+<li>&ldquo;514&rdquo;</li>
+</ul>
+<p>内核在收到这些数据后，会将数据载荷部分扔到接收缓冲区，等待应用程序调用 read 取走数据</p>
+<p>由于分片机制，我们 <strong>不能认为一个 TCP 报文对应一个原始的用户数据</strong>，因此，我们说 TCP 是面向字节流的</p>
+<p>相反，对于 UDP 协议而言，在传输层不存在分片机制，即使在 IP 层分片，接收方也会将分片后的数据重组为原数据，因此，我们说 UDP 是面向报文的</p>
+<h2 id="如何解决粘包问题">如何解决粘包问题？</h2>
+<p>例如，发送方发送了两条数据：</p>
+<ul>
+<li>&ldquo;114514&rdquo;</li>
+<li>&ldquo;niuma&rdquo;</li>
+</ul>
+<p>如果使用 TCP 协议，并且发送窗口比较大，TCP 为了提高效率，会将这两条数据合并发送，接收方收到的数据就是 &ldquo;114514niuma&rdquo; 了</p>
+<p>问题是，接收方并不知道这个数据，实际上是两条，这就是所谓的粘包问题</p>
+<p>如何解决？</p>
+<ul>
+<li>固定长度消息：双方约定每条消息的长度（不灵活，一般不用）</li>
+<li>添加分隔符（如 HTTP 协议的 \n）</li>
+<li>自定义消息格式：可以定义一个消息体，包含数据的字节数信息：
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">u_int32_t</span> <span class="n">message_length</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="kt">char</span> <span class="n">message_data</span><span class="p">[];</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span> <span class="n">msg</span><span class="p">;</span>
+</span></span></code></pre></div></li>
+</ul>
+<h2 id="为什么-tcp-每次的初始-seq-都要不一样">为什么 TCP 每次的初始 Seq 都要不一样？</h2>
+<p>主要原因是：避免历史报文被现有连接错误接收</p>
+<p>这个问题主要是针对同一个四元组连接</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-11-21-03.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/3_tcp/isn_deff.html" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>如果每次初始的 Seq 都不一样，就可以 <strong>很大程度</strong> 避免这个问题</p>
+<p>注意：并不是绝对避免，因为 Seq 存在「回环」问题</p>
+<blockquote>
+<p>在 TCP 建立连接的时候，客户端和服务端都会各自生成一个初始序列号，它是基于时钟生成的一个随机数，来保证每个连接都拥有不同的初始序列号。初始化序列号可被视为一个 32 位的计数器，该计数器的数值每 4 微秒加 1，循环一次需要 4.55 小时。</p>
+</blockquote>
+<p>如果 Seq 循环了一次，那还是有可能发生这个问题的：</p>
+<ul>
+<li>TCP 连接建立的时间很长，回环</li>
+<li>带宽大，每次发送的数据包很大，序列号用完了，回环</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-09-56-38.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>为了解决这个问题，TCP 又引入了 <strong>时间戳（32 位）</strong> 的概念，以及 PAWS 算法</p>
+<p>PAWS 算法会在收到一个数据包时，将数据包内的时间戳（A）与上一个包的时间戳（B）做比较，如果：</p>
+<ul>
+<li>A &gt; B：有效，接收</li>
+<li>A &lt;= B：过期，丢弃</li>
+</ul>
+<p>因此，<strong>初始 Seq 随机 + 时间戳</strong> 可以有效避免历史报文的错误接收问题</p>
+<h2 id="syn-报文什么时候可能会被丢弃">SYN 报文什么时候可能会被丢弃？</h2>
+<p><strong>tcp_tw_recycle</strong></p>
+<p>启用 <code>tcp_tw_recycle</code>，就会快速回收处于 TIME_WAIT 状态的连接</p>
+<p>但如果开启了 <code>tcp_tw_recycle</code> + 时间戳机制，就会启用 pre-host 的 PAWS，这个与之前的 PAWS 不同，它是对「对端 IP」做 PAWS 检查，而不是「对端 IP + Port」</p>
+<p>假设客户端的网络使用了 <strong>NAT</strong>，就会产生麻烦，这里假设客户端 A、B 处于同一个 NAT 下：</p>
+<ul>
+<li>B(11.45.1.4:1146) 先与 Server 建立连接</li>
+<li>A(11.45.1.4:1145) 后与 Server 建立连接，但 SYN 报文比 B 先到达，Server 保存 A SYN 报文的时间戳</li>
+<li>此时，B 的 SYN 报文到达，但 B 的时间戳比 A 小（因为先建立连接），由于启用了 NAT（A、B IP 是一样的），<strong>并且 Server 启用 pre-host 的 PAWS（只检查对端 IP），就会认为 B 的 SYN 报文是过期报文，丢弃</strong></li>
+</ul>
+<p>可见，tcp_tw_recycle 在 NAT 下是不安全的，存在潜在的错误丢弃 SYN 报文的可能性</p>
+<p>并且，当今网络多层 NAT 的使用非常普遍</p>
+<p>因此，4.12 版本之后的 Linux，取消了 tcp_tw_recycle</p>
+<p><strong>半连接队列溢出</strong></p>
+<p>在不开启 syn_cookies 的情况下，如果半连接队列满了，也会丢弃 SYN 报文</p>
+<p><strong>全连接队列溢出</strong></p>
+<p>如果全连接队列溢出，会丢弃新的连接请求</p>
+<h2 id="已建立连接的-tcp收到-syn-报文会发生什么">已建立连接的 TCP，收到 SYN 报文会发生什么？</h2>
+<p>这个要分两种情况，客户端发送 SYN 报文的端口号与之前是否一致：</p>
+<p><strong>如果不一致</strong></p>
+<p>Server 会认为这是一个新的连接请求，当然会回复 SYN + ACK 给对方</p>
+<p><strong>如果一致</strong></p>
+<p>说明客户端可能宕机，重启后再次用相同的 port 与 Server 建立连接</p>
+<p>由于初识 Seq 为随机值，基本上不可能与服务端的 last ack 的值相等</p>
+<p>当服务器返回 ack 后（这个 ack 对应的值基本上不可能等于 clnt_seq + 1），由于 ack 的 seq 不合法，client 会发生 RST 报文，终止 TCP 连接</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-12-28-08.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/3_tcp/challenge_ack.html#rfc-%E6%96%87%E6%A1%A3%E8%A7%A3%E9%87%8A" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h2 id="如何关闭一个-tcp-连接">如何关闭一个 TCP 连接？</h2>
+<ul>
+<li>直接关闭进程：内核会自动关闭进程存在的 TCP 连接</li>
+<li>killcx</li>
+<li>tcpkill</li>
+</ul>
+<p>killcx 与 tcpkill 的原理都是基于伪造 RST 报文实现的，只不过获取伪造 RST 报文 seq 的方式不同</p>
+<blockquote>
+<p>注意：如果 RST 报文的 seq 与预期不一致，会丢弃该报文</p>
+</blockquote>
+<h3 id="killcx">killcx</h3>
+<p>killcx 的原理是：根据提供的「源 IP + 源 Port」模拟一个 Client 向「目的 IP + 目的 Port」的 Server 发起一个 SYN 报文</p>
+<p>当 Server 收到这个 SYN 报文，会返回 ACK 报文（包含了 seq 以及 ack 的值）</p>
+<p>killcx 收到 seq 和 ack，可以反推：</p>
+<ul>
+<li>原客户端的 seq（就是 server 返回的 ack）</li>
+<li>Server 的 seq（就是 server 返回的 seq）</li>
+</ul>
+<p>于是，拿到这两个 seq，就可以分别向 Client、Server 发送伪造的 RST 报文，达到关闭 TCP 连接的效果</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-12-35-25.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/3_tcp/challenge_ack.html#killcx-%E7%9A%84%E5%B7%A5%E5%85%B7" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h3 id="tcpkill">tcpkill</h3>
+<p>与 killcx 有点不同，tcpkill 获取伪造 RST 报文 seq 的方式是被动的，即监听对应的 TCP 连接</p>
+<p>只有当待 kill 的 TCP 连接有数据包的发送，才能获取 seq</p>
+<p>因此，tcpkill <strong>只能关闭活跃的 TCP 连接</strong></p>
+<h2 id="四次挥手中收到乱序的-fin-报文怎么处理">四次挥手中收到乱序的 FIN 报文怎么处理？</h2>
+<p>看下场景：</p>
+<blockquote>
+<p>TCP 里面那个 shutdown 函数主动方调用只关闭写端情况下，假如服务端在二三次挥手之间发的数据，或者是四次挥手之前的数据包，因为网络阻塞导致第三次挥手的 FIN 包比数据包先到主动关闭方，那么主动关闭方收到 FIN 是否就会进入 timewait 状态？这时候那个延迟的数据包到了还能正常接收并处理么？</p>
+</blockquote>
+<p>意思就是：在 FIN_WAIT_2 状态下，如果 FIN 报文比 data packet 先到达，是否还能正确处理 data packet？会不会丢数据？</p>
+<p>答案是：不会</p>
+<p>在 FIN_WAIT_2 状态下，收到一条消息，内核会做以下步骤：</p>
+<ul>
+<li>检查当前消息的 seq 是否符合预期（也就是是否乱序）
+<ul>
+<li>如果符合预期，判断消息是否包含 FIN
+<ul>
+<li>如果包含 FIN：
+<ul>
+<li>发送 ack 给对方，并进入 TIME_WAIT</li>
+<li>清空「乱序队列」</li>
+</ul>
+</li>
+<li>如果不包含 FIN：将消息写入 buffer，判断「乱序队列」中是否有「符合条件的消息」
+<ul>
+<li>如果有，判断是否包含 FIN
+<ul>
+<li>如果包含 FIN，发送 ack 给对方，并进入 TIME_WAIT</li>
+<li>否则，一并写到 buffer</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>否则，写到「乱序队列」</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>符合条件是指 seq 是否等于 lastSeq + lastLen</p>
+</blockquote>
+<h2 id="处于-time_wait-的连接收到-syn-报文怎么处理">处于 TIME_WAIT 的连接，收到 SYN 报文怎么处理？</h2>
+<p>如果收到的是不同的 <code>源 IP + Port</code> 组，那么属于不同连接，直接建立即可，否则：</p>
+<p>这个主要是判断 SYN 报文的「合法性」</p>
+<ul>
+<li>如果 SYN 报文合法，复用连接，跳过 TIME_WAIT，进入 SYN_RECV<div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-12-56-49.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</li>
+<li>如果 SYN 报文不合法，发送 RST 报文给对方<div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-12-57-05.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</li>
+</ul>
+<p>这里的合法是指：<strong>SYN 报文的 Seq 比 Server 期望的 Seq 大</strong></p>
+<p>如果启用了时间戳机制，那么 <strong>还要保证 SYN 报文的 timestamp 比 Server 期望的 timestamp 大</strong></p>
+<h2 id="处于-time_wait-的连接收到-rst-报文怎么处理">处于 TIME_WAIT 的连接，收到 RST 报文怎么处理？</h2>
+<p>在 RST 报文合法的前提下，处理方式与 <code>tcp_rfc1337</code> 参数有关</p>
+<ul>
+<li>0: 提前结束 TIME_WAIT，关闭 TCP 连接</li>
+<li>1: 丢弃 RST 报文</li>
+</ul>
+<p>默认值为 0，但建议修改成 1</p>
+<blockquote>
+<p>TIME_WAIT 是我们的朋友，它是有助于我们的，不要试图避免这个状态，而是应该弄清楚它。 &mdash;《UNIX 网络编程》</p>
+<p>虽然 TIME_WAIT 状态持续的时间是有一点长，显得很不友好，但是它被设计来就是用来避免发生乱七八糟的事情。</p>
+</blockquote>
+<h2 id="tcp-连接客户端进程崩溃与断电分别发生什么">TCP 连接，客户端进程崩溃与断电，分别发生什么？</h2>
+<p><strong>客户端进程崩溃</strong></p>
+<p>客户端进程崩溃，内核会自动关闭进程建立的 TCP 连接</p>
+<p><strong>客户端断电</strong></p>
+<p>服务端对客户端断电是无感的，分两种情况考虑：</p>
+<ul>
+<li>如果有数据传输，那么服务器会因为收不到 ack，而持续重传，直到重传次数上限</li>
+<li>如果没有数据传输，那么只能依靠 TCP 的 keep-alive 机制来断开连接了</li>
+</ul>
+<h2 id="客户端拔掉网线后原本的-tcp-连接还存在吗">客户端拔掉网线后，原本的 TCP 连接还存在吗？</h2>
+<p>存在</p>
+<p>拔掉网线，并不会直接影响已存在的 TCP 连接</p>
+<p>如果客户端与服务器之间 <strong>没有数据传输</strong> ，那么断开网线的过程，对双方都是无感的，当然，甚至，如果没启用 keep-alive，TCP 连接将一直建立</p>
+<p>当然，如果二者之间存在数据传输，那么会由于重传次数到达上限导致 TCP 连接断开</p>
+<h2 id="linux-为什么默认关闭了-tcp_tw_reuse-选项">Linux 为什么默认关闭了 tcp_tw_reuse 选项？</h2>
+<p>首先弄清楚 tcp_tw_reuse 选项的作用</p>
+<p>如果启用了 tcp_tw_reuse，对于 <strong>客户端</strong> 而言，在调用 connect 时，若 connect 的「四元组」处于 TIME_WAIT 状态，并且 <strong>时间超过 1s</strong>，就可以重用该四元组建立新的连接</p>
+<p>ps：启用 tcp_tw_reuse，需要同时开启 tcp_timestamp</p>
+<p>如果启用 tcp_tw_reuse，对于客户端而言，就相当于没有 TIME_WAIT，或者时间很短</p>
+<p>TIME_WAIT 的作用：</p>
+<ul>
+<li>防止历史报文对现有连接的干扰</li>
+<li>保证被动关闭方能正确关闭</li>
+</ul>
+<p>第二点好理解，但第一点呢？</p>
+<p>不是开启了 timestamp 吗？就算序列号「回环」了，也不会有历史报文的干扰啊？</p>
+<p>事实上，对于 RST 报文，timestamp 规则不再适用</p>
+<blockquote>
+<p>It is recommended that RST segments NOT carry timestamps, and that RST segments be acceptable regardless of their timestamp. Old duplicate RST segments should be exceedingly unlikely, and their cleanup function should take precedence over timestamps.</p>
+</blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-17-44-01.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这导致了连接的非正常关闭</p>
+<p>因此，为了 TIME_WAIT 能正常发挥作用，Linux 默认关闭了 tcp_tw_reuse</p>
+<h2 id="https-中tcp-三次握手与-tls-握手能同时进行吗">HTTPS 中，TCP 三次握手与 TLS 握手能同时进行吗？</h2>
+<p>可以，但有前提</p>
+<p>我们知道，传统的 HTTPS 的建立，需要经过 TCP 三次握手 + TLS 四次握手</p>
+<p>但是，如果</p>
+<ul>
+<li>打开了 TCP 的快启动（TFO），以及使用 1.3 版本的 TLS</li>
+<li>Client 与 Server 已经通信过一次</li>
+</ul>
+<p>就可以实现「同时」进行</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-17-49-13.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>TLS 1.3 引入了 <strong>会话恢复</strong> 机制，在第二次建立连接，只需要 0-RTT</p>
+<p>结合 TFO，在第一次握手时，携带 Cookie + TLS1.3 的 Client Hello，Server 就可以在三次握手结束前，发送 Server Hello，建立 TLS 连接</p>
+<h2 id="tcp-的缺点">TCP 的缺点</h2>
+<ul>
+<li>实现在传输层，如果需要修订，需要动内核</li>
+<li>建立连接繁琐</li>
+<li>存在「队头阻塞」</li>
+<li>不支持连接迁移</li>
+</ul>
+<h2 id="quic-协议">QUIC 协议</h2>
+<h3 id="概念">概念</h3>
+<p>QUIC 是基于 UDP，在应用层实现的具有可靠传输、流量控制、拥塞控制的协议</p>
+<p>目前，HTTP/3 的实现就是基于 QUIC 协议的</p>
+<h4 id="结构">结构</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-18-10-34.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="packet">Packet</h4>
+<p>首先是 Packet Header，有两类：</p>
+<ul>
+<li>Long Packet Header：初次建立连接使用</li>
+<li>Short Packet Header：后续通信使用</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-18-54-06.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>QUIC 使用 ConnectionID 来标明每一个连接</p>
+<p>每一个 packet，都有一个 <strong>唯一的 PacketNumber</strong>，这个值是严格递增的</p>
+<p>使用严格递增的 PacketNumber，相较于 TCP 的 Seq，有两个优点：</p>
+<ul>
+<li><strong>支持乱序确认</strong></li>
+<li>更精确的计算 RTT，从而得到更精确的 RTO</li>
+</ul>
+<h4 id="frame">Frame</h4>
+<p>每一个 Packet 中，包含了若干个 Frame</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-19-00-12.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Frame 有多种类型，这里仅介绍 Stream 类型</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-19-00-46.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>StreamID：区别多个并发的 HTTP 连接</li>
+<li>Offset：类似 TCP 的 Seq，保证 <strong>同一个 Stream 内数据的有序性</strong></li>
+<li>Length：负载数据的长度</li>
+</ul>
+<h3 id="三次握手">三次握手</h3>
+<p>QUIC 协议的连接整合了 TCP 的三次握手和 TLS1.3 的安全握手。</p>
+<ol>
+<li>
+<p><strong>客户端发送 Initial 包</strong>：客户端首先生成一个独特的 Connection ID，并将其包含在 Initial 包中。这个包还包含一个 TLS 客户端 Hello 消息，内含用于握手和认证的相关参数。</p>
+</li>
+<li>
+<p><strong>服务器回应 Initial 包</strong>：收到 Initial 包后，服务器会生成自己的 Connection ID，并回传一个 Initial 包，包含 TLS 服务器 Hello 消息，并可能还包含 TLS 的证书和 Finished 信息。</p>
+</li>
+<li>
+<p><strong>客户端发送第二个 Initial 包</strong>：客户端会解密服务端发来的 Initial 包，并验证其中所包含的服务器证书。在验证通过后，客户端会产生一个新的 Initial 包，其中包含 TLS 的 Finished 信息，以确认握手的完成。此后，双方就建立起了一个加密的通信连接。</p>
+</li>
+</ol>
+<h3 id="重传机制">重传机制</h3>
+<p>你可能会想：QUIC 的每个包的 PacketNum 都不一样，重传时，接收方怎么判断一个报文是新的 packet，还是重传的 packet？</p>
+<p>实际上，QUIC 使用 <strong>StreamID + Offset</strong> 来唯一确定</p>
+<p>即使两个包的 packetNum 不同，但只要 StreamID + Offset 相同，就认为这两个包是相同的</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-19-09-58.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="流量控制">流量控制</h3>
+<p>QUIC 也使用窗口来进行流量控制，有两个维度：</p>
+<ul>
+<li>Stream</li>
+<li>Connection</li>
+</ul>
+<h4 id="stream">Stream</h4>
+<p>对于同一个 Packet 的多个 Stream 而言，每个 Stream 有自己独立的接收（发送）窗口</p>
+<p>因此，QUIC 可以实现基于 Stream 的细粒度的流量控制</p>
+<h4 id="connection">Connection</h4>
+<p>可以认为有一个「大」的窗口来控制整个 QUIC 连接的流量，其大小为所有 Stream 的窗口大小之和</p>
+<h3 id="如何解决队头阻塞">如何解决队头阻塞</h3>
+<p>前面提到每个 Stream 有自己独立的接收（发送）窗口</p>
+<p>Stream 之间是独立的，没有关联（理解成并行的 HTTP 连接）</p>
+<p>因此，即使某个 Stream 的数据出现了丢失，也不会影响其它 Stream</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-28-19-16-03.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>所以说 QUIC 解决了不同 Stream 间的队头阻塞问题，实现了「真正的」并行</p>
+<h3 id="连接迁移">连接迁移</h3>
+<p>前面提到，QUIC 基于 ConnectionID 来标识每一个 QUIC 连接</p>
+<p>当用户的网络更改（如 WLAN 切换到 5G），也不用重新建立连接，复用 Connection ID 等上下文信息即可</p>
+<h3 id="优势">优势</h3>
+<p>经过上面的分析，可以总结：相较于 TCP，QUIC 有以下优势：</p>
+<ul>
+<li>基于应用层实现，便于修订</li>
+<li>更快的连接建立：整合三次握手 + TLS 握手</li>
+<li>细粒度的流量控制：解决队头阻塞，实现「并行」传输</li>
+<li>支持连接迁移</li>
+</ul>
+<blockquote>
+<p>参考资料：<a href="https://xiaolincoding.com/network/3_tcp/quic.html" target="_blank" rel="noopener">如何基于 UDP 协议实现可靠传输</a>
+</p>
+</blockquote>
+<h2 id="端口问题">端口问题</h2>
+<h3 id="tcp-和-udp-可以使用同一个端口吗">TCP 和 UDP 可以使用同一个端口吗？</h3>
+<p>可以</p>
+<p>TCP 与 UDP 为传输层的不同协议，接收数据时，当有数据从网卡过来，会在网络层判断这个数据包是哪个协议的，进而送到不同协议栈去处理</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-09-08-47.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/3_tcp/port.html#tcp-%E5%92%8C-udp-%E5%8F%AF%E4%BB%A5%E5%90%8C%E6%97%B6%E7%BB%91%E5%AE%9A%E7%9B%B8%E5%90%8C%E7%9A%84%E7%AB%AF%E5%8F%A3%E5%90%97" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h3 id="多个-tcp-服务进程可以使用同一个端口吗">多个 TCP 服务进程可以使用同一个端口吗？</h3>
+<p>分情况</p>
+<ul>
+<li>如果两个 TCP 服务进程的监听的 IP + Port 都相同，就不能使用同一端口</li>
+<li>如果监听的 IP 不同，就可以使用同一端口</li>
+</ul>
+<p>注意：如果某个进程监听的 IP 为 0.0.0.0，第二个原则就失效了，因为监听 0.0.0.0 意味着监听了本机的所有 IP</p>
+<h3 id="如何解决服务器快速重启出现-address-already-in-use">如何解决服务器快速重启，出现 &ldquo;Address already in use&rdquo;？</h3>
+<p>这个问题的出现，是因为快速重启时，<code>监听的 IP、监听的 Port、目的 IP *、目的端口 *</code> 四元组对应的连接还处于 TIME_WAIT 状态</p>
+<p>因此，会提示地址被占用</p>
+<p>服务器可以在设置 socket 的时候加上 <code>SO_REUSEADDR</code> 选项，以复用处于 TIME_WAIT 的连接</p>
+<h3 id="多个-tcp-客户进程可以使用同一端口吗">多个 TCP 客户进程可以使用同一端口吗？</h3>
+<p>一样的，对于同一个四元组对应的连接，只要连接建立，端口就不能复用</p>
+<p>相反，只要连接不同（如服务器 IP 不同），就可以使用相同的端口</p>
+<h2 id="server-没有调用-listenclient-发起连接会发生什么">Server 没有调用 listen，Client 发起连接，会发生什么？</h2>
+<p>如果 Server <strong>bind 了某个 IP + Port</strong>，但 <strong>没有 listen</strong>，当 Client 发送 SYN 给 Server，Server 不会回 ACK 给 Client</p>
+<p>Client 会一直重试，直到重试次数达到上限</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-09-36-49.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但是，如果 Server <strong>没有 bind 客户端的目的 IP + Port</strong> ，Client 发起连接，Server 会直接发一个 RST 报文给对方</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-09-42-55.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>通常情况下，当一个连接请求到达本地却没有相关进程在目的端口侦听时就会产生一个重置报文段。</p>
+<p>UDP 协议规定，当一个数据报到达一个不能使用的目的端口时就会产生一个 ICMP 目的地不可达（端口不可达）的消息。TCP 协议则使用 <strong>重置报文段</strong> 来代替完成相关工作。</p>
+<pre><code>                -- 《TCP/IP详解 卷1：协议（原书第2版）》第 13.6.1 节
+</code></pre>
+</blockquote>
+<h2 id="半连接队列全连接队列的本质">半连接队列、全连接队列的本质？</h2>
+<p>虽然都有「队列」二字，但二者 <strong>实际上都不是队列</strong></p>
+<ul>
+<li>当一个连接请求到来，内核会将连接元数据存到 <strong>半连接队列</strong>，发送 ack</li>
+<li>收到某个连接的 ack 的 ack 后，从半连接队列中取出该连接，发送 ack，并放到 <strong>全连接队列</strong> 中</li>
+<li>服务进程调用 accept，取出一个建立好的 TCP 连接</li>
+</ul>
+<p>“收到某个连接的 ack 的 ack 后，从半连接队列中取出该连接”的「取出」过程是一个随机的过程，因为这个 ack 的顺序并不固定</p>
+<p>如果半连接队列设计成线性结构，那么取出对应连接就需要 O(n) 的时间</p>
+<p><strong>因此，半连接队列实际上是一个哈希表</strong>，取出对应连接的期望时间是 O(1)</p>
+<p><strong>而全连接队列实际上是一个链表</strong>，当然，也可以理解成队列（毕竟队列也有基于链表实现的）</p>
+<h2 id="没有-accept可以建立-tcp-连接吗">没有 accept，可以建立 TCP 连接吗？</h2>
+<p>弄清楚 accept 的本质：从全连接队列中取出一个 <strong>已经建立好的连接</strong>，处理接下来的请求</p>
+<p>也就是说，在 accept 前，TCP 连接就已经建立好了</p>
+<p>因此，accept 与建立 TCP 连接之间没有关系，没有 accept，当然可以建立 TCP 连接</p>
+<h2 id="没有-listen为什么可以建立连接">没有 listen，为什么可以建立连接？</h2>
+<p>以 TCP 自连接为例：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/socket.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;netinet/in.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;errno.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="cp">#define LOCAL_IP_ADDR		(0x7F000001) </span><span class="c1">// IP 127.0.0.1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#define LOCAL_TCP_PORT		(1145) </span><span class="c1">// 端口
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="n">sockaddr_in</span> <span class="n">local</span><span class="p">,</span> <span class="n">peer</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">ret</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">128</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">	<span class="kt">int</span> <span class="n">sock</span> <span class="o">=</span> <span class="nf">socket</span><span class="p">(</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">SOCK_STREAM</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">local</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">peer</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">peer</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">local</span><span class="p">.</span><span class="n">sin_family</span> <span class="o">=</span> <span class="n">AF_INET</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="n">local</span><span class="p">.</span><span class="n">sin_port</span> <span class="o">=</span> <span class="nf">htons</span><span class="p">(</span><span class="n">LOCAL_TCP_PORT</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="n">local</span><span class="p">.</span><span class="n">sin_addr</span><span class="p">.</span><span class="n">s_addr</span> <span class="o">=</span> <span class="nf">htonl</span><span class="p">(</span><span class="n">LOCAL_IP_ADDR</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">peer</span> <span class="o">=</span> <span class="n">local</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">ret</span> <span class="o">=</span> <span class="nf">setsockopt</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">SOL_SOCKET</span><span class="p">,</span> <span class="n">SO_REUSEADDR</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">flag</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">flag</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Fail to setsocket SO_REUSEADDR: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ret</span> <span class="o">=</span> <span class="nf">bind</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">local</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">local</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Fail to bind: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="n">ret</span> <span class="o">=</span> <span class="nf">connect</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">peer</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">peer</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Fail to connect myself: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Connect to myself successfully</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">//发送数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nf">strcpy</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="s">&#34;Hello, myself~&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">send</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">memset</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">//接收数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nf">recv</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">buf</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buf</span><span class="p">),</span> <span class="mi">0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Recv the msg: %s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">buf</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">close</span><span class="p">(</span><span class="n">sock</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>运行，抓包结果如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-09-59-05.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现，自连接也是需要三次握手建立连接</p>
+<ul>
+<li>当发起 connect 系统调用，内核会将连接信息放到一个全局 hash 表中，再将连接消息发出，</li>
+<li>由于是一个回环地址（127.0.0.1），消息又回到传输层</li>
+<li>内核检测有没有进程 bind 了该 IP + Port，有</li>
+<li>于是直接从全局 hash 表取出连接信息，发现源 IP、Port 与目的 IP、Port 相等，直接建立连接</li>
+</ul>
+<h2 id="用了-tcp数据就一定不会丢失吗">用了 TCP，数据就一定不会丢失吗？</h2>
+<h3 id="建立连接丢包">建立连接丢包</h3>
+<p>如果 Server 的半连接队列或者全连接队列满了，会丢弃新的连接请求</p>
+<h3 id="流量控制丢包">流量控制丢包</h3>
+<p>事实上，数据在被发送前，还需要排队</p>
+<blockquote>
+<p>qdisc 是&quot;queueing discipline&quot;的缩写，也就是排队规则，位于网络模型的链路层和网络层之间，它主要在操作系统内核对数据包进行排队，策略路由，速率限制等操作。</p>
+</blockquote>
+<p>qdisc 有容量限制，如果应用发送速率太快，导致队列的数据包太多，超过容量限制，内核就会丢弃这些数据包</p>
+<p>可以使用 tc 查看某个设备是否因为流量控制丢包：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>skylee@localhost Test<span class="o">]</span>$ tc -s qdisc show dev ens33
+</span></span><span class="line"><span class="cl">qdisc pfifo_fast 0: root refcnt <span class="m">2</span> bands <span class="m">3</span> priomap  <span class="m">1</span> <span class="m">2</span> <span class="m">2</span> <span class="m">2</span> <span class="m">1</span> <span class="m">2</span> <span class="m">0</span> <span class="m">0</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl"> Sent <span class="m">6092849</span> bytes <span class="m">20768</span> pkt <span class="o">(</span>dropped 0, overlimits <span class="m">0</span> requeues 1<span class="o">)</span> 
+</span></span><span class="line"><span class="cl"> backlog 0b 0p requeues <span class="m">1</span>
+</span></span></code></pre></div><h3 id="网卡丢包">网卡丢包</h3>
+<p>接收数据时，网卡会先将数据放到 ringbuffer 中</p>
+<p>如果 ringbuffer 满了，还有新的数据包到来，就会丢包</p>
+<p>可以使用 ifconfig 查看是否因为 ringbuffer 满了导致丢包：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>skylee@localhost Test<span class="o">]</span>$ ifconfig
+</span></span><span class="line"><span class="cl">ens33: <span class="nv">flags</span><span class="o">=</span>4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu <span class="m">1500</span>
+</span></span><span class="line"><span class="cl">        inet 192.168.124.114  netmask 255.255.255.0  broadcast 192.168.124.255
+</span></span><span class="line"><span class="cl">        RX packets <span class="m">127108</span>  bytes <span class="m">177474834</span> <span class="o">(</span>169.2 MiB<span class="o">)</span>
+</span></span><span class="line"><span class="cl">        RX errors <span class="m">0</span>  dropped <span class="m">0</span>  overruns <span class="m">0</span>  frame <span class="m">0</span>
+</span></span></code></pre></div><p>RX dropped 为 0，说明没有发生</p>
+<p>可以通过 ethtool 查看网卡配置：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>skylee@localhost Test<span class="o">]</span>$ ethtool -g &lt;device name&gt;
+</span></span><span class="line"><span class="cl">Ring parameters <span class="k">for</span> ens33:
+</span></span><span class="line"><span class="cl">Pre-set maximums:
+</span></span><span class="line"><span class="cl">RX:             <span class="m">4096</span>
+</span></span><span class="line"><span class="cl">RX Mini:        <span class="m">0</span>
+</span></span><span class="line"><span class="cl">RX Jumbo:       <span class="m">0</span>
+</span></span><span class="line"><span class="cl">TX:             <span class="m">4096</span>
+</span></span><span class="line"><span class="cl">Current hardware settings:
+</span></span><span class="line"><span class="cl">RX:             <span class="m">256</span>
+</span></span><span class="line"><span class="cl">RX Mini:        <span class="m">0</span>
+</span></span><span class="line"><span class="cl">RX Jumbo:       <span class="m">0</span>
+</span></span><span class="line"><span class="cl">TX:             <span class="m">256</span>
+</span></span></code></pre></div><p>ringbuffer 的大小为 4096，但是只用了 256</p>
+<p>可以使用 ethtool 修改 ringbuffer 的大小：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>root@localhost Test<span class="o">]</span><span class="c1"># sudo ethtool -G ens33 rx 4096 tx 4096</span>
+</span></span></code></pre></div><h3 id="接收缓冲区满导致丢包">接收缓冲区满导致丢包</h3>
+<p>如果接收缓冲区满了，接收方通常会发送一个「零窗口通告」报文</p>
+<p>但发送方如果仍继续发送数据，那么将会导致丢包</p>
+<p>不过这种情况一般不会出现，收到「零窗口通告」，发送方应该停止发送数据</p>
+<h3 id="两端中间节点丢包">两端中间节点丢包</h3>
+<p>数据包的传输，需要经过许多节点，如果这些节点出现问题（如路由器负载高），可能发生丢包</p>
+<p>可以使用 mrt（my trace route）工具来查看是否出现这个问题：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>root@localhost Test<span class="o">]</span><span class="c1"># mtr -r baidu.com</span>
+</span></span><span class="line"><span class="cl">Start: Wed Jan <span class="m">31</span> 11:13:41 <span class="m">2024</span>
+</span></span><span class="line"><span class="cl">HOST: localhost.localdomain       Loss%   Snt   Last   Avg  Best  Wrst StDev
+</span></span><span class="line"><span class="cl">  1.<span class="p">|</span>-- gateway                    0.0%    <span class="m">10</span>    0.4   0.6   0.4   0.8   0.0
+</span></span><span class="line"><span class="cl">  2.<span class="p">|</span>-- 192.168.0.1                0.0%    <span class="m">10</span>    1.9   8.1   1.5  62.3  19.0
+</span></span><span class="line"><span class="cl">  3.<span class="p">|</span>-- 192.168.1.1                0.0%    <span class="m">10</span>    2.8   2.8   2.3   3.6   0.0
+</span></span><span class="line"><span class="cl">  4.<span class="p">|</span>-- 100.69.0.1                 0.0%    <span class="m">10</span>    6.1   6.9   4.9  12.5   2.2
+</span></span><span class="line"><span class="cl">  5.<span class="p">|</span>-- 110.190.151.153           50.0%    <span class="m">10</span>    9.7   6.9   5.6   9.7   1.5
+</span></span><span class="line"><span class="cl">  6.<span class="p">|</span>-- 171.208.198.185           40.0%    <span class="m">10</span>    8.2   8.4   7.8   9.0   0.0
+</span></span><span class="line"><span class="cl">  7.<span class="p">|</span>-- 202.97.78.189             20.0%    <span class="m">10</span>   31.5  31.9  30.8  32.9   0.5
+</span></span><span class="line"><span class="cl">  8.<span class="p">|</span>-- 202.97.17.74              30.0%    <span class="m">10</span>   35.9  36.8  35.9  37.8   0.0
+</span></span><span class="line"><span class="cl">  9.<span class="p">|</span>-- 221.183.128.137           30.0%    <span class="m">10</span>   36.1  37.0  36.1  38.7   0.7
+</span></span><span class="line"><span class="cl"> 10.<span class="p">|</span>-- 221.183.94.21             60.0%    <span class="m">10</span>   38.5  39.1  38.5  39.8   0.0
+</span></span><span class="line"><span class="cl"> 11.<span class="p">|</span>-- 221.183.49.122             0.0%    <span class="m">10</span>   36.5  37.5  36.0  38.9   0.8
+</span></span><span class="line"><span class="cl"> 12.<span class="p">|</span>-- 111.13.188.38              0.0%    <span class="m">10</span>   37.5  37.9  37.3  38.9   0.0
+</span></span><span class="line"><span class="cl"> 13.<span class="p">|</span>-- 39.156.27.1               20.0%    <span class="m">10</span>   37.6  37.6  37.0  38.9   0.0
+</span></span><span class="line"><span class="cl"> 14.<span class="p">|</span>-- ???                       100.0    <span class="m">10</span>    0.0   0.0   0.0   0.0   0.0
+</span></span><span class="line"><span class="cl"> 15.<span class="p">|</span>-- ???                       100.0    <span class="m">10</span>    0.0   0.0   0.0   0.0   0.0
+</span></span><span class="line"><span class="cl"> 16.<span class="p">|</span>-- ???                       100.0    <span class="m">10</span>    0.0   0.0   0.0   0.0   0.0
+</span></span><span class="line"><span class="cl"> 17.<span class="p">|</span>-- ???                       100.0     <span class="m">9</span>    0.0   0.0   0.0   0.0   0.0
+</span></span><span class="line"><span class="cl"> 18.<span class="p">|</span>-- 39.156.66.10               0.0%     <span class="m">9</span>   40.1  40.1  39.1  41.7   0.5
+</span></span></code></pre></div><p>最后一行是 0，说明没有丢包（不用管前面的）</p>
+<p>但是，如果不是 0，例如：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-11-15-42.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>说明丢包是从最接近的那一行产生的（这个示例为 11 行）</p>
+<p>如果这个 IP 是内网的话，就可以根据 IP 排查一波</p>
+<p>当然，由于 TCP 的重传机制，即使中间节点丢包，只要不超过最大重传次数，TCP 也可以保证数据的可靠到达</p>
+<h3 id="回归问题">回归问题</h3>
+<p>那么，使用了 TCP 就一定不会丢包吗？</p>
+<p>经过前面的分析，可以发现：</p>
+<ul>
+<li>建立连接时，如果半连接队列、全连接队列满了</li>
+<li>流量控制，qdisc 满了</li>
+<li>网卡的 ringbuffer 满了</li>
+</ul>
+<p>都有可能导致丢包</p>
+<p>当然，接收缓冲区满了，或者中间节点丢包，这两个问题，TCP 可以解决</p>
+<p>但还有一种情况，就是在「应用层」发生了 “丢包”：</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-11-21-28.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/3_tcp/tcp_drop.html#%E7%94%A8%E4%BA%86tcp%E5%8D%8F%E8%AE%AE%E5%B0%B1%E4%B8%80%E5%AE%9A%E4%B8%8D%E4%BC%9A%E4%B8%A2%E5%8C%85%E5%90%97" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>应用在从接收缓冲区取出数据，还没来得及本地持久化，就崩溃了</p>
+<p>再次启动，会发现「消息」就丢失了</p>
+<p>因此，TCP 只能保证传输层的「可靠」</p>
+<h3 id="如何解决">如何解决？</h3>
+<ul>
+<li>建立连接产生的「丢包」，可以调整队列的容量（backlog、SOMAXCONN、tcp_max_syn_backlog）</li>
+<li>流量控制产生的丢包，可以调整 qdisc 策略</li>
+<li>网卡 ringbuffer 满了产生的丢包，可以调整 ringbuffer 的大小</li>
+</ul>
+<p>对于上面提到的应用层丢包的示例，可以在发送接收双方添加一个 Server，消息先持久化到 Server，即使应用崩溃了，也可以在 Server 拉取同步数据</p>
+<h2 id="shutdown-与-close">shutdown 与 close</h2>
+<p>shutdown 可以控制关闭 socket 的读端还是写端，而 close 是直接关闭 socket</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="c1">// server.cpp
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;TCPSocket.hpp&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">auto</span> <span class="n">serverSocket</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TCPSocket</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">,</span> <span class="mi">1145</span><span class="p">,</span> <span class="mi">100</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">auto</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">serverSocket</span><span class="o">-&gt;</span><span class="n">accept</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;Linked with &#34;</span> <span class="o">&lt;&lt;</span> <span class="n">socket</span><span class="o">-&gt;</span><span class="n">getIP</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;:&#34;</span> <span class="o">&lt;&lt;</span> <span class="n">socket</span><span class="o">-&gt;</span><span class="n">getPort</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">socket</span><span class="o">-&gt;</span><span class="n">send</span><span class="p">(</span><span class="s">&#34;hello&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="n">sleep</span><span class="p">(</span><span class="mi">100000</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// socket-&gt;close();
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">delete</span> <span class="n">socket</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="c1">// client.cpp
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;TCPSocket.hpp&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;cstdio&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">auto</span> <span class="n">clnt_sock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TCPSocket</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">connect</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">,</span> <span class="mi">1145</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;connented with server</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">close</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sleep</span><span class="p">(</span><span class="mi">100000</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Client 调用 close 后，如果 Server 在 CLOSE_WAIT 阶段向 Client 发送数据，Client 会发送 RST 报文给 Server，直接终止 TCP 连接</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-29-11-49-08.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果 Client 调用的是 shutdown，只关闭写端，那么是可以正常关闭 TCP 连接的</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="c1">// client.cpp
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="cp">#include</span> <span class="cpf">&#34;TCPSocket.hpp&#34;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;cstdio&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">auto</span> <span class="n">clnt_sock</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TCPSocket</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">connect</span><span class="p">(</span><span class="s">&#34;127.0.0.1&#34;</span><span class="p">,</span> <span class="mi">1145</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">printf</span><span class="p">(</span><span class="s">&#34;connented with server</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">socket</span> <span class="o">=</span> <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">native_sock</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">shutdown</span><span class="p">(</span><span class="n">socket</span><span class="p">,</span> <span class="n">SHUT_WR</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">receive</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&#34;</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">sleep</span><span class="p">(</span><span class="mi">100000</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">clnt_sock</span><span class="o">-&gt;</span><span class="n">close</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-29-11-54-25.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>It’s important to note that <strong>shutdown() doesn’t actually close the file descriptor—it just changes its usability</strong>. To free a socket descriptor, you need to use close().</p>
+<p>In contrast, close() will not only send a FIN packet but will also release the socket descriptor and any associated resources. It&rsquo;s worth noting that if close() is called while data is still in the send buffer, the system will attempt to send this data to the peer before fully closing the connection.</p>
+<p>Keep in mind, to ensure all resources are properly cleaned up, <strong>you should always close() a socket when you&rsquo;re done with it</strong>, even if you&rsquo;ve already called shutdown().</p>
+</blockquote>
+<p>shutdown 只是改变了文件描述符的「可用性」，要真正释放资源，必须调用 close，总结如下：</p>
+<ul>
+<li>作为被动关闭方，直接调用 close</li>
+<li>作为主动关闭方，如果有读/写的需求（这需要双方的协商，即自定协议），可以先使用 shutdown，但 <strong>最后一定要调用 close 关闭 socket</strong></li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

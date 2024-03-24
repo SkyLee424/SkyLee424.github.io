@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MySQL 基础 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="执行一个 SQL 语句，发生了什么？ SQL 语句 在 MySQL 的大致执行流程 先来看看整体流程： 图片来自小林 coding Client 先与 Server 建立连接，确定 Client 的权限，后续请求的权限都基于此 执"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MySQL 基础" />
+<meta property="og:description" content="MySQL 的基础知识" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-19T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-19T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MySQL 基础"/>
+<meta name="twitter:description" content="MySQL 的基础知识"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/%E5%9F%BA%E7%A1%80/note/">MySQL 基础</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      MySQL 的基础知识
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-19T00:00:00&#43;00:00">
+      2024-02-19
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h1 id="执行一个-sql-语句发生了什么">执行一个 SQL 语句，发生了什么？</h1>
+<h2 id="sql-语句-在-mysql-的大致执行流程">SQL 语句 在 MySQL 的大致执行流程</h2>
+<p>先来看看整体流程：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-17-42-23-014.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/base/how_select.html#mysql-%E6%89%A7%E8%A1%8C%E6%B5%81%E7%A8%8B%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<ul>
+<li>Client 先与 Server 建立连接，确定 Client 的权限，后续请求的权限都基于此</li>
+<li>执行 SQL 语句前，先看看 Cache 有没有这个 SQL 的缓存，如果有直接返回，如果没有：</li>
+<li>解析 SQL 语句</li>
+<li>执行 SQL 语句：
+<ul>
+<li>预处理：看看字段、表等是否存在</li>
+<li>确定执行计划：选择合适的索引</li>
+<li>执行，向存储引擎发起 API 请求</li>
+</ul>
+</li>
+</ul>
+<p>可以发现，MySQL 的整体架构主要分为两部分：</p>
+<ul>
+<li>Server：负责与 Client 的通信，SQL 语句的分析，执行 SQL</li>
+<li>存储引擎：负责数据的落地</li>
+</ul>
+<h3 id="建立连接-----连接器">建立连接 &mdash; 连接器</h3>
+<p>在执行 SQL 语句前，Client 需要先与 Server 建立连接</p>
+<p>MySQL 建立的连接是基于 TCP 的</p>
+<p>Client 建立连接时，需要指定用户名和密码，如果验证通过，<strong>连接器就会获取该用户拥有的权限，后续的 SQL 调用，都是基于这个时候获取的权限来鉴权的</strong></p>
+<h3 id="查询缓存">查询缓存</h3>
+<p>连接建立后，如果 Client 想要执行一个 SQL 语句，Server 会先看看这个 SQL 语句的查询结果有没有缓存（缓存是 KV 结构），如果有缓存，就可以直接返回结果给 Client</p>
+<p>为了确保数据的一致性，只要表的数据发生更改，MySQL 就会清空该表对应的缓存</p>
+<p>因此，对于更新频繁的表，查询缓存的命中率是很低的</p>
+<p>MySQL 8.0 版本直接将查询缓存删掉了</p>
+<h3 id="sql-语句解析-----解析器">SQL 语句解析 &mdash; 解析器</h3>
+<p>执行 SQL 语句之前，还要看看有没有语法错误</p>
+<p>MySQL 会使用「解析器」将一个 SQL 语句解析成若干个词</p>
+<ul>
+<li>关键词：如 select、from、where</li>
+<li>非关键词：如 user</li>
+</ul>
+<p>解析过后，看看有没有语法错误，如果有，直接返回错误给 Client，如果没有，构建语法树，为后续执行 SQL 做准备</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-18-06-17-327.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="执行-sql-语句">执行 SQL 语句</h3>
+<h4 id="预处理器">预处理器</h4>
+<p>预处理器会基于之前构建的语法树来 <strong>判断表、字段在数据库中是否存在</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-18-11-30-167.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="优化器">优化器</h4>
+<p>在执行之前，还要确定 <strong>执行计划</strong></p>
+<p>由于一个 SQL 语句使用到的索引可能有多个，优化器需要选择一个查询性能较高的索引</p>
+<p>例如，假设有一个 user 表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">User</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w">       </span><span class="nb">int</span><span class="w"> </span><span class="n">auto_increment</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w">     </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">sex</span><span class="w">      </span><span class="nb">char</span><span class="w">        </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">phoneNum</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w"> </span><span class="k">null</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>并且有两个索引：</p>
+<pre tabindex="0"><code>+-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| Table | Non_unique | Key_name | Seq_in_index | Column_name | Collation | Cardinality | Sub_part | Packed | Null | Index_type | Comment | Index_comment | Visible | Expression |
++-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+| User  |          0 | PRIMARY  |            1 | id          | A         |           0 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
+| User  |          1 | idx_name |            1 | name        | A         |           0 |     NULL |   NULL |      | BTREE      |         |               | YES     | NULL       |
++-------+------------+----------+--------------+-------------+-----------+-------------+----------+--------+------+------------+---------+---------------+---------+------------+
+</code></pre><p>如果执行 <code>select id, name from User where id &gt; 1 and name like 'f%';</code>，会用到哪个索引呢？</p>
+<p>可以使用 explain 来看看：</p>
+<pre tabindex="0"><code>+----+-------------+-------+------------+-------+------------------+----------+---------+------+------+----------+--------------------------+
+| id | select_type | table | partitions | type  | possible_keys    | key      | key_len | ref  | rows | filtered | Extra                    |
++----+-------------+-------+------------+-------+------------------+----------+---------+------+------+----------+--------------------------+
+|  1 | SIMPLE      | User  | NULL       | range | PRIMARY,idx_name | idx_name | 46      | NULL |    1 |    75.00 | Using where; Using index |
++----+-------------+-------+------------+-------+------------------+----------+---------+------+------+----------+--------------------------+
+</code></pre><p>可以看到，使用了 idx_name，而不是聚集索引（主键索引）</p>
+<p>因为使用 idx_name，对于这个 SQL 语句来说，不涉及回表查询，相当于是覆盖索引了，相对主键索引，性能更好</p>
+<p>如果是 <code>select * from User where id &gt; 1 and name like 'f%'</code>，那么就要走主键索引了，避免一次回表查询</p>
+<h4 id="执行器">执行器</h4>
+<p>确定了执行计划，Server 层就会与存储引擎层交互了</p>
+<p>以两个例子来说说交互过程：</p>
+<ul>
+<li>全表查询</li>
+<li>索引下推</li>
+</ul>
+<p><strong>全表查询</strong></p>
+<p>例如：<code>select * from user where sex = 'F';</code></p>
+<ul>
+<li>执行器第一次查询，让存储引擎读取表中第一条记录</li>
+<li>执行器会判断这个记录是否符合条件
+<ul>
+<li>如果不符合，跳过</li>
+<li>如果符合， <strong>将结果返回给客户端</strong></li>
+</ul>
+</li>
+<li>一直重复上述过程，直到数据全部读取过一遍</li>
+</ul>
+<p>可以发现，执行器每得到一个合法数据，就会返回给客户端，之所以客户端显示的是所有记录，是因为客户端会在查询全部执行完毕后，才会将结果返回给用户</p>
+<p><strong>索引下推</strong></p>
+<p>索引下推是 MySQL5.6 版本引入的策略，用于联合索引的优化</p>
+<p>具体来说，索引下推将回表这个操作下放到了存储引擎层，而不是 Server，减少回表次数，提高效率</p>
+<p>例如假设有一个联合索引（age，salary）</p>
+<p>执行 <code>select * from user where age &gt; 10 and salary = 1000</code></p>
+<p>根据查询条件，联合索引会部分失效：age 字段可以用到索引，但 salary 不能</p>
+<p>如果不启用索引下推：</p>
+<ul>
+<li>执行器调用 API，使存储引擎定位到 age &gt; 10 的第一条记录</li>
+<li>存储引擎获取主键值，<strong>执行回表查询</strong>，将完整的查询结果返回给 Server</li>
+<li>Server 来判断 salary 是否等于 1000，如果相等，返回给 Client</li>
+</ul>
+<p>如果启用索引下推：</p>
+<ul>
+<li>执行器调用 API，使存储引擎定位到 age &gt; 10 的第一条记录</li>
+<li>由于建立联合索引，存储引擎可以自己判断 salary 是否等于 1000，<strong>如果相等，根据主键 id 执行回表查询</strong>，将完整的查询结果返回给 Server</li>
+<li>Server 判断其它条件是否满足（本例没有其它条件）如果满足，将结果返回给 Client</li>
+</ul>
+<p>可以发现，如果不启用索引下推，当满足 age &gt; 10，就要回表查询；而启用索引下推，只有当 salary = 1000 时才会回表查询</p>
+<p>可以使用 explain 执行计划看看有没有使用索引下推：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-19-25-03-623.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果出现 <code>Using Index Condition</code>，说明使用了索引下推</p>
+<hr>
+<h1 id="mysql-一行记录是如何存储的">MySQL 一行记录是如何存储的？</h1>
+<p>下面的示例都是基于 MySQL8.1 版本</p>
+<h2 id="mysql-的数据存放在哪里">MySQL 的数据存放在哪里？</h2>
+<p>可以使用 <code>SHOW VARIABLES LIKE 'datadir';</code> 来查看 MySQL 数据的存储位置：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; SHOW VARIABLES LIKE <span class="s1">&#39;datadir&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">+---------------+-----------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> Variable_name <span class="p">|</span> Value           <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+---------------+-----------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> datadir       <span class="p">|</span> /var/lib/mysql/ <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+---------------+-----------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in <span class="nb">set</span> <span class="o">(</span>0.09 sec<span class="o">)</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-19-31-10-667.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这个文件夹内存放了 MySQL 存储的所有数据，这里面还有若干个子目录，每个子目录代表一个 db，存储了表数据</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">bash-4.4# <span class="nb">cd</span> bluebell/
+</span></span><span class="line"><span class="cl">bash-4.4# ls -l
+</span></span><span class="line"><span class="cl">total <span class="m">3420</span>
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">18</span> 20:11 comment_contents.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">18</span> 20:11 comment_indices.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">18</span> 20:11 comment_subjects.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">131072</span> Feb <span class="m">18</span> 20:11 comment_user_hate_mappings.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">147456</span> Feb <span class="m">18</span> 20:11 comment_user_like_mappings.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">147456</span> Feb <span class="m">18</span> 20:11 communities.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Jan <span class="m">11</span> 16:37 expired_post_scores.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">15</span> 09:10 fts_000000000000042e_00000000000000ac_index_1.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000ac_index_2.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000ac_index_3.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000ac_index_4.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000ac_index_5.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">15</span> 09:10 fts_000000000000042e_00000000000000ac_index_6.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">163840</span> Feb <span class="m">15</span> 09:10 fts_000000000000042e_00000000000000b3_index_1.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000b3_index_2.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000b3_index_3.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000b3_index_4.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_00000000000000b3_index_5.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">294912</span> Feb <span class="m">15</span> 09:10 fts_000000000000042e_00000000000000b3_index_6.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_being_deleted.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_being_deleted_cache.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">15</span> 09:10 fts_000000000000042e_config.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Feb <span class="m">18</span> 16:53 fts_000000000000042e_deleted.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">114688</span> Nov  <span class="m">4</span> 09:08 fts_000000000000042e_deleted_cache.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">262144</span> Feb <span class="m">18</span> 20:11 posts.ibd
+</span></span><span class="line"><span class="cl">-rw-r----- <span class="m">1</span> mysql mysql <span class="m">163840</span> Feb <span class="m">19</span> 09:00 users.ibd
+</span></span></code></pre></div><h2 id="mysql-的表空间结构">MySQL 的表空间结构？</h2>
+<p>表空间由：段、区、页、行 这四个基本结构组成</p>
+<h3 id="行row">行（row）</h3>
+<p>数据库的 record 都是按照 <strong>行</strong> 来存储的</p>
+<h3 id="页page">页（page）</h3>
+<p>如果数据读取的基本单位是 <em>行</em> 的话，每次只能读极少数据，会增加很多 IO 次数，效率低</p>
+<p>InnoDB 存储引擎读取数据的基本单位是 <strong>页</strong>，一页的大小默认是 16K</p>
+<p>数据页内，存储了很多行</p>
+<p>每次读取数据，最少都要读取一页到内存，也就是 16K</p>
+<h3 id="区extent">区（extent）</h3>
+<p>B+ 树的每个节点就是一个数据页，其中，每层之间的节点组成一个双向链表</p>
+<p>在查询时，可能涉及到读取多个数据页，如果这些数据页在磁盘不是连续的，那么会带来很多随机 IO，严重降低读写性能</p>
+<p>因此，当数据量较大时，为索引分配空间就不能以页来分配了，而是按照 <strong>区</strong> 作为基本单位</p>
+<p>一个区的大小默认为 1M，可以存放 64 个页，在这个区内的所有数据页的物理位置都是连续的</p>
+<h4 id="段segment">段（segment）</h4>
+<p>表空间是由若干个 <strong>段</strong> 组成的，一般分为：</p>
+<ul>
+<li>索引段：存放索引数据</li>
+<li>数据段：存放记录的数据</li>
+<li>回滚段：用于 MVCC</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-19-48-57-575.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/base/row_format.html#%E8%A1%A8%E7%A9%BA%E9%97%B4%E6%96%87%E4%BB%B6%E7%9A%84%E7%BB%93%E6%9E%84%E6%98%AF%E6%80%8E%E4%B9%88%E6%A0%B7%E7%9A%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<h2 id="innodb-的行格式有哪些">InnoDB 的行格式有哪些？</h2>
+<p>InnoDB 提供了 4 种行格式，分别是 Redundant、Compact、Dynamic和 Compressed 行格式</p>
+<ul>
+<li>Redundant 太过古老，为 MySQL5.0 版本之前使用，性能不佳</li>
+<li>Compact 是一种紧凑的行格式，可以让一个页存放更多行数据</li>
+<li>Dynamic和 Compressed 是基于 Compact 改进的，在 5.7 版本后，默认使用的是 Dynamic 行格式</li>
+</ul>
+<h2 id="compact-行格式">COMPACT 行格式</h2>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-19-52-55-411.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/base/row_format.html#compact-%E8%A1%8C%E6%A0%BC%E5%BC%8F%E9%95%BF%E4%BB%80%E4%B9%88%E6%A0%B7" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<ul>
+<li>变长字段列表（可选）：<strong>逆序</strong> 记录了每一变长字段的实际长度</li>
+<li>NULL 值列表（可选）：<strong>逆序</strong> 记录了每列是否为 NULL</li>
+<li>记录头信息（必需）：包含信息较多，这里写几个重要的：
+<ul>
+<li>delete_mask：标记该行数据是否删除（这里可以发现删除数据并不是马上删除）</li>
+<li>next_record：下一条记录的位置</li>
+<li>record_type：记录类型（普通记录、B+ 树非叶子节点记录、最小记录、最大记录）</li>
+</ul>
+</li>
+<li>row_id（可选）：如果没有主键，也没有 unique 列，那么 InnoDB 会为该表添加一个隐藏的 row_id 字段</li>
+<li>trx_id（必需）：事务 id，记录了该行是哪个事务生成的</li>
+<li>roll_pointer（必需）：指向上一个版本的指针</li>
+<li>列 1、列 2&hellip;：记录每一列的数据</li>
+</ul>
+<h2 id="varcharn-的-n-的最大取值为多少">varchar(n) 的 n 的最大取值为多少？</h2>
+<p>首先弄清楚：n 并不是字节数，而是 <strong>字符数</strong></p>
+<p>MySQL 规定：<strong>除了 TEXT、BLOBs 这种大对象类型之外，其他所有的列（不包括隐藏列和记录头信息）占用的字节长度加起来不能超过 65535 个字节。</strong></p>
+<p>例如，假设要创建这样一个表：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">TABLE</span><span class="w"> </span><span class="n">test</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="o">`</span><span class="n">name</span><span class="o">`</span><span class="w"> </span><span class="nb">VARCHAR</span><span class="p">(</span><span class="mi">65535</span><span class="p">)</span><span class="w">  </span><span class="k">NULL</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">)</span><span class="w"> </span><span class="n">ENGINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InnoDB</span><span class="w"> </span><span class="k">DEFAULT</span><span class="w"> </span><span class="nb">CHARACTER</span><span class="w"> </span><span class="k">SET</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ascii</span><span class="w"> </span><span class="n">ROW_FORMAT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">COMPACT</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>报错：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-20-07-56-866.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><em>This includes storage overhead</em>，这个 overhead 指的就是前面提到的：<strong>变长字段列表和 NULL 值列表</strong></p>
+<p>在这个示例中，NULL 值列表的大小为 1 字节（因为允许 name 为 NULL）</p>
+<p>而变长字段列表的大小为 2 字节</p>
+<blockquote>
+<p>「变长字段长度列表」所占用的字节数 = 所有「变长字段长度」占用的字节数之和。</p>
+<p>所以，我们要先知道每个变长字段的「变长字段长度」需要用多少字节表示？具体情况分为：</p>
+<ul>
+<li>条件一：如果变长字段允许存储的最大字节数小于等于 255 字节，就会用 1 字节表示「变长字段长度」；</li>
+<li>条件二：如果变长字段允许存储的最大字节数大于 255 字节，就会用 2 字节表示「变长字段长度」；</li>
+</ul>
+</blockquote>
+<p>因此，在本例的条件下，name 能存储的的最大值为 65535-1-2=65532 字节</p>
+<p>而我们采用的又是 ascii 编码，每个字符占 1 字节，因此，n 的最大值为 65532</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; CREATE TABLE test1 <span class="o">(</span>
+</span></span><span class="line"><span class="cl">    -&gt; <span class="sb">`</span>name<span class="sb">`</span> VARCHAR<span class="o">(</span>65532<span class="o">)</span>  NULL
+</span></span><span class="line"><span class="cl">    -&gt; <span class="o">)</span> <span class="nv">ENGINE</span> <span class="o">=</span> InnoDB DEFAULT CHARACTER <span class="nv">SET</span> <span class="o">=</span> ascii <span class="nv">ROW_FORMAT</span> <span class="o">=</span> COMPACT<span class="p">;</span>
+</span></span><span class="line"><span class="cl">Query OK, <span class="m">0</span> rows affected <span class="o">(</span>0.02 sec<span class="o">)</span>
+</span></span></code></pre></div><p>如果我们采用 utfm8 编码，n 的最大值就不是 65532 了，因为 utf8 编码，每个字符占 3 个字节，那么 n 的最大值应该为 65532/3=21844：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; CREATE TABLE test1 <span class="o">(</span>
+</span></span><span class="line"><span class="cl">    -&gt; <span class="sb">`</span>name<span class="sb">`</span> VARCHAR<span class="o">(</span>65532<span class="o">)</span>  NULL
+</span></span><span class="line"><span class="cl">    -&gt; <span class="o">)</span> <span class="nv">ENGINE</span> <span class="o">=</span> InnoDB DEFAULT CHARACTER <span class="nv">SET</span> <span class="o">=</span> utf8 <span class="nv">ROW_FORMAT</span> <span class="o">=</span> COMPACT<span class="p">;</span>
+</span></span><span class="line"><span class="cl">ERROR <span class="m">1074</span> <span class="o">(</span>42000<span class="o">)</span>: Column length too big <span class="k">for</span> column <span class="s1">&#39;name&#39;</span> <span class="o">(</span><span class="nv">max</span> <span class="o">=</span> 21845<span class="o">)</span><span class="p">;</span> use BLOB or TEXT instead
+</span></span></code></pre></div><p>此外，一个表通常有多个字段，即使采用 ascii 编码，n 的值也应该 &lt; 65532</p>
+<p>总结：</p>
+<ul>
+<li>n 代表的是字符数，而不是字节数</li>
+<li>n 的最大值限制于编码方式、表的字段数等</li>
+</ul>
+<h2 id="行溢出后mysql-是如何处理的">行溢出后，MySQL 是如何处理的？</h2>
+<p>如果表中包含了 TEXT、BLOB 字段，那么一行的数据可能会超过 65535 字节，此时就会发生行溢出</p>
+<p>对于 COMPACT 行格式而言，如果发生行溢出，在记录的真实数据处，只会保存 <strong>该列</strong> 的 <strong>一部分数据</strong>，留 20 字节存储溢出页地址，多的数据会存储到溢出页中：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-20-21-29-364.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Compressed 和 Dynamic 这两个行格式和 Compact 非常类似，主要区别就在于对行溢出的处理</p>
+<p>这两个行格式，如果发生行溢出，在记录的真实数据处，<strong>不会</strong>保存 <strong>该列</strong> 的数据，而是仅存储溢出页的地址，溢出页来负责存储实际数据</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-20-24-06-141.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/base/row_format.html#%E8%A1%8C%E6%BA%A2%E5%87%BA%E5%90%8E-mysql-%E6%98%AF%E6%80%8E%E4%B9%88%E5%A4%84%E7%90%86%E7%9A%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

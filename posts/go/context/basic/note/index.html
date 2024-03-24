@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Go: Context - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="在 Go 服务中，每个传入的请求都在其自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问其他后端，如数据库和 RPC 服务。处理请求的 goroutine 通常需要访问特定于"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Go: Context" />
+<meta property="og:description" content="Go: Context 介绍" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/go/context/basic/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-15T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Go: Context"/>
+<meta name="twitter:description" content="Go: Context 介绍"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/go/context/basic/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/go/context/basic/note/">Go: Context</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Go: Context 介绍
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/golang/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Golang
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/golang/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Golang</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-15T00:00:00&#43;00:00">
+      2024-03-15
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      6 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>在 Go 服务中，每个传入的请求都在其自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问其他后端，如数据库和 RPC 服务。处理请求的 goroutine 通常需要访问特定于请求（request-specific context）的值，例如最终用户的身份、授权令牌和请求的截止日期（deadline）。</p>
+<p>当一个请求被取消或超时时，处理该请求的所有 goroutine 都应该快速退出（fail fast），这样系统就可以回收它们正在使用的任何资源。</p>
+<p>Go 1.7 引入一个 context 包，它使得跨 API 边界的请求范围元数据、取消信号和截止日期很容易传递给处理请求所涉及的所有 goroutine（显示传递）。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">Context</span> <span class="kd">interface</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">Deadline</span><span class="p">()</span> <span class="p">(</span><span class="nx">deadline</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Time</span><span class="p">,</span> <span class="nx">ok</span> <span class="kt">bool</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">Done</span><span class="p">()</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">Err</span><span class="p">()</span> <span class="kt">error</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nf">Value</span><span class="p">(</span><span class="nx">key</span> <span class="nx">any</span><span class="p">)</span> <span class="nx">any</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="集成-context-到-api-中">集成 Context 到 API 中</h3>
+<p>一般来说，将 Context 集成到 API 中，需要将 API 的首参数作为 Context：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">d</span> <span class="o">*</span><span class="nx">Dialer</span><span class="p">)</span> <span class="nf">DialContext</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">network</span><span class="p">,</span> <span class="nx">address</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Conn</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+</span></span></code></pre></div><p>在此函数执行 Dial 操作的过程中，可以通过 ctx 来超时控制和取消</p>
+<h3 id="contextwithvalue">Context.WithValue</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">WithValue</span><span class="p">(</span><span class="nx">parent</span> <span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="nx">any</span><span class="p">)</span> <span class="nx">Context</span>
+</span></span></code></pre></div><p>WithValue 返回父级的副本，其中与 key 关联的值为 val。</p>
+<p>仅将 Value 用于传输进程和 API 的请求范围数据，而 <strong>不是用于将可选参数传递给函数</strong>。</p>
+<p>提供的键必须是可比较的，并且 <strong>不应是字符串类型或任何其他内置类型</strong>，以避免使用上下文的包之间发生 <strong>冲突</strong>。</p>
+<p>WithValue 的用户应该 <strong>定义自己的键类型</strong>。</p>
+<p>为了避免在将值分配给一个 interface{} 类型时进行额外的内存分配（allocation），上下文键（context keys）常常采用具体类型 struct{}</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">contextKey</span> <span class="kd">struct</span><span class="p">{}</span> <span class="c1">// 使用 struct{} 类型的键
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">value</span> <span class="o">:=</span> <span class="s">&#34;some value&#34;</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">ctx</span> <span class="p">=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithValue</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">contextKey</span><span class="p">{},</span> <span class="nx">value</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">retrievedValue</span> <span class="o">:=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Value</span><span class="p">(</span><span class="nx">contextKey</span><span class="p">{})</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">fmt</span><span class="p">.</span><span class="nf">Println</span><span class="p">(</span><span class="nx">retrievedValue</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><blockquote>
+<p>在 Go 中，interface{} 是一个空接口，它可以容纳任何类型的值。当你将一个具体类型的值分配给 interface{} 类型时，Go 通常需要进行类型转换（type assertion），这可能会导致额外的内存分配和运行时开销。为了避免这些开销，上下文（context）包提供了一种 context.Context 类型，它使用了一种特殊的技巧，其中键（keys）通常采用具体类型 struct{} 而不是接口类型。</p>
+</blockquote>
+<p>context.WithValue 方法允许上下文携带请求范围的数据。这些数据必须是安全的，以便多个 goroutine 同时使用。</p>
+<p>这里的数据，更多是面向请求的元数据，<strong>不应该作为函数的可选参数来使用</strong>（比如 context 里面挂了一个 sql.Tx 对象，传递到 data 层使用），因为 <strong>元数据相对函数参数更加是隐含的</strong> ，面向请求的。而参数是更加显示的。</p>
+<h4 id="原理">原理</h4>
+<p>context.WithValue 内部基于 valueCtx 实现:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">WithValue</span><span class="p">(</span><span class="nx">parent</span> <span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="nx">any</span><span class="p">)</span> <span class="nx">Context</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">parent</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nb">panic</span><span class="p">(</span><span class="s">&#34;cannot create context from nil parent&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">key</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nb">panic</span><span class="p">(</span><span class="s">&#34;nil key&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">reflectlite</span><span class="p">.</span><span class="nf">TypeOf</span><span class="p">(</span><span class="nx">key</span><span class="p">).</span><span class="nf">Comparable</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nb">panic</span><span class="p">(</span><span class="s">&#34;key is not comparable&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">valueCtx</span><span class="p">{</span><span class="nx">parent</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>valueCtx 的相关定义如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// A valueCtx carries a key-value pair. It implements Value for that key and
+</span></span></span><span class="line"><span class="cl"><span class="c1">// delegates all other calls to the embedded Context.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">valueCtx</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Context</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="nx">any</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 递归的查找，从父节点寻找匹配的 key，直到 root context（Backgrond 和 TODO Value 函数会返回
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">c</span> <span class="o">*</span><span class="nx">valueCtx</span><span class="p">)</span> <span class="nf">Value</span><span class="p">(</span><span class="nx">key</span> <span class="nx">any</span><span class="p">)</span> <span class="nx">any</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">c</span><span class="p">.</span><span class="nx">key</span> <span class="o">==</span> <span class="nx">key</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">c</span><span class="p">.</span><span class="nx">val</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nf">value</span><span class="p">(</span><span class="nx">c</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-15-11-11-47-614.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>小技巧：如果要传递的参数很多，可以传递一个 map，避免产生的查询链太长，影响效率</p>
+<h4 id="安全">安全</h4>
+<p>同一个 context 对象可以传递给在不同 goroutine 中运行的函数；上下文对于多个 goroutine <strong>同时使用是安全的</strong>。</p>
+<p>对于值类型最容易犯错的地方，在于 context 的 value 应该是 <strong>不可修改（immutable）</strong> 的，每次重新赋值应该是新的 context，即:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// pkg context
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">WithValue</span><span class="p">(</span><span class="nx">parent</span> <span class="nx">Context</span><span class="p">,</span> <span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="nx">any</span><span class="p">)</span> <span class="nx">Context</span>
+</span></span></code></pre></div><p>这种思想就是 <strong>写时拷贝</strong> 思想</p>
+<p>修改一个 Context Value 时，不能直接修改，先 deep-copy 一份，再生成一个新的 context 传给下游</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-15-11-12-13-848.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这样各自读取的副本都是自己的数据，写行为追加的数据，在 ctx2 中也能完整读取到，同时也不会污染 ctx1 中的数据。</p>
+<h3 id="cancellation">Cancellation</h3>
+<blockquote>
+<p>When a Context is canceled, all Contexts derived from it are also canceled</p>
+</blockquote>
+<p>当一个 context 被取消时，从它派生的所有 context 也将被取消。</p>
+<p>WithCancel(ctx) 参数 ctx 认为是 parent ctx，在内部会进行一个传播关系链的关联。</p>
+<p>Done() 返回 一个 chan，当我们取消某个 parent context, 实际上上会递归层层 cancel 掉自己的 child context 的 done chan，从而让整个调用链中所有监听 cancel 的 goroutine 退出。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kn">package</span> <span class="nx">main</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;context&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;fmt&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">gen</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kt">int</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">dst</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">n</span> <span class="o">:=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">			<span class="k">defer</span> <span class="nb">close</span><span class="p">(</span><span class="nx">dst</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="c1">// 防止 goroutine 泄漏
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>				<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;ctx.Err(): %v\n&#34;</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">().</span><span class="nf">Error</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">					<span class="k">return</span>
+</span></span><span class="line"><span class="cl">				<span class="k">case</span> <span class="nx">dst</span> <span class="o">&lt;-</span> <span class="nx">n</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">n</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">dst</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithCancel</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">dst</span> <span class="o">:=</span> <span class="nf">gen</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">dst</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;v: %v\n&#34;</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">v</span> <span class="o">==</span> <span class="mi">5</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">break</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="timeout">TimeOut</h3>
+<blockquote>
+<p>All blocking/long operations should be cancelable</p>
+</blockquote>
+<p>这点可以通过使用 context.WithDeadline 实现</p>
+<p>例如，将上面的代码加上超时时间</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">gen</span> <span class="o">:=</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kt">int</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">dst</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">n</span> <span class="o">:=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">			<span class="k">defer</span> <span class="nb">close</span><span class="p">(</span><span class="nx">dst</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="c1">// 防止 goroutine 泄漏
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>				<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;ctx.Err(): %v\n&#34;</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">().</span><span class="nf">Error</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">					<span class="k">return</span>
+</span></span><span class="line"><span class="cl">				<span class="k">case</span> <span class="nx">dst</span> <span class="o">&lt;-</span> <span class="nx">n</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">					<span class="nx">n</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">				<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">dst</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithDeadline</span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nf">Background</span><span class="p">(),</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Now</span><span class="p">().</span><span class="nf">Add</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">dst</span> <span class="o">:=</span> <span class="nf">gen</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">v</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">dst</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">fmt</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;v: %v\n&#34;</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="使用原则">使用原则</h3>
+<ul>
+<li><strong>Do not store Contexts inside a struct type</strong>; instead, pass a Context explicitly to each function that needs it.</li>
+<li>Replace a Context using WithCancel, WithDeadline, WithTimeout, or WithValue</li>
+<li><strong>Do not pass a nil Context</strong> , even if a function permits it. Pass a TODO context if you are unsure about which Context to use.
+<blockquote>
+<p>TODO returns a non-nil, empty [Context]. Code should use context.TODO when it&rsquo;s unclear which Context to use or it is not yet available (because the surrounding function has not yet been extended to accept a Context parameter).</p>
+</blockquote>
+</li>
+<li>Use context values only for request-scoped data that transits processes and APIs, <strong>not for passing optional parameters to functions</strong></li>
+<li>All blocking/long operations should be cancelable.</li>
+<li>Context.Value should inform, not control.（即不要使用 context.Value 来控制程序的流程）</li>
+<li>Try not to use context.Value.</li>
+</ul>
+<h3 id="示例">示例</h3>
+<p>下面实现一个简易的 MySQL 客户端，使用 context 来实现查询的超时和取消操作。</p>
+<p>先来看看目录结构：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Sky_Lee@SkyLeeMacBook-Pro context_demo % tree
+</span></span><span class="line"><span class="cl">.
+</span></span><span class="line"><span class="cl">├── context_demo
+</span></span><span class="line"><span class="cl">├── go.mod
+</span></span><span class="line"><span class="cl">├── main.go
+</span></span><span class="line"><span class="cl">└── sql
+</span></span><span class="line"><span class="cl">    └── sql.go
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="m">2</span> directories, <span class="m">4</span> files
+</span></span></code></pre></div><p>main.go 的内容如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kn">package</span> <span class="nx">main</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;context&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;context_demo/sql&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;log&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;net/http&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;time&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">db</span> <span class="o">*</span><span class="nx">sql</span><span class="p">.</span><span class="nx">DB</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="kd">var</span> <span class="nx">err</span> <span class="kt">error</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 这里是一个演示，并不会真正连接数据库
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">db</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">sql</span><span class="p">.</span><span class="nf">Open</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">db</span><span class="p">.</span><span class="nf">Close</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">http</span><span class="p">.</span><span class="nf">HandleFunc</span><span class="p">(</span><span class="s">&#34;/user&#34;</span><span class="p">,</span> <span class="nx">handlerGetUser</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">log</span><span class="p">.</span><span class="nf">Fatal</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nf">ListenAndServe</span><span class="p">(</span><span class="s">&#34;:1145&#34;</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// controller 层
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">handlerGetUser</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">ctx</span><span class="p">,</span> <span class="nx">cancel</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nf">WithTimeout</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nf">Context</span><span class="p">(),</span> <span class="mi">3</span><span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span><span class="p">)</span> <span class="c1">// 控制 queryUsers 的超时时间为 3s
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">defer</span> <span class="nf">cancel</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">user</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nf">queryUsers</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">http</span><span class="p">.</span><span class="nf">Error</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="s">&#34;Failed to query users&#34;</span><span class="p">,</span> <span class="nx">http</span><span class="p">.</span><span class="nx">StatusInternalServerError</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">log</span><span class="p">.</span><span class="nf">Printf</span><span class="p">(</span><span class="s">&#34;Failed to query users, reason: %v\n&#34;</span><span class="p">,</span> <span class="nx">err</span><span class="p">.</span><span class="nf">Error</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">w</span><span class="p">.</span><span class="nf">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="nx">user</span> <span class="o">+</span> <span class="s">&#34;\n&#34;</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// logic 层
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">queryUsers</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nf">SelectUser</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">db</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// dao 层
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="nf">SelectUser</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">db</span> <span class="o">*</span><span class="nx">sql</span><span class="p">.</span><span class="nx">DB</span><span class="p">)</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">query</span> <span class="o">:=</span> <span class="s">&#34;SELECT username FROM user LIMIT 1&#34;</span> <span class="c1">// 示例查询语句
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 使用context控制超时时间
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">res</span><span class="p">,</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">db</span><span class="p">.</span><span class="nf">QueryWithContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span> <span class="nx">query</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">err</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">res</span><span class="p">,</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>为了方便，main.go 实现了 controller、logic、dao 层的内容</p>
+<p>main.go 控制了单次查询的超时时间为 3s，并且通过 context.WithTimeout 控制了查询操作的超时时间</p>
+<p>再来看看 sql.go 文件：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kn">package</span> <span class="nx">sql</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kn">import</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;context&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;errors&#34;</span>
+</span></span><span class="line"><span class="cl">	<span class="s">&#34;time&#34;</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">var</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">ErrTimeout</span> <span class="p">=</span> <span class="nx">errors</span><span class="p">.</span><span class="nf">New</span><span class="p">(</span><span class="s">&#34;sql: timeout&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">DB</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 使用 context 控制超时时间
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 返回 string 作为查询结果，仅仅是一个示例
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">db</span> <span class="o">*</span><span class="nx">DB</span><span class="p">)</span> <span class="nf">QueryWithContext</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">query</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">res</span> <span class="kt">string</span><span class="p">,</span> <span class="nx">err</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 先检查 context 是否超时
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="s">&#34;&#34;</span><span class="p">,</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">default</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">ch</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kd">struct</span><span class="p">{})</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">defer</span> <span class="nb">close</span><span class="p">(</span><span class="nx">ch</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">res</span><span class="p">,</span> <span class="nx">err</span> <span class="p">=</span> <span class="nx">db</span><span class="p">.</span><span class="nf">execute</span><span class="p">(</span><span class="nx">query</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// 异步检查查询执行完毕，或者 context 超时
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// context 超时或者其它错误
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ctx</span><span class="p">.</span><span class="nf">Done</span><span class="p">():</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// 根据 query 取消查询
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// 但取消的是查询本身，不是之前的 goroutine
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// 因此存在 goroutine 泄漏的风险
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// 理想情况下，我们希望 cancelQuery 这类函数可以在数据库驱动层面上，使得 execute 返回，以避免 goroutine 泄漏
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">db</span><span class="p">.</span><span class="nf">cancelQuery</span><span class="p">(</span><span class="nx">query</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="k">switch</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="nx">context</span><span class="p">.</span><span class="nx">DeadlineExceeded</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">err</span> <span class="p">=</span> <span class="nx">ErrTimeout</span>
+</span></span><span class="line"><span class="cl">		<span class="k">default</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">err</span> <span class="p">=</span> <span class="nx">ctx</span><span class="p">.</span><span class="nf">Err</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">res</span> <span class="p">=</span> <span class="s">&#34;&#34;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// 查询执行完毕
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">ch</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">return</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 这里就涉及到了与 DB 交互了
+</span></span></span><span class="line"><span class="cl"><span class="c1">// 返回类型简单设置为 string
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">db</span> <span class="o">*</span><span class="nx">DB</span><span class="p">)</span> <span class="nf">execute</span><span class="p">(</span><span class="nx">query</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="kt">string</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 模拟 RTT 为 10s
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nx">time</span><span class="p">.</span><span class="nx">Second</span> <span class="o">*</span> <span class="mi">10</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="s">&#34;done&#34;</span><span class="p">,</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 取消查询
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">db</span> <span class="o">*</span><span class="nx">DB</span><span class="p">)</span> <span class="nf">cancelQuery</span><span class="p">(</span><span class="nx">query</span> <span class="kt">string</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 一般来说，query 应包含一个 connectionID
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// 可以根据 connectionID 来关闭与 DB 的连接
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// 从而取消查询
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// do nothing
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// just a example
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Open</span><span class="p">()</span> <span class="p">(</span><span class="o">*</span><span class="nx">DB</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// do nothing
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// just a example
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">return</span> <span class="nb">new</span><span class="p">(</span><span class="nx">DB</span><span class="p">),</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">db</span> <span class="o">*</span><span class="nx">DB</span><span class="p">)</span> <span class="nf">Close</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// do nothing
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// just a example
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p>sql.go 最重要的方法就是 QueryWithContext 了</p>
+<p>QueryWithContext 方法的实现，需要考虑 context 超时的情况：</p>
+<ol>
+<li>先检查 context 是否超时</li>
+<li>异步执行查询</li>
+<li>异步检查查询执行完毕，或者 context 超时</li>
+<li>根据 context 超时或者其它错误，返回错误</li>
+<li>查询执行完毕，返回结果</li>
+</ol>
+<p>来看看执行结果吧：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-15-11-12-52-254.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，即使 execute 模拟的查询时间为 10s，总查询时间也控制在了 3s</p>
+<p>注意：</p>
+<p>这个 demo 是存在 goroutine 泄漏的问题的：如果 execute 函数一直不返回，那么创建的 goroutine 永远不会被销毁</p>
+<p>实际的实现，避免 goroutine 泄漏，依赖 cancelQuery 方法，在数据库驱动层面让 execute 返回，从而避免 goroutine 泄漏</p>
+<h3 id="context-到底解决了什么">Context 到底解决了什么？</h3>
+<p><a href="https://faiface.github.io/post/context-should-go-away-go2/" target="_blank" rel="noopener">Context should go away for Go 2</a>
+ 这篇文章的作者提到了：Go2.0 版本应该去掉 context，理由如下：</p>
+<p><strong>Context is like a virus</strong></p>
+<p>每个函数的第一个参数都是 context，即使你不使用它（传一个 context.ToDo），显得代码十分丑陋，<strong>可读性差</strong></p>
+<p><strong>Context is mostly an inefficient linked list</strong></p>
+<p>并且，context.Value，内部实现实际上就是一个链表，查询的时间复杂度为 O(n)，如果调用链很长，那么效率也是很低的</p>
+<p>那么，Context 到底解决了什么问题？为什么要使用 Context？</p>
+<p>Context 提供了一种优雅的 <strong>cancellation</strong>，仅管它并不完美，但它确实很简洁地解决了问题。</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

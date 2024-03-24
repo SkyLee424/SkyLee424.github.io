@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MySQL 索引 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="索引有哪些？ B&#43; 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&amp;"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MySQL 索引" />
+<meta property="og:description" content="索引有哪些？ B&#43; 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-20T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-20T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MySQL 索引"/>
+<meta name="twitter:description" content="索引有哪些？ B&#43; 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/%E7%B4%A2%E5%BC%95/note/">MySQL 索引</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/%E7%B4%A2%E5%BC%95/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">索引</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-20T00:00:00&#43;00:00">
+      2024-02-20
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      15 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="索引有哪些">索引有哪些？</h2>
+<p>B+ 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&hellip;&hellip;</p>
+<p>感觉有点懵 😳，下面来分析一波</p>
+<h3 id="按数据结构分类">按数据结构分类</h3>
+<p>索引按照数据结构，大致分为三类：</p>
+<ul>
+<li>B+ 树索引</li>
+<li>Hash 索引</li>
+<li>Full-Text 索引</li>
+</ul>
+<p>B+ 树索引结构如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-20-46-03-002.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%8C%89%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%88%86%E7%B1%BB" target="_blank" rel="noopener">图片来自小林 coding</a>
+
+注意，叶子节点之间构成的双向链表，图中有误</p>
+</blockquote>
+<p>B+ 树索引结构的 <strong>非叶子节点存储索引数据</strong></p>
+<ul>
+<li>如果是主键索引，叶子节点存储行数据</li>
+<li>如果是二级索引，叶子节点存储主键 id</li>
+</ul>
+<p>B+ 树索引结构相比 B 树、AVL 树而言，树的深度更浅（看起来更矮胖），这意味者只需要 <strong>更少的磁盘 IO 次数</strong>，就可以找到想要的数据</p>
+<p>而 Hash 索引最大的优势在于可以在期望时间复杂度为 O(1) 的情况下，查找数据，但是 <strong>无法范围查询</strong></p>
+<p>Full-Text 索引主要用于大文本的索引</p>
+<p>在不指定索引类型的情况下，创建索引时，InnoDB 默认创建的是 B+ 树索引</p>
+<h3 id="按存储数据分类">按存储数据分类</h3>
+<p>如果按照存储数据分类，可以分为：</p>
+<ul>
+<li>聚集索引，叶子节点存储行数据</li>
+<li>二级索引，叶子节点存储主键 id</li>
+</ul>
+<p>如果查询时，走的是二级索引，就有可能涉及到 <strong>回表查询</strong>：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-20-54-15-688.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%8C%89%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%88%86%E7%B1%BB" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<h3 id="按字段特性分类">按字段特性分类</h3>
+<p>如果按照字段特性分类，可以分为：</p>
+<ul>
+<li>主键索引</li>
+<li>唯一索引：以 unique 字段建立的索引</li>
+<li>普通索引</li>
+<li>前缀索引：在索引数据时，仅索引前面的部分数据</li>
+</ul>
+<p><strong>唯一索引</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">UNIQUE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">index_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">ON</span><span class="w"> </span><span class="k">table_name</span><span class="p">(</span><span class="n">index_column_1</span><span class="p">,</span><span class="n">index_column_2</span><span class="p">,...);</span><span class="w">
+</span></span></span></code></pre></div><p><strong>前缀索引</strong></p>
+<p>使用前缀索引的目的主要是减少占用空间</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">index_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">ON</span><span class="w"> </span><span class="k">table_name</span><span class="p">(</span><span class="k">column_name</span><span class="p">(</span><span class="k">length</span><span class="p">));</span><span class="w">
+</span></span></span></code></pre></div><h3 id="按字段个数分类">按字段个数分类</h3>
+<p>如果按照字段个数分类，可以分为：</p>
+<ul>
+<li>单列索引</li>
+<li>联合索引</li>
+</ul>
+<p>联合索引指为多个字段建立索引，例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">index_product_id_name</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">product</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-21-03-02-520.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%8C%89%E5%AD%97%E6%AE%B5%E4%B8%AA%E6%95%B0%E5%88%86%E7%B1%BB" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>每个非叶子节点，存储的是 product_id、name 两个字段的值，且排序规则为：先按照 product_id 排序，如果 product_id 相同，再按 name 排序</p>
+<p>对于 name 字段来说，是 <strong>整体无序，局部有序</strong> 的</p>
+<p>因此，联合索引遵循 <strong>最左匹配法则</strong></p>
+<blockquote>
+<p>最左前缀法则：查询从联合索引的 <strong>最左列</strong> 开始，并且不跳过索引中的列如果跳过某一列，该列后面的索引将失效</p>
+</blockquote>
+<ul>
+<li>对于 where product_id=1 and name = &lsquo;iphone&rsquo;，索引有效</li>
+<li>对于 where name = &lsquo;iphone&rsquo;，<strong>索引无效</strong></li>
+</ul>
+<p>因此，在建立联合索引时，应该 <strong>将使用频率较高的字段放在前面，防止索引失效</strong></p>
+<p>此外，就算遵循最左匹配法制，联合索引也有可能失效</p>
+<p>具体来说，联合索引中，出现范围查询（即 <code>&lt;</code> 和 <code>&gt;</code>），<strong>范围查询右侧的列索引失效</strong></p>
+<p>举个例子，假设有联合索引（profession，age，status）</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 遵循最左匹配法则：profession，age，status 都存在
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">explain</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">tb_user</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">profession</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;Engineer&#39;</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">20</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">tb_user</span><span class="p">.</span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-21-13-17-052.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>key_len = 85，说明 status 索引没有用于加速</p>
+<p>如果将 <code>&gt;</code> 改成 <code>&gt;=</code>，输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-21-13-44-762.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>key_len = 90，说明 status 索引用于加速</p>
+<p><strong>因此，如果业务逻辑允许 <code>&gt;=</code> 和 <code>&lt;=</code>，尽量使用，避免索引失效</strong></p>
+<hr>
+<h2 id="什么时候需要创建索引什么时候不需要">什么时候需要创建索引？什么时候不需要？</h2>
+<p>索引虽然可以带来读取速度的提升，但是也会带来一定的不良影响：</p>
+<ul>
+<li>需要占用物理空间</li>
+<li>降低增删改的效率，因为创建索引、维护索引需要时间</li>
+</ul>
+<p>因此不是什么时候都能创建索引，使用索引的原则如下：</p>
+<p><strong>可以创建索引</strong></p>
+<ul>
+<li>字段有唯一性限制的</li>
+<li>经常作为 where 条件的，如果有多列，可以建立联合索引</li>
+<li>经常用于 order by 的字段，避免 file sort</li>
+</ul>
+<p><strong>不要创建索引</strong></p>
+<ul>
+<li>读少写多的场景：相比读取性能的提升，写操作性能下降可能更严重，收益不高</li>
+<li>字段区分度低：比如性别字段，索引的区分度很小，字段的值分布均匀，无论搜索哪个值都可能得到一半的数据。在这些情况下，还不如不要索引。MySQL 有一个查询优化器，查询优化器发现某个值出现在表的数据行中的百分比（惯用的百分比界线是&quot;30%&quot;）很高的时候，它一般会忽略索引，进行全表扫描。</li>
+<li>表中数据少：全表查询也很快，建立索引反而浪费空间</li>
+</ul>
+<hr>
+<h2 id="在哪些情况下索引会失效">在哪些情况下，索引会失效？</h2>
+<h3 id="对索引字段使用最左模糊匹配">对索引字段使用最左模糊匹配</h3>
+<p>例如：<code>where name = '%ack</code> 或者 <code>where name = %ack%</code></p>
+<p>这两种情况，都会导致索引失效，转而使用全表查询</p>
+<p>因为为 name 建立索引时，是按照 name 的 ascii 码排序的（从前往后，例如 <code>ab &lt; b &lt; cd</code>，最左模糊匹配当然会导致索引失效</p>
+<h3 id="对索引字段使用函数">对索引字段使用函数</h3>
+<p>例如 <code>select id from users where length(name) = 6;</code></p>
+<p>即使对 name 建立索引，走的仍然是全表查询，因为并没有给 <code>length(name)</code> 建立索引</p>
+<p>MySQL8.0 开始支持了函数索引，可以单独对 length(name) 建立索引：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">alter</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">user0</span><span class="w"> </span><span class="k">add</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="n">idx_len_name</span><span class="p">((</span><span class="k">length</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span><span class="w">
+</span></span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-15-09-40-824.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="对索引字段使用计算表达式">对索引字段使用计算表达式</h3>
+<p>例如 <code>select id from users where age - 1 = 10;</code></p>
+<p>即使对 age 建立索引，走的仍然是全表查询，因为并没有给 <code>age - 1</code> 建立索引</p>
+<p>MySQL 没有实现「优化」计算表达式，即将上面的 SQL 优化成 <code>select id from users where age = 11;</code>，而是需要我们自己优化</p>
+<h3 id="对索引字段隐式类型转换">对索引字段隐式类型转换</h3>
+<p>例如 <code>select id, phone from users where phone = 114514</code>，其中 phone 的类型为 varchar(20)</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-15-16-27-122.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>虽然走了索引，但是类型为 index，还是要扫描整个索引树，与全表查询差不多，性能差</p>
+<p>上面的 SQL 语句，实际上被翻译成：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">phone</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">users</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="k">CAST</span><span class="p">(</span><span class="n">phone</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">signed</span><span class="w"> </span><span class="nb">int</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">114514</span><span class="w">
+</span></span></span></code></pre></div><p>相当于对 phone 字段使用了函数，当然会造成索引失效</p>
+<p>而对于:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">phone</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">user0</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>是会走索引的：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-15-19-44-627.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>因为翻译过来就是：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">phone</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">user0</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">CAST</span><span class="p">(</span><span class="s2">&#34;1&#34;</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">signed</span><span class="w"> </span><span class="nb">int</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>并没有对 id 使用函数</p>
+<blockquote>
+<p>补充：如何判断 MySQL 类型转换规则</p>
+<p>执行下面的 SQL：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="s1">&#39;10&#39;</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">9</span><span class="w">
+</span></span></span></code></pre></div><ul>
+<li>如果结果为 1，说明默认将字符串转换为数字</li>
+<li>如果结果为 0，说明默认将数字转换为字符串</li>
+</ul>
+<p>我本地执行的结果为 1，说明默认将字符串转换为数字，这也印证了上面 id，即主键索引没有失效</p>
+</blockquote>
+<h3 id="联合索引不遵循最左匹配法则">联合索引不遵循最左匹配法则</h3>
+<p>联合索引指为多个字段建立索引，例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">index_product_id_name</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">product</span><span class="p">(</span><span class="n">product_id</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-19-21-03-02-520.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%8C%89%E5%AD%97%E6%AE%B5%E4%B8%AA%E6%95%B0%E5%88%86%E7%B1%BB" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>每个非叶子节点，存储的是 product_id、name 两个字段的值，且排序规则为：先按照 product_id 排序，如果 product_id 相同，再按 name 排序</p>
+<p>对于 name 字段来说，是 <strong>整体无序，局部有序</strong> 的</p>
+<p>如果不遵循最左匹配法则，即跳过 product_id，直接使用 name 作为查询条件，由于 name 整体无序，联合索引自然失效</p>
+<h3 id="where-子句的-or">where 子句的 or</h3>
+<p>例如：<code>select id from users where name = 'Jack' or age &gt; 10</code>，其中 name 建立了二级索引，但 age 没有索引</p>
+<p>name 索引会失效，因为 OR 的含义就是两个只要满足一个即可，因此只有一个条件列是索引列是没有意义的，<strong>只要有条件列不是索引列，就会进行全表扫描</strong>。</p>
+<hr>
+<h2 id="怎么优化索引">怎么优化索引？</h2>
+<h3 id="前缀索引优化">前缀索引优化</h3>
+<p>对于比较长的字段，如果要建立索引，可以建立前缀索引，以减少空间占用</p>
+<p>但前缀索引也有局限性：</p>
+<ul>
+<li>order by 无法使用前缀索引，而是直接 file sort</li>
+<li>无法实现覆盖索引（即避免回表查询）</li>
+</ul>
+<p>上面两点不难理解，其本质原因还是因为字段的不完整性</p>
+<h3 id="覆盖索引优化">覆盖索引优化</h3>
+<p>尽量使用覆盖索引，减少回表查询，例如 <code>select id, name from users where name like 'n%';</code>，其中 id 为主键，name 为普通索引</p>
+<p>这句话就使用到了覆盖索引：在查询时，走 idx_name，不需要回表查询</p>
+<p>此外，如果一个 SQL 要查询多个字段，如：<code>select name, phone, sex from users where name like 'n%';</code>，可以建立联合索引 idx_name_phone_sex 来避免回表查询</p>
+<h3 id="主键索引尽量自增">主键索引尽量自增</h3>
+<p>在设计主键时，最好保证主键是递增的</p>
+<p>如果使用非递增主键，那么插入数据时，主键 id 完全是随机的，必须移动业内的其它数据来插入新的数据，还有可能出现一种叫做「<strong>页分裂</strong>」的现象</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-09-37-12-186.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/index/index_interview.html#%E4%B8%BB%E9%94%AE%E7%B4%A2%E5%BC%95%E6%9C%80%E5%A5%BD%E6%98%AF%E8%87%AA%E5%A2%9E%E7%9A%84" target="_blank" rel="noopener">图片来自小林 codig</a>
+</p>
+<p>这种现象不仅影响性能，还会产生内存碎片，空间利用率不高</p>
+<h3 id="索引字段尽量-not-null">索引字段尽量 NOT NULL</h3>
+<p>索引列存在 NULL 就会导致优化器在做索引选择的时候更加复杂，更加难以优化</p>
+<h3 id="避免索引失效">避免索引失效</h3>
+<p>设计索引时，要结合业务需求，避免建立的索引失效，不仅不能提高查询效率，还会降低增删改的性能</p>
+<hr>
+<h2 id="如何判断一个查询语句的索引使用情况">如何判断一个查询语句的索引使用情况？</h2>
+<p>使用 explain 执行计划可以查看一个 SQL 语句索引的使用情况</p>
+<p>例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">explain</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="k">User</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">id</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>输出：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain
+</span></span><span class="line"><span class="cl">    -&gt; <span class="k">select</span> * from User order by id<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span>  <span class="p">|</span> possible_keys <span class="p">|</span> key     <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> User  <span class="p">|</span> NULL       <span class="p">|</span> index <span class="p">|</span> NULL          <span class="p">|</span> PRIMARY <span class="p">|</span> <span class="m">4</span>       <span class="p">|</span> NULL <span class="p">|</span>    <span class="m">4</span> <span class="p">|</span>   100.00 <span class="p">|</span> NULL  <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+---------+---------+------+------+----------+-------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><h3 id="type重点">type（重点）</h3>
+<p>在 MySQL 的 <code>EXPLAIN</code> 查询计划中，<code>type</code> 字段表示查询操作使用的访问类型（Access Type）。<code>type</code> 字段的值描述了 MySQL 优化器选择用于执行查询的访问方法，它是评估查询性能和优化查询的关键指标之一。</p>
+<p>以下是 <code>type</code> 字段可能出现的常见值及其含义：</p>
+<ol>
+<li>
+<p><code>ALL</code>：全表扫描，表示查询将扫描全表的所有行。这是最慢的访问类型，通常应该尽量避免。</p>
+</li>
+<li>
+<p><code>index</code>：索引扫描，表示查询将扫描整个索引树，但不需要访问表的数据行。这比全表扫描快，但仍需要较多的 IO 操作。例如上面的示例，基于 id 来排序</p>
+</li>
+<li>
+<p><code>range</code>：范围扫描，表示查询将在索引树中扫描一个范围的索引值，而不是整个索引。</p>
+</li>
+<li>
+<p><code>ref</code>：基于非唯一索引的等值查找，表示查询将使用一个非唯一索引来定位数据行。</p>
+</li>
+<li>
+<p><code>eq_ref</code>：基于唯一索引的等值查找，表示查询将使用一个唯一索引来定位数据行。</p>
+</li>
+<li>
+<p><code>const</code>：常量查找，表示查询使用一个常量条件（例如主键或唯一索引条件），只返回一行结果。</p>
+</li>
+<li>
+<p><code>system</code>：表中只有一行（或零行），表示查询将只访问一行数据。</p>
+</li>
+<li>
+<p><code>NULL</code>：在一些特殊情况下，<code>type</code> 字段的值可能为 <code>NULL</code>，表示查询无效或无法优化。</p>
+</li>
+</ol>
+<p>一般来说，我们希望查询使用 <code>const</code>、<code>eq_ref</code> 或 <code>ref</code> 等基于索引的访问类型，而不是 <code>ALL</code> 或 <code>index</code> 这样的全表扫描或索引扫描类型。</p>
+<h3 id="其它">其它</h3>
+<ul>
+<li>possible key（重点）：可能用到的索引</li>
+<li>Key（重点）：实际使用的索引，如果为 NULL，则没有使用索引。</li>
+<li>Key len（重点）：表示索引中使用的字节数，该值为索引字段最大可能长度，并非实际使用长度，在不损失精确性的前提下，长度越短越好。</li>
+<li>rows：MySQL 认为必须要执行查询的行数，在 innodlb 引擎的表中，是一个估计值，可能并不总是准确的。</li>
+<li>filtered：表示返回结果的行数占需读取行数的百分比，filtered 的值越大越好。</li>
+</ul>
+<p>还有一个 Extra 字段也需要关注：</p>
+<ul>
+<li>Using filesort：通常出现在 order by 中，如果 order by 的字段没有建立索引（或者建立的是前缀索引），那么就会出现 filesort，意味着可能在文件内进行排序，效率低，应该避免</li>
+<li>Using temporary：使用临时表保存中间结果，MySQL 在对查询结果排序时使用临时表，常见于排序 order by 和分组查询 group by。效率低，要避免</li>
+<li>Using Index Condition：虽然用了索引，但是还是要回表查询（索引下推）</li>
+<li>Using Index：所需数据只需在索引即可全部获得，即覆盖索引，不需要回表</li>
+</ul>
+<hr>
+<h2 id="mysql-为什么默认使用-b-树存储索引和数据">MySQL 为什么默认使用 B+ 树存储索引和数据？</h2>
+<p>一步一步分析</p>
+<p>MySQL 除了支持精确查询外，还支持 <strong>范围查询</strong>，对查询数据 <strong>排序</strong></p>
+<p>也就是说，MySQL 的查询需求：</p>
+<ul>
+<li>尽量少的磁盘 IO</li>
+<li>支持精确查询，也要支持范围查询，还能高效排序</li>
+</ul>
+<h3 id="二叉搜索树">二叉搜索树</h3>
+<p>二叉搜索树可以满足第二个需求，在精确查询某个数据，期望时间复杂度是 O(logn)，n 待查询数据的深度</p>
+<p>也可以范围查询：先查询第一个边界值，然后中序遍历直到第二个边界值</p>
+<p>也可以高效排序：二叉搜索树的中序遍历本身就是有序的</p>
+<p>但是，二叉搜索树存在 <strong>失衡问题</strong>，即树的高度可能失衡，<strong>退化成一个链表</strong>，这样查询数据的最坏时间复杂度就为 O(n) 了，效率低</p>
+<h3 id="avl-树">AVL 树</h3>
+<p>为了避免二叉搜索树的失衡，出现了 AVL 树，即自平衡的二叉搜索树</p>
+<p>虽然解决了失衡问题，但是随着数据的增多，树的深度也更深，这意味着可能需要更多的磁盘 IO 次数才能读取到目标页</p>
+<h3 id="b-树">B 树</h3>
+<p>AVL 树，本质还是一棵二叉树，只有两个子节点</p>
+<p>而 B 树就不一样了，在 AVL 树的基础上，引入了「阶」的概念，即可能有多个子节点，这在一定程度上解决了 AVL 树的深度问题</p>
+<h3 id="b-树-1">B+ 树</h3>
+<p><strong>单点查询</strong></p>
+<p>B 树的每个节点除了包含索引数据外，<strong>还包含了记录（行数据）</strong>，这意味着：在页的大小相同的情况下，存放的索引数据较少，那么子节点的数目更少，存储相同的数据，树的深度更深</p>
+<p>而 B+ 树只有叶子节点存放记录，<strong>非叶子节点只存放索引数据</strong>，那么一个非叶子节点就可以有更多的子节点，使得 B+ 树的深度比 B 树更浅，看起来更加「矮胖」</p>
+<p>这样，查询单个数据，<em>平均磁盘 IO 的次数</em> 相较 B 树更少</p>
+<p><strong>范围查询</strong></p>
+<p>如果要范围查询，B 树需要中序遍历很多节点，性能不太理想</p>
+<p>而 B+ 树的叶子节点之间构成「双向链表」，如果要范围查询，只需要定位到第一个叶子节点，然后遍历链表直到不满足范围要求</p>
+<p><strong>数据的插入与删除</strong></p>
+<p>B 树在插入和删除数据时，树形变化可能较大，这会带来一定性能开销</p>
+<p>而 B+ 树由于节点数据时冗余的，插入和删除数据时，树形变化较小</p>
+<hr>
+<h2 id="mysql-单表行数不要超过-2000w-行">MySQL 单表行数不要超过 2000w 行？</h2>
+<h3 id="页结构">页结构</h3>
+<p>首先来看看 MySQL 的页结构</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-15-39-22-640.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/mysql/index/2000w.html#%E9%A1%B5%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>每一页记录的数据，除了包含我们的用户数据，还要包含其它元数据</p>
+<h3 id="索引结构">索引结构</h3>
+<p>再来看看主键索引结构：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-20-15-41-57-516.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>每个索引的非叶子节点记录了索引数据，即页号 + 对应页的主键 id 的最小值，在根据主键 id 查询数据时，就可以使用到这些节点加速</p>
+<p>叶子节点记录了主键 id + 行数据</p>
+<h3 id="理论行数上限">理论行数上限</h3>
+<p>假设：</p>
+<ul>
+<li>非叶子节点记录的索引数据有 x 行</li>
+<li>树的深度为 d</li>
+<li>每个叶子节点能记录的数据有 y 行</li>
+</ul>
+<p>那么，一颗深度为 d 的 B+ 树的理论行数为</p>
+<p><code>x^(d-1)*y</code></p>
+<p>那么 x、y 的值怎么确定呢？</p>
+<p>下面的计算，页的大小都为 16K</p>
+<p><strong>x 的值</strong></p>
+<p>页结构告诉我们：每页的元数据大概会占用 <code>1K</code> 左右的空间</p>
+<p>那么剩余空间还有 <code>15K</code></p>
+<p>每一个索引数据由 页号 + min_id 组成</p>
+<p>假设页号占 4 字节，id 为 bigint，占 8 字节，那么一个索引数据就是 12 字节</p>
+<p>因此，x 的值为：(16K - 1K) / (4 + 8) = 1280 行</p>
+<p><strong>y 的值</strong></p>
+<p>与非叶子节点一样，叶子节点用于记录真实行数据的空间也是 15K</p>
+<p><strong>由于每张表，字段不同，数据也不同，每一行的大小也不同，因此，y 的值也会有较大差异</strong></p>
+<p>这里假设每一行的数据为 1K，那么 y 的值为 15</p>
+<p><strong>理论行数上限</strong></p>
+<p>在上面的条件下，假设 B+ 树的高度为 3，那么理论行数上限值为：<code>1280^(3-1)*15</code>，约为 2450w 行，与「建议值 2000w」差不多</p>
+<h3 id="mysql-单表行数不要超过-2000w-行-1">MySQL 单表行数不要超过 2000w 行？</h3>
+<p>如果树的高度超过 3，那么每查询一个行数据，就要多一次磁盘 IO，对性能的影响很大，因此，尽量让树的高度 &lt;= 3</p>
+<p>经过上面的分析，我们发现：在 <strong>单行数据约为 1K</strong> 的情况下，如果要保证树的高度 &lt;= 3，那么最多就只能存放约 2450w 行的数据</p>
+<p>因此这个 2000w 行还是有依据的，但是也要结合实际情况：</p>
+<ul>
+<li>如果每行数据较大，那么在保证树的高度小等于 3 的情况下，单表行数就不能达到 2000w 行</li>
+<li>如果业务可以接受较高延迟，那么单表也可以存放超过 2000w 行的数据</li>
+</ul>
+<p>因此，2000w 这个值是一个普适性的建议值，能够保证基本查询性能，也符合大部分业务需求</p>
+<hr>
+<h2 id="mysql-使用-like-x索引一定会失效吗">MySQL 使用 like “%x“，索引一定会失效吗？</h2>
+<p>对于这个查询语句：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">user0</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="k">like</span><span class="w"> </span><span class="s1">&#39;%ack&#39;</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>如果 name 字段建立了索引 idx_name，索引一定会失效吗？</p>
+<h3 id="场景一">场景一</h3>
+<p>这是一个一般场景：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">user1</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">age</span><span class="w"> </span><span class="n">tinyint</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_name</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">user1</span><span class="p">(</span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>执行 explain 执行计划：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span> <span class="p">|</span> possible_keys <span class="p">|</span> key  <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra       <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user1 <span class="p">|</span> NULL       <span class="p">|</span> ALL  <span class="p">|</span> NULL          <span class="p">|</span> NULL <span class="p">|</span> NULL    <span class="p">|</span> NULL <span class="p">|</span>    <span class="m">1</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using where <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+------+---------------+------+---------+------+------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>可以发现，索引失效了，走的全表查询</p>
+<h3 id="场景二">场景二</h3>
+<p>这个场景比较特殊：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">user0</span><span class="w"> </span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">name</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">create</span><span class="w"> </span><span class="k">index</span><span class="w"> </span><span class="n">idx_name</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">user0</span><span class="p">(</span><span class="n">name</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>可以发现：user0 只有两个字段</p>
+<p>执行 explain 执行计划：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain <span class="k">select</span> * from user0 where name like <span class="s1">&#39;%ack&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span>  <span class="p">|</span> possible_keys <span class="p">|</span> key      <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows <span class="p">|</span> filtered <span class="p">|</span> Extra                    <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> user0 <span class="p">|</span> NULL       <span class="p">|</span> index <span class="p">|</span> NULL          <span class="p">|</span> idx_name <span class="p">|</span> <span class="m">43</span>      <span class="p">|</span> NULL <span class="p">|</span>    <span class="m">1</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using where<span class="p">;</span> Using index <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+----------+---------+------+------+----------+--------------------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>可以发现，idx_name 并没有失效，type 为 index，即全扫描 idx_name 索引树</p>
+<p>为什么？</p>
+<p>因为 user0 只有 id、name 两个字段，<code>select * from user0</code> 这个操作 <strong>等价于</strong> <code>select id, name from user0</code>，不涉及回表查询</p>
+<p>由于二级索引相较于主键索引，<strong>更加轻量</strong>（主键索引的叶子节点还要记录 trx_id、roll_pointer），在 <strong>不涉及回表</strong> 的情况下，查询性能更好</p>
+<p>因此，优化器决定使用 idx_name，而不是全表查询（即使用主键索引）</p>
+<p>但是，即使使用了 idx_name，类型还是为 index，性能也是比较差的，只是比全表好一点点。。。</p>
+<p>此外，对于 user1 表，如果是 <code>select id, name from user1</code>，还是会走 idx_name 的，理由与上面一致</p>
+<h3 id="补充">补充</h3>
+<p><code>select * from user0 where name like '%ack'</code> 一定会走索引 idx_name 吗？</p>
+<p>实际上也不一定，前面提到了，idx_name（二级索引）不包含 trx_id、roll_pointer</p>
+<p>如果直接走二级索引，可能出现「脏读」问题</p>
+<p>MySQL 对于二级索引所在的数据页有一个 <code>Page Header</code> 的结构，里面含有一个名为 <code>PAGE_MAX_TRX_ID</code> 的字段，这个字段标明了修改当前索引页面的最大事务 ID，当查询进来的时候会先判断本次 Read View 的 <code>min_trx_id</code> 跟 <code>PAGE_MAX_TRX_ID</code> 的关系，<strong>如果 min_trx_id &gt; <code>PAGE_MAX_TRX_ID</code>，说明 <code>PAGE_MAX_TRX_ID</code> 对应的事务已经提交了</strong>，就可以走二级索引，否则就要回聚簇索引里面拿更详细的信息做判断。</p>
+<hr>
+<h2 id="countcount1-count主键字段-count其它字段-有什么区别性能如何">count(*)、count(1) 、count(主键字段) 、count(其它字段) 有什么区别？性能如何？</h2>
+<ul>
+<li>count(*)</li>
+<li>count(1)</li>
+<li>count(主键字段)</li>
+<li>count(其它字段，not null)</li>
+<li>count(其它字段，可以为 null)</li>
+<li>count(其它字段，not null，有索引)</li>
+<li>count(其它字段，可以为 null，有索引)</li>
+</ul>
+<p>首先要弄清楚 count 函数的作用：统计某个字段不为 NULL 的行数</p>
+<p>其查询的本质是 <strong>遍历整个索引树</strong> 的叶子节点</p>
+<p>count(*) 实际上与 count(1) 等价（包括性能），不涉及到任何字段，即统计整张表的行数</p>
+<blockquote>
+<p>InnoDB handles SELECT COUNT(*) and SELECT COUNT(1) operations in the same way. There is no performance difference.</p>
+</blockquote>
+<p>因此，<code>count(*)</code> 在遍历索引树节点时，每从 InnoDB 读取到一条记录，Server <strong>不会将字段值取出来</strong>，而是直接将 count + 1</p>
+<p>而 <code>count(主键字段)</code> 实际上作用与 <code>count(*)</code> 是一样的，都是统计整张表的行数，因为主键不能为 NULL</p>
+<p>因此，<code>count(主键字段)</code> 的性能与 <code>count(*)</code> 基本一致</p>
+<p>而 <code>count(其它字段)</code>，就要看看是否允许该字段为 NULL 了：</p>
+<ul>
+<li>如果不允许为 NULL，那么性能与 <code>count(主键字段)</code> 基本一致</li>
+<li>如果允许为 NULL，那么 Server 每从 InnoDB 读取到一条记录，<strong>需要将字段值取出来</strong>，判断是否为 NULL，如果不为 NULL，将 count + 1，<strong>性能较差</strong></li>
+</ul>
+<p>理论分析完毕，做个实验：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 创建 test 表
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">test</span><span class="p">(</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">id</span><span class="w"> </span><span class="nb">int</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="n">auto_increment</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">col_not_null</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">null</span><span class="p">,</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">col_null</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 创建存储过程，用于插入 100w 行数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">DELIMITER</span><span class="w"> </span><span class="err">$$</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">CREATE</span><span class="w"> </span><span class="k">PROCEDURE</span><span class="w"> </span><span class="n">InsertTestData</span><span class="p">(</span><span class="n">i</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="nb">int</span><span class="p">)</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">BEGIN</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="n">WHILE</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="n">j</span><span class="w"> </span><span class="k">DO</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">INSERT</span><span class="w"> </span><span class="k">INTO</span><span class="w"> </span><span class="n">test</span><span class="w"> </span><span class="p">(</span><span class="n">col_not_null</span><span class="p">,</span><span class="w"> </span><span class="n">col_null</span><span class="p">)</span><span class="w"> </span><span class="k">VALUES</span><span class="w"> </span><span class="p">(</span><span class="n">CONCAT</span><span class="p">(</span><span class="s1">&#39;Val&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">),</span><span class="w"> </span><span class="p">(</span><span class="n">CONCAT</span><span class="p">(</span><span class="s1">&#39;Val&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">)));</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">        </span><span class="k">SET</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">    </span><span class="k">END</span><span class="w"> </span><span class="n">WHILE</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">END</span><span class="err">$$</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">DELIMITER</span><span class="w"> </span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="c1">-- 插入 100w 行数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">CALL</span><span class="w"> </span><span class="n">InsertTestData</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">1000000</span><span class="p">);</span><span class="w">
+</span></span></span></code></pre></div><p>现在依次执行：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="n">col_not_null</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="n">col_null</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">test</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>每条语句执行 5 次，平均查询时间如下：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>平均查询时间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>count(*)</td>
+<td>98.2ms</td>
+</tr>
+<tr>
+<td>count(1)</td>
+<td>97.2ms</td>
+</tr>
+<tr>
+<td>count(id)</td>
+<td>93.2ms</td>
+</tr>
+<tr>
+<td>count(col_not_null)</td>
+<td>93.2ms</td>
+</tr>
+<tr>
+<td>count(col_null)</td>
+<td>326.8ms</td>
+</tr>
+</tbody>
+</table>
+<p>可以发现，count(*)、count(1) 、count(主键字段)、count(其它字段，not null) 四者性能接近，而 <strong>count(其它字段，可以为 null) 的性能差</strong></p>
+<p>因此在 <strong>只有主键索引</strong> 的情况下，可以得出以下结论：</p>
+<pre tabindex="0"><code>性能排行
+
+count(*) = count(1) ≈ count(主键字段) ≈ count(其它字段，not null) &gt;&gt; count(其它字段，可以为 null)
+</code></pre><p>此外，网上有人说：<em>对于确实要统计可以为 null 的字段的 count，可以对这个字段建一个二级索引，避免走主键索引遍历（二级索引要轻量一些）</em></p>
+<p>对 <code>col_null</code> 建一个二级索引后， <code>count(col_null)</code> 5 次平均执行时间为 <code>313ms</code>，看起来似乎快了一些</p>
+<p>但是 <strong>业务需求如果就是查询该字段的 count</strong>，并且 <strong>表的数据量比较少（比如本例的 100w 行数据）</strong>，建立索引带来的收益还比不上建立索引带来的开销</p>
+<blockquote>
+<p>可以认为：建立索引基本上不会对 count 的性能有太大的提升</p>
+<p><strong>count 的性能主要取决于目标字段是否允许为 null</strong></p>
+</blockquote>
+<p>那如果就是要统计可以为 null 的字段的 count，怎么优化？</p>
+<p>如果业务允许一定的误差，可以使用 explain 执行计划，来 <strong>模糊查询</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysql&gt; explain
+</span></span><span class="line"><span class="cl">    -&gt; <span class="k">select</span> count<span class="o">(</span>col_null<span class="o">)</span> from test<span class="p">;</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+--------------+---------+------+--------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span> id <span class="p">|</span> select_type <span class="p">|</span> table <span class="p">|</span> partitions <span class="p">|</span> <span class="nb">type</span>  <span class="p">|</span> possible_keys <span class="p">|</span> key          <span class="p">|</span> key_len <span class="p">|</span> ref  <span class="p">|</span> rows   <span class="p">|</span> filtered <span class="p">|</span> Extra       <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+--------------+---------+------+--------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="p">|</span>  <span class="m">1</span> <span class="p">|</span> SIMPLE      <span class="p">|</span> <span class="nb">test</span>  <span class="p">|</span> NULL       <span class="p">|</span> index <span class="p">|</span> NULL          <span class="p">|</span> idx_col_null <span class="p">|</span> <span class="m">43</span>      <span class="p">|</span> NULL <span class="p">|</span> <span class="m">998602</span> <span class="p">|</span>   100.00 <span class="p">|</span> Using index <span class="p">|</span>
+</span></span><span class="line"><span class="cl">+----+-------------+-------+------------+-------+---------------+--------------+---------+------+--------+----------+-------------+
+</span></span><span class="line"><span class="cl"><span class="m">1</span> row in set, <span class="m">1</span> warning <span class="o">(</span>0.00 sec<span class="o">)</span>
+</span></span></code></pre></div><p>在 rows 字段，给出了模糊值 998602，整个统计时间为 0.00 sec，非常快</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>索引 on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/tags/%E7%B4%A2%E5%BC%95/</link>
+    <description>Recent content in 索引 on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Tue, 20 Feb 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/tags/%E7%B4%A2%E5%BC%95/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL 索引</title>
+      <link>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</link>
+      <pubDate>Tue, 20 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</guid>
+      <description>索引有哪些？ B+ 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&amp;</description>
+    </item>
+  </channel>
+</rss>

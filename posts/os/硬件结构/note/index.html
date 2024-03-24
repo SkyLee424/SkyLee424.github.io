@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Linux Hardware - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="32 位 CPU 最大只能操作 4G 内存吗？ 两个基本概念： CPU 位宽 地址总线 位宽 地址总线： 如果地址总线只有 1 条，只能表示：0、1 两种地址 如果地址总线有 2 条，能表"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Linux Hardware" />
+<meta property="og:description" content="32 位 CPU 最大只能操作 4G 内存吗？ 两个基本概念： CPU 位宽 地址总线 位宽 地址总线： 如果地址总线只有 1 条，只能表示：0、1 两种地址 如果地址总线有 2 条，能表" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-03T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-03T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Linux Hardware"/>
+<meta name="twitter:description" content="32 位 CPU 最大只能操作 4G 内存吗？ 两个基本概念： CPU 位宽 地址总线 位宽 地址总线： 如果地址总线只有 1 条，只能表示：0、1 两种地址 如果地址总线有 2 条，能表"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/">Linux Hardware</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/os/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          OS
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/os/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">OS</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/linux/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Linux</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-03T00:00:00&#43;00:00">
+      2024-02-03
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      10 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="32-位-cpu-最大只能操作-4g-内存吗">32 位 CPU 最大只能操作 4G 内存吗？</h2>
+<p>两个基本概念：</p>
+<ul>
+<li>CPU 位宽</li>
+<li><strong>地址总线</strong> 位宽</li>
+</ul>
+<blockquote>
+<p>地址总线：</p>
+<ul>
+<li>如果地址总线只有 1 条，只能表示：0、1 两种地址</li>
+<li>如果地址总线有 2 条，能表示：00、01、10、11 四种地址</li>
+<li>&hellip;</li>
+</ul>
+</blockquote>
+<p>CPU 想要操作内存地址，需要 <strong>地址总线</strong></p>
+<p>由于 CPU 能操作的地址总线长度 <strong>不应该</strong> 超出 CPU 的位宽，因此，32 位的 CPU 能操作的地址总线条数最多为 32 条，寻址空间为 2^32，也就是 4G</p>
+<blockquote>
+<p>如果超过 32 条，32 位 CPU 一次性不能完全计算出内存地址，操作十分繁琐，严重耗费性能！</p>
+</blockquote>
+<p>因此，32 位 CPU <strong>理论</strong> 操作的最大内存为 4G</p>
+<blockquote>
+<p><strong>PAE 技术</strong> 可以使 32 位的 CPU 支持超过 4GB 的物理内存。此技术是通过在地址翻译过程中增加 <strong>额外的一级页表</strong> 来实现的，这使得 CPU 可以使用多达 36 位的物理地址，支持的物理内存 <strong>理论上可以达到最大 64GB</strong>。</p>
+</blockquote>
+<h2 id="64-位相比-32-位-cpu-的优势在哪64-位-cpu-的计算性能一定比-32-位-cpu-高很多吗">64 位相比 32 位 CPU 的优势在哪？64 位 CPU 的计算性能一定比 32 位 CPU 高很多吗？</h2>
+<p>问题一：</p>
+<ul>
+<li><strong>单次可以计算的数字最大为 64 位，可以计算更大的数据</strong>；而 32 位 CPU 要想计算超过 32 位的数据，就需要多次分步骤计算，性能较差</li>
+<li><strong>内存寻址空间更大</strong>：64 位 CPU 的理论寻址空间为 2^64，一般的 64 位 CPU 的地址总线为 48 位，可以允许更大的内存</li>
+</ul>
+<p>问题二：</p>
+<p>不一定，只有计算大数（超过 32 位），64 位 CPU 的性能优势才能体现出来</p>
+<h2 id="软件的-32-位和-64-位之间的区别">软件的 32 位和 64 位之间的区别？</h2>
+<ul>
+<li>软件的 32 位和 64 位之间的区别？</li>
+<li>32 位的操作系统可以运行在 64 位的电脑上吗？</li>
+<li>64 位的操作系统可以运行在 32 位的电脑上吗？如果不行，原因是什么？</li>
+</ul>
+<p>区别在于指令是 32 位还是 64 位</p>
+<p>OS 本质也是一种软件，32 位的 OS 经过一个「兼容层」就可以在 64 位的电脑上运行</p>
+<p>相反，64 位 OS 无法在 32 位的电脑上运行，因为 32 位 CPU 的寄存器无法存储 64 位的指令</p>
+<h2 id="cpu-cache">CPU Cache</h2>
+<p>结构：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-13-09-43.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_to_make_cpu_run_faster.html#cpu-cache-%E6%9C%89%E5%A4%9A%E5%BF%AB" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>首先要讲一下 Cache line 的概念：</p>
+<p>CPU Cache 是由很多个 Cache Line 组成的，Cache Line 是 CPU 从内存读取数据的 <strong>基本单位</strong></p>
+<p>CPU 从内存读取数据，并缓存到 L1、L2 缓存的过程，一次是读取「一批」数据，这一批数据会被存放到 Cache line 中</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-13-02-51.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_to_make_cpu_run_faster.html#cpu-cache-%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E8%AF%BB%E5%8F%96%E8%BF%87%E7%A8%8B%E6%98%AF%E4%BB%80%E4%B9%88%E6%A0%B7%E7%9A%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>在 Linux 上，可以使用以下指令查看每一级缓存的 cache line 的大小：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">root@SkyLee:~# cat /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
+</span></span><span class="line"><span class="cl"><span class="m">64</span>
+</span></span></code></pre></div><p>上面的结果表示 L1 缓存的 cache line 的大小为 64 字节</p>
+<h3 id="如何写出让-cpu-跑得更快的代码">如何写出让 CPU 跑得更快的代码？</h3>
+<p>要想让 CPU 跑得更「快」，就得提高 CPU Cache 的命中率，减少内存的访问次数</p>
+<p>从 L1 缓存的结构可以看出，有两个优化点：</p>
+<ul>
+<li>数据缓存</li>
+<li>指令缓存</li>
+</ul>
+<h4 id="提高数据缓存命中率">提高数据缓存命中率</h4>
+<p>分析下面的代码，哪个更快？</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// code 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">arr</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="n">N</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// code 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">arr</span><span class="p">[</span><span class="n">N</span><span class="p">][</span><span class="n">N</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="n">arr</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>对于 c 来说，答案是第一种方式更快</p>
+<p>因为 c 的二维数组的存储方式是 <strong>按行存储</strong>，例如 <code>arr[2][2]</code> 的存储顺序为: <code>arr[0][0]</code>、<code>arr[0][1]</code>、<code>arr[1][0]</code>、<code>arr[1][1]</code></p>
+<p>前面提到，CPU 从内存读取数据的基本单位是 Cache Line</p>
+<p>那么，如果 Cache Line 为 64 字节，第一次就可以读取 <code>arr[0][0] ~ arr[0][15]</code> 共 64 字节的数据到 L1 Cache 的数据缓存部分，后续访问 <code>arr[0][1] ~ arr[0][15]</code> 时，就不用读取内存，直接读 L1 Cache 即可</p>
+<p>如果采取按行遍历，就可以大大提高数据缓存的命中率，进而提升性能</p>
+<h4 id="提高指令缓存命中率">提高指令缓存命中率</h4>
+<p>观察下面代码：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="k">const</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">100</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">arr</span><span class="p">(</span><span class="n">N</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rand</span><span class="p">()</span> <span class="o">%</span> <span class="mi">100</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="n">std</span><span class="o">::</span><span class="n">sort</span><span class="p">(</span><span class="n">arr</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">arr</span><span class="p">.</span><span class="n">end</span><span class="p">());</span> <span class="c1">// 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="c1">// 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">50</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>先执行 1 后执行 2</li>
+<li>先执行 2 后执行 1</li>
+</ul>
+<p>哪个更快？</p>
+<p>答案是：先执行 1 后执行 2</p>
+<p>CPU 有一个功能叫做 <strong>分支预测</strong></p>
+<p>如果分支预测可以预测到接下来要执行 if 里的指令，还是 else 指令的话，就可以「<strong>提前」把这些指令放在指令缓存中</strong> ，这样 CPU 可以直接从 Cache 读取到指令，于是执行速度就会很快。</p>
+<p>因此，先升序排序，那么小于 50 的元素就会被 <strong>集中</strong> 放在前面，<strong>大概率</strong> 会命中指令缓存，性能更高</p>
+<h4 id="提高多核-cpu-的缓存命中率">提高多核 CPU 的缓存命中率</h4>
+<p>现在的 CPU 基本上都是多核的，每个核有独立的 L1、L2 Cache</p>
+<p>而线程可以在不同核上交替执行，如果一个线程在多个核之间来回切换，缓存命中率就会下降</p>
+<p>如果想避免这种情况，可以将某个线程「绑定」在一个核心上</p>
+<p>Linux 提供了 <code>sched_setaffinity</code> 方法做到这一点</p>
+<h3 id="缓存一致性问题">缓存一致性问题</h3>
+<h4 id="数据写入内存的步骤">数据写入内存的步骤？</h4>
+<p>首先说说数据读取的步骤：</p>
+<ul>
+<li>检查 L1 Cache 有没有该数据，如果没有：</li>
+<li>检查 L2 Cache 有没有该数据，如果没有：</li>
+<li>检查 L3 Cache 有没有该数据，如果没有：</li>
+<li>从内存读取数据</li>
+</ul>
+<p>再来讨论数据写入的步骤</p>
+<p><strong>写直达</strong></p>
+<p>写直达会将数据 <strong>同时</strong> 写到 CPU Cache（如果数据存在）和 Memory</p>
+<p>优点就是 <strong>确保了数据的一致性</strong></p>
+<p>但这种方式，会 <strong>浪费很多时间、性能</strong>（内存写入速率远小于 CPU Cache）</p>
+<p><strong>写回</strong></p>
+<p>在写入前，先检查 CPU Cache 中有没有该数据：</p>
+<ul>
+<li>如果没有，那直接写到内存</li>
+<li>如果有，<strong>写到 CPU Cache</strong>，并打上「脏」标记，代表该数据被修改过</li>
+</ul>
+<p>「写回」方式不会将新的数据直接写到内存，真正的写入内存时机，是在 <strong>该 Cache Block 被替换时</strong></p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-17-35-54.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/cpu_mesi.html#%E5%86%99%E5%9B%9E" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>这就是「懒更新」的思想，线段树也用到了该思想</p>
+<p>优点就是性能高，不用每次都写内存</p>
+<p><strong>缺点就是存在数据不一致问题</strong></p>
+<p>假设有一个变量 i（初始值为 0），<strong>且核心 A、B 的 L1 Cache 都有变量 i</strong>，初始，线程 T 在核心 A 上运行：</p>
+<ul>
+<li>T 修改 i 的值为 1</li>
+<li>发生调度，T 下处理机</li>
+<li>发生调度，T 上处理机，<strong>在核心 B 运行</strong></li>
+<li>T 想要读取 i，但是，B 的 L1 Cache 并没有更新，此时，<strong>T 就读到了脏数据！</strong></li>
+</ul>
+<p>那么，如何保证 CPU Cache 之间的一致性呢？有两种方式：</p>
+<ul>
+<li>总线嗅探</li>
+<li>MESI 协议</li>
+</ul>
+<h4 id="总线嗅探">总线嗅探</h4>
+<p>总线嗅探的基本原理是：</p>
+<ul>
+<li>每个 CPU 核心监听总线上的事件</li>
+<li>当 CPU 更新修改变量 i 的值时，将这个事件广播到总线</li>
+<li>其它 CPU 监听到该事件，检查自己的缓存有没有该数据，如果有，那么更新</li>
+</ul>
+<p>由于 CPU 需要每时每刻监听总线上的一切活动，但是不管别的核心的 Cache 是否缓存相同的数据，都需要发出一个广播事件，这无疑会 <strong>加重总线的负载</strong>。</p>
+<p>此外，总线嗅探看似解决了上面的数据不一致，但是，如果核心 B 的 L1 Cache 一开始没有变量 i：</p>
+<ul>
+<li>T 修改 i 的值为 1，广播该事件到总线</li>
+<li>核心 B 监听到该事件，但自己的缓存没有 i，忽略</li>
+<li>发生调度，T 下处理机</li>
+<li>发生调度，T 上处理机，<strong>在核心 B 运行</strong></li>
+<li>T 想要读取 i，由于核心 B 的缓存没有变量 i，于是访问内存</li>
+<li>但是，修改后的 i，还没有写入内存，此时，<strong>T 就读到了脏数据！</strong></li>
+</ul>
+<p>因此，总线嗅探 <strong>不能完全解决</strong> CPU Cache 的一致性问题</p>
+<blockquote>
+<p>事实上，要解决 CPU Cache 的一致性问题，需要满足两个条件：</p>
+<ul>
+<li>写传播：修改 L1 Cache 的消息，必须传播到其它核心</li>
+<li><strong>事务串行化</strong>：某个变量在一个核心的操作顺序，在其它核心看起来必须是一致的</li>
+</ul>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-17-54-46.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/cpu_mesi.html#%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E6%80%A7%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>总线嗅探仅满足了第一个条件</p>
+</blockquote>
+<h4 id="mesi-协议">MESI 协议</h4>
+<p>MESI 是：<code>Modified, Exclusive, Shared, and Invalid</code> 的缩写，具体含义如下</p>
+<ul>
+<li>M：已修改</li>
+<li>E：独占</li>
+<li>S：共享</li>
+<li>I：无效</li>
+</ul>
+<p>这四个状态是 <strong>Cache Line</strong> 的基本状态，在运行时，四个状态之间可以相互转换（状态机）</p>
+<ul>
+<li>「独占」的含义是：该数据只有当前的 CPU Cache 有，其它没有</li>
+<li>「共享」的含义是：该数据除了当前的 CPU 有以外，其它某些 CPU 也有</li>
+<li>「已修改」的含义是：该数据在当前的 CPU 有过修改（与内存不一致了）</li>
+<li>「无效」的含义是：该 Cache Block 无效</li>
+</ul>
+<p>处于「独占」和「已修改」状态的 Cache Line，可以直接修改数据而不通知其它核心，解决了 <em>总线嗅探</em> 的性能浪费问题</p>
+<p>处于「共享」状态的 Cache Line，若要修改数据，需要 <strong>通知</strong> 其它共享该 Cache Line 的核心，将「共享」状态修改为「无效」状态，并且，本核心的状态修改为「已修改」</p>
+<p>处于「无效」的 Cache Line，核心 <strong>不可以读取</strong></p>
+<p>对于上面的示例，如果使用 MESI 协议：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-18-50-35.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果 Core1 想读取 i 的值：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-18-51-23.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>补充:</p>
+<p>状态转换规则：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-18-52-01.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/cpu_mesi.html#mesi-%E5%8D%8F%E8%AE%AE" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>此外，还有一个 <a href="https://www.scss.tcd.ie/Jeremy.Jones/vivio/caches/MESI.htm" target="_blank" rel="noopener">网站</a>
+ 帮忙理解 MESI</p>
+</blockquote>
+<h2 id="cpu-是如何执行任务的">CPU 是如何执行任务的？</h2>
+<h3 id="读写数据时的问题">读写数据时的问题</h3>
+<p>假设现在有一个双核 CPU</p>
+<p>我们假设有两个线程 a、b，分别运行在核心 A、B 上</p>
+<p>有两个 long 类型的变量 v0、v1，二者之间 <strong>没有任何关系</strong></p>
+<p>由于 v0、v1 的 <strong>存储位置恰好十分接近</strong>，导致 CPU 读取 v0 的时候，<strong>恰好</strong> 将 v1 也一并读入到 <strong>同一个 Cache Line</strong> 中，问题就产生了：</p>
+<p>如果核心 A 修改 v0 的值，由于核心 B 也有 v0 的值，因此，核心 B 的 v0、v1 所对应的 Cache Line 的状态为 I（无效）</p>
+<p>此时，线程 b 想要读取 v1 的值，由于 v1 所在的 Cache Line 的状态为 I，因此需要：</p>
+<ul>
+<li>核心 A 将 v0、v1 所在的 Cache Line 写回内存，状态修改为 S</li>
+<li>核心 B 从内存中读取 v1，状态也为 S</li>
+</ul>
+<p>如果线程 b 修改 v1 的值，也会影响线程 a 对 v0 读取</p>
+<p>可以发现，这种情况的出现，会 <strong>十分影响性能</strong>，因为 Cache miss</p>
+<h4 id="什么是伪共享">什么是伪共享？</h4>
+<p>上面提到的场景就是伪共享问题：<strong>这种因为多个线程同时读写同一个 Cache Line 的不同变量时，而导致 CPU Cache 失效的现象称为伪共享（False Sharing）</strong></p>
+<h4 id="怎么解决伪共享带来的性能损失">怎么解决伪共享带来的性能损失？</h4>
+<p>要想解决伪共享问题，需要避免一些不相关变量位于同一个 Cache Line 中</p>
+<p>例如，对于下面这个结构体：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">Foo</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">b</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>有可能 a、b 会因为位于同一个 Cache Line，出现伪共享问题</p>
+<p>在 Linux 中，可以通过 <code>__cacheline_aligned_in_smp</code> 宏定义来避免：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">Foo</span><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">a</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">b</span> <span class="n">__cacheline_aligned_in_smp</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><p>本质上还是 <strong>填充字节以达到一个 Cache Line 的大小</strong> 来避免的，典型的用空间换时间的思想</p>
+<p>再来看一个 Java 的一个并发框架的部分实现：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-14-17.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_cpu_deal_task.html#%E9%81%BF%E5%85%8D%E4%BC%AA%E5%85%B1%E4%BA%AB%E7%9A%84%E6%96%B9%E6%B3%95" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>p1 ~ p7 的大小加起来为 56 个字节，起到填充字节的作用，避免 <em>其它不相关变量</em> 与 final 常量处于一个 Cache Line，导致读取 final 常量 cache miss</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-15-54.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="cpu-是如何选择任务的">CPU 是如何选择任务的？</h3>
+<!-- 调度的是 task_struct -->
+<p>无论是进程还是线程（轻量级进程），都是用 task_struct 来表示</p>
+<p>内核选择任务的过程，就是选择 task_struct 的过程</p>
+<h4 id="调度类">调度类</h4>
+<p>Linux 有三个调度类：</p>
+<ul>
+<li>DeadLine</li>
+<li>RealTime</li>
+<li>Fair</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-18-32.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_cpu_deal_task.html#%E8%B0%83%E5%BA%A6%E7%B1%BB" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<ul>
+<li>SCHED_DEADLINE：选择 deadline 离当前时间最近的 task</li>
+<li>SCHED_FIFO：先来先服务，但是优先级高的可以抢占</li>
+<li>SCHED_RR：轮转法，但是优先级高的可以抢占</li>
+<li>SCHED_NORMAL：普通任务调度策略</li>
+<li>SCHED_BATCH：后台任务调度策略（优先级比前台任务低）</li>
+</ul>
+<p>DeadLine 和 RealTime 调度器，都是用于 <strong>实时任务</strong></p>
+<p>而 Fair 用于 <strong>普通任务</strong></p>
+<h4 id="完全公平调度cfs">完全公平调度（CFS）</h4>
+<p>对于普通任务，公平最重要，Fair 的调度，又叫做完全公平调度</p>
+<p>算法的基本思想：</p>
+<ul>
+<li>为每个任务分配一个虚拟运行时间 vruntime</li>
+<li>调度时，<strong>选择 vruntime 少的</strong>，尽可能保证每个任务都有相似的时间执行</li>
+</ul>
+<p>vruntime 的计算规则：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-24-39.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>对于优先级一致的任务，实际运行时间越大，vruntime 越大</li>
+<li>对于实际运行时间越大的任务，优先级越高，vruntime 越小</li>
+</ul>
+<h4 id="cpu-runtime-queue">CPU Runtime Queue</h4>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-26-55.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/1_hardware/how_cpu_deal_task.html#cpu-%E8%BF%90%E8%A1%8C%E9%98%9F%E5%88%97" target="_blank" rel="noopener">图片来自小林 coding，csf_rq 应为 cfs_rq</a>
+</p>
+</blockquote>
+<p>三个队列的优先级为：DeadLine &gt; RealTime &gt; Fair</p>
+<p>也就是说：实时任务总是比普通任务先执行</p>
+<h4 id="调整优先级">调整优先级</h4>
+<p>任务的优先级 priority 的范围为 [0, 139]，<strong>priority 越小，优先级越大</strong></p>
+<ul>
+<li>实时任务 priority 的范围为 [0, 99]</li>
+<li>普通任务 priority 的范围为 [100, 139]</li>
+</ul>
+<p>对于普通任务，可以通过调整 Nice 值，来调整优先级</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-02-19-32-17.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>nice 值的范围为 [-20, 19]</p>
+<p>普通任务 new_priority = old_priority + nice</p>
+<p>因此，如果要想提高普通任务的优先级，可以降低 nice 值</p>
+<p>在启动任务的时候，可以指定 nice 值</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">nice -n -1 ./helloworld
+</span></span></code></pre></div><p>也可以调整一个运行中的进程的 nice 值</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 查看原 nice 值</span>
+</span></span><span class="line"><span class="cl">root@SkyLee:~# ps -o nice -p <span class="m">1050</span>
+</span></span><span class="line"><span class="cl"> NI
+</span></span><span class="line"><span class="cl">  <span class="m">0</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 修改 nice 值</span>
+</span></span><span class="line"><span class="cl">root@SkyLee:~# renice -1 -p <span class="m">1050</span>
+</span></span><span class="line"><span class="cl"><span class="m">1050</span> <span class="o">(</span>process ID<span class="o">)</span> old priority 0, new priority -1
+</span></span><span class="line"><span class="cl"><span class="c1"># 查看新 nice 值</span>
+</span></span><span class="line"><span class="cl">root@SkyLee:~# ps -o nice -p <span class="m">1050</span>
+</span></span><span class="line"><span class="cl"> NI
+</span></span><span class="line"><span class="cl"> -1
+</span></span></code></pre></div><p>当然，普通任务不管怎么调整，优先级也不会比实时任务高，如果对实时性有要求，可以修改一个运行中的进程为实时任务：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 将 pid 为 1145 的进程改为实时任务，并且优先级为 1</span>
+</span></span><span class="line"><span class="cl">chrt -f <span class="m">1</span> -p <span class="m">1145</span>
+</span></span></code></pre></div><h2 id="什么是中断">什么是中断？</h2>
+<p>中断是一种事件处理机制，OS 在收到中断请求后，会中断正在执行的进程，然后调用内核中断程序处理</p>
+<p>但是，如果中断时间过长，会导致之前执行的进程一直等待，用户体验不好</p>
+<p>并且，在处理中断时，OS 往往会屏蔽其它的中断，如果中断时间过长，会导致其它中断请求漏掉</p>
+<h3 id="什么是软中断">什么是软中断？</h3>
+<p>内核处理中断请求的过程叫做「硬中断」，为了避免硬中断的时间过长，内核会触发一个「软中断」来处理接下来的任务，当次硬中断就结束了</p>
+<ul>
+<li>例如，网卡接收到数据以后，会向 OS 发起一个硬中断，OS 收到该中断，就来处理这个事件</li>
+<li>OS 先屏蔽其它的中断请求，避免频繁中断降低性能</li>
+<li>OS 触发软中断</li>
+<li>OS 取消屏蔽其它中断，硬中断结束，由软中断处理接下来的任务</li>
+<li>软中断处理程序负责将网卡 ringbuffer 的数据取走，放到内核的接收缓冲区</li>
+</ul>
+<p>可以发现，中断分为上下两部分：</p>
+<ul>
+<li>上部分：硬中断，<strong>快速</strong> 处理中断请求</li>
+<li>下部分：软中断，<strong>延迟</strong> 处理上部分未处理的事件，<strong>内核线程</strong> 的形式</li>
+</ul>
+<h3 id="软中断有哪些类型">软中断有哪些类型？</h3>
+<p>可以在 Linux 下查看 <code>/proc/softirqs</code> 的内容：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">root@SkyLee:~# cat /proc/softirqs
+</span></span><span class="line"><span class="cl">                    CPU0       CPU1       
+</span></span><span class="line"><span class="cl">          HI:          <span class="m">2</span>          <span class="m">0</span>
+</span></span><span class="line"><span class="cl">       TIMER:   <span class="m">66975830</span>   <span class="m">81145851</span>
+</span></span><span class="line"><span class="cl">      NET_TX:          <span class="m">5</span>          <span class="m">7</span>
+</span></span><span class="line"><span class="cl">      NET_RX:    <span class="m">7477893</span>    <span class="m">7523257</span>
+</span></span><span class="line"><span class="cl">       BLOCK:       <span class="m">2728</span>    <span class="m">3216316</span>
+</span></span><span class="line"><span class="cl">    IRQ_POLL:          <span class="m">0</span>          <span class="m">0</span>
+</span></span><span class="line"><span class="cl">     TASKLET:        <span class="m">691</span>      <span class="m">13839</span>
+</span></span><span class="line"><span class="cl">       SCHED:  <span class="m">189534698</span>  <span class="m">190142385</span>
+</span></span><span class="line"><span class="cl">     HRTIMER:       <span class="m">1785</span>          <span class="m">0</span>
+</span></span><span class="line"><span class="cl">         RCU:  <span class="m">147754429</span>  <span class="m">147986682</span>
+</span></span></code></pre></div><p>这里表示有 10 中软中断，例如：NET_RX 表示网络接收中断，NET_TX 表示网络发送中断、TIMER 表示定时中断、RCU 表示 RCU 锁中断、SCHED 表示内核调度中断。</p>
+<h3 id="如果软中断占用了较高的系统资源怎么定位解决">如果软中断占用了较高的系统资源，怎么定位，解决？</h3>
+<p>首先使用 top 查看当前软中断占用了多少资源：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">top - 10:16:08 up <span class="m">38</span> days, 15:33,  <span class="m">1</span> user,  load average: 0.01, 0.01, 0.00
+</span></span><span class="line"><span class="cl">Tasks: <span class="m">132</span> total,   <span class="m">1</span> running, <span class="m">131</span> sleeping,   <span class="m">0</span> stopped,   <span class="m">0</span> zombie
+</span></span><span class="line"><span class="cl">%Cpu<span class="o">(</span>s<span class="o">)</span>:  0.5 us,  0.5 sy,  0.0 ni, 99.0 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+</span></span></code></pre></div><p><code>si</code> 就是软中断占用 CPU 的比例，如果发现占用较高，可以使用 watch 来查看软中断次数的变化频率：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">watch -d cat /proc/softirqs
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-10-13-38.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果发现某个软中断的变化频率较高，例如对于网络 IO 比较频繁的 Server，NET_RX 的变化频率需要格外注意，如果频率过高，可以使用 <code>sar -n DEV</code> 查看哪个网卡的数据包比较多</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-10-21-04.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这里的 eth0 网卡的包比较多，可以使用 tcpdump 抓包判断有没有非法的报文，可以考虑加防火墙，或者升级带宽等等</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

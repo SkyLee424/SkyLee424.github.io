@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MySQL 主从复制、读写分离、分库分表 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="主从复制 常见主从模型 常见的主从模型有以下几种： 一主一从 一主多从 互为主从 主从复制原理 简单来说，就是从库的 IO_Thread 将主库发来的 binlog 写到本地的 relay log，然"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MySQL 主从复制、读写分离、分库分表" />
+<meta property="og:description" content="主从复制 常见主从模型 常见的主从模型有以下几种： 一主一从 一主多从 互为主从 主从复制原理 简单来说，就是从库的 IO_Thread 将主库发来的 binlog 写到本地的 relay log，然" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-26T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-26T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MySQL 主从复制、读写分离、分库分表"/>
+<meta name="twitter:description" content="主从复制 常见主从模型 常见的主从模型有以下几种： 一主一从 一主多从 互为主从 主从复制原理 简单来说，就是从库的 IO_Thread 将主库发来的 binlog 写到本地的 relay log，然"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/">MySQL 主从复制、读写分离、分库分表</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/cluster/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Cluster</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">高可用</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-26T00:00:00&#43;00:00">
+      2024-02-26
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      11 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="主从复制">主从复制</h2>
+<h3 id="常见主从模型">常见主从模型</h3>
+<p>常见的主从模型有以下几种：</p>
+<ul>
+<li>一主一从</li>
+<li>一主多从</li>
+<li>互为主从</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-19-00-55-949.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="主从复制原理">主从复制原理</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-19-16-04-455.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>简单来说，就是从库的 IO_Thread 将主库发来的 <strong>binlog</strong> 写到本地的 <strong>relay log</strong>，然后由 <strong>SQL_Thread</strong> 负责拉取 relay log 完成主从复制</p>
+<blockquote>
+<p>binlog 是主库主动推送，还是从库主动拉取？</p>
+<p><strong>一开始创建主备关系的时候，是由备库指定的。</strong></p>
+<p>比如基于位点的主备关系，备库说“我要从 binlog 文件 A 的位置 P”开始同步， 主库就从这个指定的位置开始往后发。</p>
+<p>而主备复制关系搭建 <strong>完成以后</strong>，是 <strong>主库</strong> 来 <strong>决定“要发数据给备库”</strong> 的。</p>
+<p>所以主库有生成新的日志，就会发给备库。</p>
+</blockquote>
+<h4 id="循环复制">循环复制</h4>
+<p>生产上常常使用双主（互为主从）结构，这样主节点宕机了，还可以切换到从节点，保证可用性</p>
+<p>但双主结构存在一个 <strong>循环复制</strong> 的问题：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-19-22-15-201.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>假设一个业务代码向 A 库写入了一个数据，那么 A 库会产生相应的 binlog，并发送给 B 库</p>
+<p>B 库收到 A 库的 binlog，也会写入这个数据，<strong>并生成相应的 binlog</strong>（建议将 log_slave_updates 设置为 on，表示从库执行 relay log 以后，也会生成 binlog）</p>
+<p>B 库当然要把最新的 binlog 发给 A 库，但这个 binlog 记录的数据是 <strong>重复</strong> 的</p>
+<p>如果 A 库再执行一次这个 binlog，就相当于循环复制了</p>
+<p>如何解决这个问题？</p>
+<p>事实上，binlog 还 <strong>记录了生产该日志的 server id</strong>，如果收到的 binlog 的 server id 与自己是一样的，就不执行</p>
+<p>因此，要避免循环复制，需要：</p>
+<ul>
+<li>每个库的 server id 不同</li>
+<li>从库重放 binlog 时，生成的新 binlog 的 server id 必须与原 binlog 一致</li>
+</ul>
+<p>那么，保证了上面两点就能绝对避免循环复制吗？</p>
+<p>并不是</p>
+<p><strong>场景一</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-19-40-59-957.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>trx1 是在 C 库执行的，server_id 为 C 库的 server_id</p>
+<p>然后，A、B 搭建成双主结构，由于 server_id 不是 A、B，因此循环复制</p>
+<p>解决方法就是：临时忽略 C 库的 server_id</p>
+<p>可以在 A 或者 B 上执行：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">stop</span><span class="w"> </span><span class="n">slave</span><span class="err">；</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">CHANGE</span><span class="w"> </span><span class="n">MASTER</span><span class="w"> </span><span class="k">TO</span><span class="w"> </span><span class="n">IGNORE_SERVER_IDS</span><span class="o">=</span><span class="p">(</span><span class="n">server_id_of_C</span><span class="p">);</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="k">start</span><span class="w"> </span><span class="n">slave</span><span class="p">;</span><span class="w">
+</span></span></span></code></pre></div><p>这样这个节点收到这个 binlog 就不会执行，也就避免了循环复制</p>
+<p>同步完毕以后再改回来</p>
+<p><strong>场景二</strong></p>
+<p>如果主库发送完 binlog 之后，<strong>修改了自己的 server id</strong>，等 binlog 传回来以后，就会认为自己的 server id 与 binlog 中的 server id 不一致，造成循环复制</p>
+<blockquote>
+<p>那为什么还要允许运行时修改 server id 呢？设置为只读不就解决了？</p>
+<p>逆向修改 server_id，反而可以解决死循环问题</p>
+<p>例如上面的示例：可以将 A 库的 server_id 临时修改成 C，不就避免了死循环吗</p>
+</blockquote>
+<h3 id="主从延迟">主从延迟</h3>
+<p>从库要想同步主库的数据，肯定需要一定的时间，这段时间就叫做主从延迟时间</p>
+<p>主从延迟期间，如果有客户端读取从库的数据，可能会读取到旧数据，因此，需要尽可能缩短主从延迟</p>
+<blockquote>
+<p>可以通过在从库执行 <code>show slave status</code> 来查看 seconds_behind_master（SBM）的值</p>
+</blockquote>
+<h4 id="出现场景">出现场景</h4>
+<p>将整个主从复制分为三个时间点：</p>
+<ul>
+<li>主库完成一个事务，写入 binlog，这个时刻记做 T1</li>
+<li>从库收到主库的 binlog，记做 T2</li>
+<li>从库执行完这个事务，记做 T3</li>
+</ul>
+<p>那么主从延迟的时间 T = (T2 - T1) + (T3 - T2)</p>
+<p>T2 - T1 比较好理解：就是 <strong>网络延迟时间</strong>，如果网络波动比较大，有可能造成主从延迟时间较长，一般来说，网络延迟时间是比较短的，也不太好优化</p>
+<p>所以，主从延迟的原因主要取决于：<strong>从库接收到 binlog 到处理完事务的时间差</strong></p>
+<p>T3 - T2 又可以细分：</p>
+<ul>
+<li>IO_Thread 写入 relay log 的过程</li>
+<li>SQL_Thread 执行 relay log 的过程</li>
+</ul>
+<p>来讨论一下一些导致 T3 - T2 时间较长的场景：</p>
+<p><strong>从库性能太差</strong></p>
+<p>一般来说，为了保证业务的可用性，我们总是偏向于提高主库的配置，从库的配置可能较低</p>
+<p>例如：主库使用 SSD，而从库使用 HDD，写入速度太慢，<strong>IO 造成瓶颈</strong></p>
+<p>解决方案：</p>
+<p>现在一般讲究一个「对称部署」，为了保证可用性，主库挂了，从库随时要来顶住，因此主库与从库配置相同</p>
+<p><strong>从库压力太大</strong></p>
+<p>我们遇到的大多场景都是读多写少</p>
+<p>如果做读写分离：主库 write only，从库 read only</p>
+<p>从库同步的过程中，如果读的 QPS 太高了，<strong>从库压力太大，CPU、IO 都被大量读请求占用</strong>，自然主从延迟就变高了</p>
+<p>解决方案：</p>
+<p>部署多个从节点，将读请求分发到不同的从节点上，降低单个从节点的压力（当然数据不一致的可能也相应增加）</p>
+<p><strong>大事务</strong></p>
+<p>例如一个事务在主库执行 10min，那么只有等到这个事务执行完毕以后，才会写入 binlog</p>
+<p>从库收到这个 binlog，也需要花较长时间才能执行完这个事务，这个期间，主从都是不同步的</p>
+<p>因此，总是听到：“不要一次性 delete 太多数据”</p>
+<p>解决方案也很简单：就是避免大事务的产生</p>
+<p><strong>从库的并行复制能力</strong></p>
+<p>这里的「复制」指的是 SQL_Thread 执行 relay log 的过程</p>
+<p>早期的 MySQL（5.6 版本之前）SQL_Thread 是单线程的</p>
+<p>如果 binlog 很多，单线程可能就处理不过来了，造成积压，主从延迟升高</p>
+<h4 id="为什么从库会延迟好几个小时">为什么从库会延迟好几个小时？</h4>
+<p>如果从库的 <strong>复制能力太弱</strong>，就有可能出现这种延迟几个小时的情况</p>
+<p>为了提高复制能力，很容易想到多线程处理</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-20-43-33-648.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>SQL_Thread 变成了一个 Coordinator 和若干个 Worker Thread</p>
+<p>Coordinator 不负责 relay log 的实际处理，而是负责将 relay log 分发到不同的 Worker</p>
+<p>Worker 就专注于执行事务就可以</p>
+<p>那么重点来了：Coordinator 分配 relay log 的原则是什么？</p>
+<ol>
+<li>不能产生更新覆盖，这就要求对同一行的更新事务，必须放在同一个 Worker 中</li>
+<li>同一个事务不能拆开，只能由一个 Worker 处理</li>
+</ol>
+<blockquote>
+<p>第一点的「更新覆盖」的场景：</p>
+<p>两个事务，都想修改第 row 行的数据</p>
+<ul>
+<li>事务 A 先执行，将这一行的数据修改为 data0</li>
+<li>事务 B 后执行，将这一行的数据修改为 data1</li>
+</ul>
+<p>在主库，更新顺序为 A-&gt;B，那么在从库，这个顺序也应该是 A-&gt;B，否则可能出现主从不一致问题</p>
+</blockquote>
+<h5 id="56-版本-mysql-解决方案">5.6 版本 MySQL 解决方案</h5>
+<p>5.6 版本的 MySQL 引入了并行复制，即 SQL_Thread 变成了多线程，但是粒度比较粗，是 <strong>基于「库」的</strong>，不同库的事务肯定是可以并行执行的</p>
+<p>这个方式在每个库的负载都比较均衡的场景下比较有用，能起到不错效果</p>
+<p>但是，如果业务上就一个库，或者不同 DB 的热点不同，比如一个是业务逻辑库，一个是系统配置库，那就起不到并行的效果。</p>
+<h5 id="57-版本-mysql-解决方案">5.7 版本 MySQL 解决方案</h5>
+<p>因此，5.7 版本的 MySQL 又额外引入了一种策略：<strong>LOGICAL_CLOCK</strong>，基本思想如下：</p>
+<ul>
+<li>如果主库的两个事务都处于 prepare 状态，那么这两个事务可以在从库上并行执行</li>
+<li>如果主库的两个事务，一个处于 prepare，一个处于 commit，那么这两个事务可以在从库上并行执行</li>
+</ul>
+<p>只要若干个事务同时处于 prepare 状态（包括 commit 状态），那么说明这些事务肯定是客户端发起了 commit 请求，自然可以并行执行</p>
+<p>这种方案比起 5.6 版本的方案，更具有适用性</p>
+<p>还可以调整 <code>binlog_group_commit_sync_delay</code> 和 <code>binlog_group_commit_sync_no_delay_count</code> 参数（这两个参数是用于控制 fsync 的），来延长 prepare 状态的时间，以此产生更多「同时」处于 prepare 状态的事务，进而提交从库的并发度</p>
+<p>但是这个方式还存在局限：</p>
+<p>假设一个主库，单线程插入了很多数据，<strong>过了 3 个小时后</strong>，我们要给这个主库搭建一个相同版本的备库。</p>
+<p>由于已经过了 3 个小时，此时同时处于 prepare 状态的事务可以说是很少的，绝大多数事务已经被提交了</p>
+<p>此时如果采用 LOGICAL_CLOCK 策略，<strong>从库的复制过程就退化成单线程了</strong>，效率不高</p>
+<h5 id="5722-版本-mysql-解决方案">5.7.22 版本 MySQL 解决方案</h5>
+<p>为了解决上面这个场景的问题，5.7.22 版本 MySQL 引入了 WRITESET 策略，基本思想如下：</p>
+<p>在主库，对于一个事务涉及到的 <strong>每一行</strong>，计算出这一行 <code>库名 + 表名 + 索引名 + 值</code> 的哈希值</p>
+<p>将这些哈希值组成一个 write_set 集合，写到 binlog 里面</p>
+<p>从库收到 binlog，coordinator 会看看两个事务的 write_set 有没有交集：</p>
+<ul>
+<li>如果没有交集，说明这两个事务涉及完全不同的行，可以并行操作</li>
+</ul>
+<h3 id="主从切换">主从切换</h3>
+<p>来看看主从切换的大体步骤：</p>
+<ul>
+<li>从库循环检查自己的 SBM 是否小于某个值（比如 5s），如果小于，进入下一步</li>
+<li>将主库设置为 Read Only</li>
+<li>从库继续同步数据，知道 SBM 等于 0</li>
+<li>将从库设置为可读写</li>
+<li>将业务请求切换到从库</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-21-47-45-163.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，在主从切换期间，是存在 <strong>服务不可用</strong> 的：主、从均处于 Read Only</p>
+<blockquote>
+<p>如果要确实要保证下游服务的可用性，并且可以接受短期的数据不一致，可以直接将从库设置为可读写，然后把请求路由到从库，从库后台同步主库的数据，最后完成切换（不推荐）</p>
+</blockquote>
+<p>可以看出 <strong>MySQL 的可用性，很大一部分因素在于主从延迟</strong>，如果一开始 SBM 就比较短，那么整个切换过程中，服务不可用的时间就很短了</p>
+<h4 id="主库出问题从库怎么办">主库出问题，从库怎么办？</h4>
+<p>主库出问题，从库怎么办？</p>
+<p>按照正常流程，应该要选举出一个从节点，然后走主从切换的流程</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-27-10-38-39-051.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但问题是：其它从节点应该怎么去同步新的主节点的数据呢？</p>
+<p>难点：从库去同步新的主库的数据，不是全量同步，而是增量同步，如何寻找这个同步的「起始点」？</p>
+<p><strong>基于位点的主从切换</strong></p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">CHANGE</span><span class="w"> </span><span class="n">MASTER</span><span class="w"> </span><span class="k">TO</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_HOST</span><span class="o">=</span><span class="err">$</span><span class="n">host_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PORT</span><span class="o">=</span><span class="err">$</span><span class="n">port</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_USER</span><span class="o">=</span><span class="err">$</span><span class="n">user_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="err">$</span><span class="n">password</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_LOG_FILE</span><span class="o">=</span><span class="err">$</span><span class="n">master_log_name</span><span class="w"> </span><span class="c1">-- 指定主库同步的文件
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="n">MASTER_LOG_POS</span><span class="o">=</span><span class="err">$</span><span class="n">master_log_pos</span><span class="w">   </span><span class="c1">-- 指定同步的位置
+</span></span></span></code></pre></div><p>问题就是如何确定同步的起始位置</p>
+<p>使用这种方法，只能获取一个 <strong>大概的</strong> 的位点：</p>
+<ul>
+<li>等待新的主库将 relay log 同步完成</li>
+<li>获取新的主库的 file（show mater status）</li>
+<li>取原主库的故障时刻 T</li>
+<li>使用 mysqlbinlog 解析新主库 file 在 T 时刻的位点</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">mysqlbinlog File --stop-datetime<span class="o">=</span>T --start-datetime<span class="o">=</span>T
+</span></span></code></pre></div><p><strong>基于 GTID 的主从切换</strong></p>
+<p>上面的方式太麻烦了，还容易出错</p>
+<p>MySQL 5.6 引入了 <strong>全局事务 ID（GTID）</strong>，是一个事务的唯一标识</p>
+<p>在 GTID 模式下，从库获取新的主库的位点这件事情就在 MySQL 内部做好了：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">CHANGE</span><span class="w"> </span><span class="n">MASTER</span><span class="w"> </span><span class="k">TO</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_HOST</span><span class="o">=</span><span class="err">$</span><span class="n">host_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PORT</span><span class="o">=</span><span class="err">$</span><span class="n">port</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_USER</span><span class="o">=</span><span class="err">$</span><span class="n">user_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="err">$</span><span class="n">password</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="w">  </span><span class="c1">-- 指定使用 GTID 确定位点
+</span></span></span></code></pre></div><p>想要更深入的了解 GTID 的实现，可以看看这篇文章：<a href="https://time.geekbang.org/column/article/77427" target="_blank" rel="noopener">27 | 主库出问题了，从库怎么办？</a>
+</p>
+<h2 id="读写分离">读写分离</h2>
+<h3 id="什么是读写分离">什么是读写分离</h3>
+<p>读写分离，指的是将 DB 的读写操作分配到不同的节点执行，例如：主库只进行写操作，从库只进行读操作</p>
+<p>采用读写分离，可以提高整个 DB 集群的读能力</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-27-10-54-04-846.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="读写分离如何实现">读写分离如何实现</h3>
+<p>在 MySQL 集群搭建完毕以后，应用层一般有两种方式实现读写分离：</p>
+<ul>
+<li>应用层代码手动实现</li>
+<li>基于 Proxy（代理层）实现</li>
+</ul>
+<p><strong>应用层代码手动实现</strong></p>
+<p>应用程序主动做负载均衡，这种模式下一般会把数据库的连接信息放在客户端的连接层。也就是说，<strong>由客户端来选择后端数据库进行查询。</strong></p>
+<p>这种方式的性能较好，缺点就是需要对已有代码进行修改</p>
+<p><strong>基于 Proxy（代理层）实现</strong></p>
+<p>这个方式就是在 Client 到 Server 之间引入一个代理，自动分发客户端的请求：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-27-11-02-06-320.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Proxy 会负责请求的分发与负载均衡</p>
+<p>这种方式的优点就是不用修改已有代码，但是有一定的性能损耗</p>
+<h4 id="问题">问题</h4>
+<p>引入读写分离，虽然可以提高读写性能，但会带来 <strong>数据不一致</strong> 的问题：</p>
+<p>前面提到主从复制是需要时间的，当一个业务修改了表中的某一个数据，同步到其它从库需要时间</p>
+<p>如果刚刚修改完数据，就去从库访问的话，就有可能访问到过期数据</p>
+<p>如何解决？</p>
+<p><strong>强制走主库</strong></p>
+<p>一些对数据一致性要求很高的业务（如金融），可以采取这种方式，保证绝对的数据一致性</p>
+<p>这种方式比较简单，缺点就是：如果很多业务都有很高实时性要求，都走主库，会 <strong>对主库造成很大压力</strong></p>
+<p><strong>Sleep</strong></p>
+<p>既然同步需要时间，那我们可以「sleep」一下，等它同步完了再去访问不就好了吗</p>
+<p>例如，一个用户发布了一个商品，前端可以基于本地已有信息进行展示，就好像获取到了最新的数据一样</p>
+<p>用户待会刷新页面，其实已经过了一段时间，也就达到了 sleep 的目的，只要等待时间内同步完成，访问的就是最新的数据</p>
+<p>这种方式适用于对数据实时性要求低的业务，就算访问到过期数据也影响不大</p>
+<p>缺点就是：我们无法保证在规定时间内主从同步完毕，还是 <strong>有访问到过期数据的可能性</strong></p>
+<p><strong>判断主从无延迟方案</strong></p>
+<p>这种方式比较折中</p>
+<ol>
+<li>在访问数据之前，<strong>判断主从是否同步完毕</strong>：</li>
+<li>如果同步完毕，那么走从库，获取的是最新数据</li>
+<li>如果没有，可以等待一段时间，重复第一个步骤</li>
+<li>如果等待时间 <strong>超过一定阈值</strong>，那么根据实际需求，看看是走主库，获取最新数据；或者走从库，获取过期数据</li>
+</ol>
+<p>这种方式看起来比较灵活，可以根据实际需求选择走主库还是走从库</p>
+<blockquote>
+<p>如何判断主从是否同步完毕？</p>
+<ol>
+<li>可以使用 <code>show slave status</code> 查看 SBM，如果为 0，说明 <strong>可能</strong> 同步完毕。但这个方式判断不太精确</li>
+<li>可以对比位点确保主备无延迟</li>
+<li>可以对比 GTID 集合确保主备无延迟</li>
+</ol>
+</blockquote>
+<h2 id="分库分表">分库分表</h2>
+<h3 id="什么是分库">什么是分库</h3>
+<p>分库，指的是将一个数据库的数据分散到不同的数据库上，以减轻单个 DB 的压力</p>
+<p>分库有两种方式：</p>
+<ul>
+<li>垂直分库</li>
+<li>水平分库</li>
+</ul>
+<p>垂直分库指的是：按照业务，将一个库的多个表分到不同的库上，不同业务使用不同的数据库</p>
+<p>例如，一个数据库内有：User 表、Post 表、Comment 表，如果要垂直分库，就可以将这三张表分到不同的库中</p>
+<p>水平分库指的是：同一个表，按照一定「分片规则」，分配到不同的库中</p>
+<p>例如，一张 Comment 表，做水平切分，id 为 1 ～ 10000 的存在第一个 DB，id 为 10001 ～ 20000 的存在第二个 DB</p>
+<h3 id="什么是分表">什么是分表</h3>
+<p>分表，指的是将一张表的数据拆分成多张表，提高单表查询效率</p>
+<!-- 由于基本上用的是 InnoDB，InnoDB 默认通过 B+ 树索引数据，如果一张表的行数太多，B+ 树的检索效率就会下降（需要更多的 IO 次数）
+
+为了保证单个索引树的高度小于等于 3，可以对大表进行拆分 -->
+<p>分表也是两种方式：</p>
+<ul>
+<li>垂直分表</li>
+<li>水平分表</li>
+</ul>
+<p>垂直分表指的是：将一张表按照不同的字段，拆分成多张表</p>
+<p>例如 User 表有 name、sex、addr、phone、email 字段，可以将 User 表拆成 user_base(id, name, sex) 和 user_extra(id, addr, phone, email)</p>
+<p>水平分表指的是：按照一定的「分片规则」，将一张表的若干行数据拆分成到不同的表，解决单表数据太多导致检索能力下降问题</p>
+<p>例如，对于 User 表，id 为 1 ～ 10000 的存在表 user_0，id 为 10001 ～ 20000 的存在表 user_2</p>
+<p>水平分表只能解决单表数据量太大的问题，为了提高整体的效率，<strong>一般与水平分库结合使用</strong></p>
+<h3 id="什么时候需要分库分表">什么时候需要分库分表</h3>
+<ul>
+<li>单表数据量太大，检索能力下降</li>
+<li>数据库存放的数据太多，备份时间很长</li>
+<li>并发请求高，一个 DB 扛不住</li>
+</ul>
+<h3 id="常见分片算法">常见分片算法</h3>
+<p><strong>哈希分片</strong></p>
+<p>根据指定 key（比如 id） 的哈希值，算出这个数据在哪个库（表）中</p>
+<p>哈希分片算法比较适合 <strong>随机</strong> 查询的场景，并能 <strong>一定程度避免单个库上的热点问题</strong>，<strong>不适合范围查询</strong></p>
+<p><strong>范围分片</strong></p>
+<p>按照指定范围区间来分配数据，例如，将 id 为 1 ～ 10000 的存在第一个 DB，id 为 10001 ～ 20000 的存在第二个 DB</p>
+<p>范围分片算法比较适合 <strong>范围</strong> 查询的场景，但有可能 <strong>存在</strong> 单个库上的 <strong>热点问题</strong></p>
+<h3 id="分库分表带来的问题">分库分表带来的问题</h3>
+<p>引入分库分表，除了性能的提升，还会带来一定麻烦：</p>
+<ul>
+<li><strong>无法使用 join 操作</strong></li>
+<li><strong>事务问题</strong>：如果单个事务涉及到不同的 DB，就涉及到 <strong>分布式事务</strong> 了</li>
+<li><strong>ID</strong>：分库分表以后，数据存在不同的 DB，那么自增 ID 就无法满足需求了（可能重复），需要引入分布式 ID</li>
+<li><strong>聚合查询</strong>：对于 order by、group by 变得很复杂</li>
+<li><strong>维护成本</strong>：分库分表会带来额外的维护成本</li>
+</ul>
+<blockquote>
+<p>无法使用 join 操作其实也不能算缺点</p>
+<p>很多大厂的资深 DBA 都是建议尽量不要使用 join 操作，效率不太理想</p>
+<p>虽然不能用 join，但是可以在业务层做数据的组装，也能达到类似效果</p>
+</blockquote>
+<h3 id="分库分表后数据如何迁移">分库分表后，数据如何迁移</h3>
+<p>第一种方案就是 <strong>停机迁移</strong></p>
+<p>在低峰期，可以挂一个公告，表示需要停机维护，然后做数据迁移即可</p>
+<p>第二种方案是 <strong>双写</strong>，适用于无法停机，只能在线迁移的情况</p>
+<ul>
+<li>老库的增删改操作，新库也要同步进行（双写），如果新库没有这个数据，需要先插入</li>
+<li>双写在新库只会写入新的数据，旧数据需要新库在后台同步</li>
+<li>持续上面的操作，直到数据迁移完毕</li>
+</ul>
+<p>双写方案比较麻烦，很可能出问题</p>
+<p>无论哪种方案，都要使用到 binlog</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

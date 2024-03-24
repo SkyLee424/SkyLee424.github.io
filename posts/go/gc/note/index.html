@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Go: GC 原理 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="标记清扫法 Go 1.3 的 GC 采用标记清扫法，分为两个步骤： 标记 清扫 标记的过程很简单：从对象根节点开始 dfs，每遍历到一个节点就做标记，最后没有标记的节"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Go: GC 原理" />
+<meta property="og:description" content="Go 垃圾回收的实现原理" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/go/gc/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-19T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-19T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Go: GC 原理"/>
+<meta name="twitter:description" content="Go 垃圾回收的实现原理"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/go/gc/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/go/gc/note/">Go: GC 原理</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Go 垃圾回收的实现原理
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/golang/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Golang
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/golang/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Golang</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-19T00:00:00&#43;00:00">
+      2024-03-19
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      5 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="标记清扫法">标记清扫法</h2>
+<p>Go 1.3 的 GC 采用标记清扫法，分为两个步骤：</p>
+<ul>
+<li>标记</li>
+<li>清扫</li>
+</ul>
+<p>标记的过程很简单：从对象根节点开始 dfs，每遍历到一个节点就做标记，最后没有标记的节点就是要清理的节点：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-14-06-622.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>例如上图：对象 4 和对象 5 将在清扫过程中被清理</p>
+<p>为了保证 GC 的过程中，对象之间的引用关系不被改变，go runtime 会 <strong>阻塞除了 gc 以外的所有 goroutine</strong>，这个过程被称为 <strong>STW（stop-the-world）</strong></p>
+<p>STW 的时间越长，整个应用程序阻塞的时间就会越长，给用户的体验就是进程「卡住了」</p>
+<h2 id="三色标记法">三色标记法</h2>
+<p>1.3 版本的 Go 采用的标记清扫法的 STW 时间太长了</p>
+<p>在 1.5 版本，Go 引入了三色标记法</p>
+<h3 id="原理">原理</h3>
+<p>三色标记法将程序中的对象分成白色、黑色和灰色三类。</p>
+<ul>
+<li>白色：不确定对象。</li>
+<li>灰色：存活对象，子对象待处理。</li>
+<li>黑色：存活对象。</li>
+</ul>
+<p>标记过程如下：</p>
+<ol>
+<li><strong>STW</strong>，标记准备，将所有节点标记为白色</li>
+<li><strong>解除 STW</strong></li>
+<li>将所有根节点标记为 <em>灰色</em></li>
+<li>遍历灰色集合：将灰色节点标记为黑色，灰色节点的字节点标记为灰色</li>
+<li>持续步骤 4，直到灰色集合为空</li>
+</ol>
+<p>用几张图来展示三色标记法的过程：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-25-13-299.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-26-19-622.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-31-41-543.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-32-18-877.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-32-59-253.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>最终，对象 4 和对象 5 处于白色集合，将被 GC 掉</p>
+<h3 id="存在的问题">存在的问题</h3>
+<p>在标记的过程中，是没有 STW 的，也就是说，GC 和其它 goroutine 是并发执行的</p>
+<p>并发执行，意味着 GC 过程中，其它 goroutine <strong>可能修改了对象间的引用关系</strong> ，这会带来两个问题：</p>
+<ul>
+<li>某一个对象，没有被任何对象引用，但无法被 GC</li>
+<li>某一个对象，被其它对象引用，但是被 GC</li>
+</ul>
+<p>第一种情况还好，即使这一次没有被 GC，下一轮 GC 也可以把它回收掉</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-41-48-470.png"
+      alt="对象 1、2、3 在本轮 GC 无法回收" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但第二种情况就比较严重了，回收了正在使用的对象，这会带来严重后果：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-43-39-600.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>在这个情景下，由于对象 0 已经是黑色，无法将对象 4、5 标记为黑色，会导致对象 4、5 在本轮 GC 错误回收！</p>
+<p>错误回收发生的根本原因还是在于：<strong>黑色对象直接引用了一个白色对象</strong>，白色对象无法被染色，于是就被回收了</p>
+<h2 id="屏障">屏障</h2>
+<p>为了避免上述问题，我们当然可以在标记时，设置 STW，防止并发修改</p>
+<p>但这样就退化为标记清扫法了，我们应该在没有 STW 的前提（即允许并发修改）下，保证对象不被错误回收</p>
+<p>Go 在实现三色标记法时，引入了写屏障</p>
+<h3 id="插入写屏障">插入写屏障</h3>
+<p>插入写屏障的原理是：<strong>不允许一个黑色节点的子节点为白色</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-48-33-099.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>引入写屏障，可以在允许并发修改的条件下，保证对象不被错误回收</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-50-04-106.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这样，对象 4、5 就不会被回收了</p>
+<p>为了保证栈的读写效率，写屏障只会在堆对象启用，<strong>不会在栈对象启用</strong></p>
+<p>这意味着如果对象 4、5 如果存储在栈区，还是有可能被错误回收的</p>
+<p>因此，使用插入写屏障，需要在白色对象回收完毕后，<strong>再单独扫描一遍栈区</strong>，并且，这个扫描过程 <strong>需要 STW</strong></p>
+<h3 id="删除写屏障">删除写屏障</h3>
+<p>原理直接看图吧：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-18-17-55-31-338.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>引入删除屏障，也可以在允许并发修改的条件下，保证对象不被错误回收</p>
+<p>但是这种删除方式会出现 <strong>遗漏删除</strong> 的问题：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-19-08-50-07-173.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>对象 1、2、3 应该在这一轮被 GC，但是却没有，只能在下一轮 GC</p>
+<p>当然，标准的 Go 实现（至少到目前为止）并未使用传统意义上的删除写屏障，在 1.5 ～ 1.8 版本间，Go 使用的是插入写屏障机制</p>
+<h3 id="混合写屏障">混合写屏障</h3>
+<p>插入写屏障和删除写屏障的短板：</p>
+<ul>
+<li>插入写屏障：结束时 <strong>需要 STW 来重新扫描栈</strong>，标记栈上引用的白色对象的存活；</li>
+<li>删除写屏障：回收精度低 <!-- ，GC 开始时 STW 扫描堆栈来记录初始快照，这个过程会保护开始时刻的所有存活对象。 --></li>
+</ul>
+<p>为了弥补这两种方式的短板，Go 1.8 引入了 <strong>混合写屏障</strong></p>
+<blockquote>
+<p>As of Go 1.7, the one remaining source of unbounded and potentially non-trivial stop-the-world (STW) time is stack re-scanning. We propose to eliminate the need for stack re-scanning by switching to a <strong>hybrid write barrier</strong> that combines a Yuasa-style <strong>deletion write barrier</strong> [Yuasa &lsquo;90] and a Dijkstra-style <strong>insertion write barrier</strong> [Dijkstra &lsquo;78]. Preliminary experiments show that this <strong>can reduce worst-case STW time to under 50µs</strong>, and this approach may make it practical to <strong>eliminate STW mark termination altogether</strong>.</p>
+<p>Eliminating stack re-scanning will in turn simplify and eliminate many other parts of the garbage collector that exist solely to improve the performance of stack re-scanning. This includes stack barriers (which introduce significant complexity in many parts of the runtime) and maintenance of the re-scan list. Hence, in addition to substantially improving STW time, the hybrid write barrier should also reduce the overall complexity of the garbage collector.</p>
+</blockquote>
+<p>顾名思义，混合写屏障就是将 <code>插入写屏障</code> 与 <code>删除写屏障</code> 结合起来了，具体规则如下：</p>
+<ul>
+<li>GC 开始将栈上的对象 <strong>全部扫描并标记为黑色</strong>（这一步需要 STW，但时间很短）</li>
+<li>GC 期间，任何在栈上创建的新对象，均为黑色。</li>
+<li>堆上添加一个新的引用对象，将引用对象标记为灰色</li>
+<li>堆上删除一个已有引用对象，将引用对象标记为灰色</li>
+</ul>
+<p>这种方式避免了结束时需要 STW 重新扫描栈，但仍然存在 <strong>回收精度低</strong> 的问题</p>
+<blockquote>
+<p>所以目前我还没有弄清楚为什么 Go1.8 要引入混合写屏障，直接用删除写屏障不就好了吗？</p>
+</blockquote>
+<p>Golang 官方给出了混合写屏障的优缺点：</p>
+<blockquote>
+<p>The advantage of the hybrid barrier is that it <em>lets a stack scan permanently blacken a stack</em> (<strong>without a STW and without write barriers to the stack</strong>), which <strong>entirely eliminates the need for stack re-scanning</strong>, in turn eliminating the need for stack barriers and re-scan lists. Stack barriers in particular introduce significant complexity throughout the runtime, as well as interfering with stack walks from external tools such as GDB and kernel-based profilers.</p>
+<p>Also, like the Dijkstra-style write barrier, the hybrid barrier does not require a read barrier, so pointer reads are regular memory reads; and it ensures progress, since objects progress monotonically from white to grey to black.</p>
+<p>The disadvantages of the hybrid barrier are minor. <strong>It may result in more floating garbage</strong>, since it retains everything reachable from roots (other than stacks) at any point during the mark phase. However, in practice it&rsquo;s likely that the <strong>current Dijkstra barrier is retaining nearly as much</strong>. The hybrid barrier also prohibits certain optimizations: in particular, the Go compiler currently omits a write barrier if it can statically show that the pointer is nil, but the hybrid barrier requires a write barrier in this case. This may slightly increase binary size.</p>
+</blockquote>
+<p>用中文来说的话：如果在栈引入屏障，它在运行时 <strong>会引入相当的复杂性</strong>，同时也干扰了如 GDB 和基于内核的性能分析等外部工具的栈回溯。</p>
+<p>因此，混合写屏障通过将栈上对象全部标记为黑色，<strong>彻底避免了重新 STW 来扫描栈</strong>（STW stack re-scanning），同时也避免了栈上的写屏障，保证了运行效率</p>
+<p>当然，混合写屏障还是有缺点的：可能产生一些浮动垃圾（但是 dijkstra 风格的插入写屏障还是有浮动垃圾的可能）</p>
+<h2 id="gc-的时机">GC 的时机</h2>
+<h3 id="自动触发">自动触发</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// src/runtime/mgc.go
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">const</span> <span class="p">(</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">gcTriggerHeap</span> <span class="nx">gcTriggerKind</span> <span class="p">=</span> <span class="kc">iota</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">gcTriggerTime</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">gcTriggerCycle</span>
+</span></span><span class="line"><span class="cl"><span class="p">)</span>
+</span></span></code></pre></div><p>一共有三种触发方式：</p>
+<ul>
+<li>gcTriggerHeap：堆内存分配</li>
+<li>gcTriggerTime：定时触发，以 runtime.forcegcperiod 变量为准，默认 2min 一次</li>
+<li>gcTriggerCycle：如果没有启用 GC，那么启用（这种方式出现在手动调用 <code>runtime.GC()</code>）</li>
+</ul>
+<h3 id="手动触发">手动触发</h3>
+<p>可以调用 <code>runtime.GC()</code> 来手动触发 GC</p>
+<h3 id="自动触发基本流程">自动触发基本流程</h3>
+<p>go 的 runtime 在初始化时，会启动一个 goroutine 用于 GC：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">init</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="nf">forcegchelper</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">forcegchelper</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">forcegc</span><span class="p">.</span><span class="nx">g</span> <span class="p">=</span> <span class="nf">getg</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nf">lockInit</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">lock</span><span class="p">,</span> <span class="nx">lockRankForcegc</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">lock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">forcegc</span><span class="p">.</span><span class="nx">idle</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nf">throw</span><span class="p">(</span><span class="s">&#34;forcegc: phase error&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">atomic</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">idle</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">goparkunlock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">lock</span><span class="p">,</span> <span class="nx">waitReasonForceGCIdle</span><span class="p">,</span> <span class="nx">traceEvGoBlock</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// 将当前 goroutine 挂起，等待被唤醒
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="c1">// this goroutine is explicitly resumed by sysmon
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">if</span> <span class="nx">debug</span><span class="p">.</span><span class="nx">gctrace</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nb">println</span><span class="p">(</span><span class="s">&#34;GC forced&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="nf">gcStart</span><span class="p">(</span><span class="nx">gcTrigger</span><span class="p">{</span><span class="nx">kind</span><span class="p">:</span> <span class="nx">gcTriggerTime</span><span class="p">,</span> <span class="nx">now</span><span class="p">:</span> <span class="nf">nanotime</span><span class="p">()})</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>这个 goroutine 会先被挂起，等待被其它 goroutine 唤醒</p>
+<p>唤醒这个操作实际上是由一个监控 goroutine 完成的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">sysmon</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="o">...</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="o">...</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// check if we need to force a GC
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">if</span> <span class="nx">t</span> <span class="o">:=</span> <span class="p">(</span><span class="nx">gcTrigger</span><span class="p">{</span><span class="nx">kind</span><span class="p">:</span> <span class="nx">gcTriggerTime</span><span class="p">,</span> <span class="nx">now</span><span class="p">:</span> <span class="nx">now</span><span class="p">});</span> <span class="nx">t</span><span class="p">.</span><span class="nf">test</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="nx">atomic</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">idle</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nf">lock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">forcegc</span><span class="p">.</span><span class="nx">idle</span> <span class="p">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">			<span class="kd">var</span> <span class="nx">list</span> <span class="nx">gList</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">list</span><span class="p">.</span><span class="nf">push</span><span class="p">(</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">g</span><span class="p">)</span> <span class="c1">// 将 forcegc.g 加入到 GRQ 中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nf">injectglist</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">list</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">			<span class="nf">unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">forcegc</span><span class="p">.</span><span class="nx">lock</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">debug</span><span class="p">.</span><span class="nx">schedtrace</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">lasttrace</span><span class="o">+</span><span class="nb">int64</span><span class="p">(</span><span class="nx">debug</span><span class="p">.</span><span class="nx">schedtrace</span><span class="p">)</span><span class="o">*</span><span class="mi">1000000</span> <span class="o">&lt;=</span> <span class="nx">now</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">lasttrace</span> <span class="p">=</span> <span class="nx">now</span>
+</span></span><span class="line"><span class="cl">			<span class="nf">schedtrace</span><span class="p">(</span><span class="nx">debug</span><span class="p">.</span><span class="nx">scheddetail</span> <span class="p">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nf">unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">sched</span><span class="p">.</span><span class="nx">sysmonlock</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>这个函数会不停检测 idle time 是否与 forcegcperiod 相等，如果相等，会将 forcegc 这个 goroutine 加入到全局队列中，等待调度</p>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/334999060" target="_blank" rel="noopener">Golang 垃圾回收+混合写屏障 GC 全分析</a>
+</li>
+<li><a href="https://github.com/golang/proposal/blob/master/design/17503-eliminate-rescan.md" target="_blank" rel="noopener">Proposal: Eliminate STW stack re-scanning</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

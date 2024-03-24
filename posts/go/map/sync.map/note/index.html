@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Go: sync.Map - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="原生的 Map 有并发访问的安全问题： var m map[int]int = make(map[int]int, 4) func Store(key, val int) { m[key] = val } func Load(key int) (int, bool) { val, ok := m[key] return val, ok } func main() { var wg sync.WaitGroup wg.Add(100) for i := 0; i &amp;lt; 100; i&#43;&#43; { go func(key int) { defer wg.Done() Store(key, key) Load(key) }(i)"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Go: sync.Map" />
+<meta property="og:description" content="sync.Map 的底层实现" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/go/map/sync.map/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-17T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-17T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Go: sync.Map"/>
+<meta name="twitter:description" content="sync.Map 的底层实现"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/go/map/sync.map/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/go/map/sync.map/note/">Go: sync.Map</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      sync.Map 的底层实现
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/golang/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Golang
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/golang/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Golang</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">并发编程</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-17T00:00:00&#43;00:00">
+      2024-03-17
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      5 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>原生的 Map 有并发访问的安全问题：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">m</span> <span class="kd">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="kt">int</span> <span class="p">=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="kt">int</span><span class="p">]</span><span class="kt">int</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="kt">int</span><span class="p">)</span>  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nx">val</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Load</span><span class="p">(</span><span class="nx">key</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">val</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nx">val</span><span class="p">,</span> <span class="nx">ok</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">main</span><span class="p">()</span>  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kd">var</span> <span class="nx">wg</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">WaitGroup</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">wg</span><span class="p">.</span><span class="nf">Add</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="mi">100</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">go</span> <span class="kd">func</span><span class="p">(</span><span class="nx">key</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">defer</span> <span class="nx">wg</span><span class="p">.</span><span class="nf">Done</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">Load</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}(</span><span class="nx">i</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">wg</span><span class="p">.</span><span class="nf">Wait</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<pre tabindex="0"><code>fatal error: concurrent map writes
+</code></pre><p>map 不允许并发写，可以使用读写锁解决：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="kt">int</span><span class="p">)</span>  <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">defer</span> <span class="nx">rwlock</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">rwlock</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nx">val</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Load</span><span class="p">(</span><span class="nx">key</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">defer</span> <span class="nx">rwlock</span><span class="p">.</span><span class="nf">RUnlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">rwlock</span><span class="p">.</span><span class="nf">RLock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">val</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="nx">val</span><span class="p">,</span> <span class="nx">ok</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>sync 包也提供了一个 <strong>开箱即用、并发访问安全</strong> 的 map：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-17-15-02-10-368.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>使用 <code>sync.Map</code> 修改上面的代码：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">var</span> <span class="nx">m</span> <span class="nx">sync</span><span class="p">.</span><span class="nx">Map</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">val</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Load</span><span class="p">(</span><span class="nx">key</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">val</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Load</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span> <span class="c1">// 确实有 key
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">res</span><span class="p">,</span> <span class="nx">ok2</span> <span class="o">:=</span> <span class="nx">val</span><span class="p">.(</span><span class="kt">int</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">ok2</span> <span class="p">{</span> <span class="c1">// 检查 val 的类型
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="k">return</span> <span class="nx">res</span><span class="p">,</span> <span class="nx">ok</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="syncmap-底层是怎么实现的">sync.Map 底层是怎么实现的</h2>
+<h3 id="数据结构">数据结构</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">Map</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">mu</span> <span class="nx">Mutex</span> <span class="c1">// 保护 dirty
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="nx">atomic</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">[</span><span class="nx">readOnly</span><span class="p">]</span> <span class="c1">// 允许并发读
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">dirty</span> <span class="kd">map</span><span class="p">[</span><span class="nx">any</span><span class="p">]</span><span class="o">*</span><span class="nx">entry</span> <span class="c1">// 非 goroutine 安全的原始 map
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">misses</span> <span class="kt">int</span> <span class="c1">// 记录了读取 read，miss 的次数
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p>再来看看 readOlny 是个啥：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// readOnly is an immutable struct stored atomically in the Map.read field.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">readOnly</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span>       <span class="kd">map</span><span class="p">[</span><span class="nx">any</span><span class="p">]</span><span class="o">*</span><span class="nx">entry</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">amended</span> <span class="kt">bool</span> <span class="c1">// true if the dirty map contains some key not in m.（如果 dirty 包含一些不存在于 m 中的 key，那么为 true）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p>可以发现：</p>
+<ul>
+<li>Map 使用了两个原生的 map，分别是 read.m、dirty</li>
+<li>read 的类型是 <code>atomic.Pointer[readOnly]</code>，可以并发地读。但如果需要更新 read，则需要加锁保护</li>
+<li>dirty 是一个原始 map，新增加的 key 都存储在这里</li>
+<li>mu 是互斥锁，用于保护 dirty 的读写操作</li>
+<li>如果一个 key 在 dirty 而不在 read 中（这个 key 是后添加的），那么递增 misses</li>
+</ul>
+<p>无论是 read，还是 dirty，其 value 类型都是指向 entry 的指针，那么 entry 是个啥？</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// An entry is a slot in the map corresponding to a particular key.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">type</span> <span class="nx">entry</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">p</span> <span class="nx">atomic</span><span class="p">.</span><span class="nx">Pointer</span><span class="p">[</span><span class="nx">any</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>entry 实际上使用原子指针封装了真实 value</p>
+<p>这里借用 <a href="https://www.cnblogs.com/qcrao-2018/p/12833787.html#%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84" target="_blank" rel="noopener">深度解密 Go 语言之 sync.map </a>
+ 的一张图片来帮助理解：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-17-15-16-31-221.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="store">Store</h3>
+<p>Store 方法用于向 sync.Map 存储数据</p>
+<p>可以先想想实现 Store 的大方向：</p>
+<ul>
+<li>判断 key 是否存在
+<ul>
+<li>如果存在，那么修改 value 即可</li>
+<li>否则，新增一个 entry 到 map 中</li>
+</ul>
+</li>
+</ul>
+<p>来看看 sync 包是怎么实现的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">Store</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">_</span><span class="p">,</span> <span class="nx">_</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">Swap</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">Swap</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span> <span class="nx">value</span> <span class="nx">any</span><span class="p">)</span> <span class="p">(</span><span class="nx">previous</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">loaded</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 如果 read 中，包含这个 key，那么直接修改即可（这个修改的过程在 trySwap 中，基于 CAS 实现原子修改 entry）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">v</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nf">trySwap</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">value</span><span class="p">);</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="nx">v</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="o">*</span><span class="nx">v</span><span class="p">,</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 准备操作 dirty，加锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span> <span class="c1">// 双重检查（double-check）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// 如果 read map 中存在该 key，但 p == expunged，则说明 m.dirty != nil 并且 m.dirty 中不存在该 key 值，直接修改 dirty
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">if</span> <span class="nx">e</span><span class="p">.</span><span class="nf">unexpungeLocked</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nx">e</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nf">swapLocked</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">value</span><span class="p">);</span> <span class="nx">v</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">loaded</span> <span class="p">=</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">previous</span> <span class="p">=</span> <span class="o">*</span><span class="nx">v</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">];</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nf">swapLocked</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">value</span><span class="p">);</span> <span class="nx">v</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">loaded</span> <span class="p">=</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">previous</span> <span class="p">=</span> <span class="o">*</span><span class="nx">v</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">!</span><span class="nx">read</span><span class="p">.</span><span class="nx">amended</span> <span class="p">{</span> <span class="c1">// 说明 dirty 为 nil
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// We&#39;re adding the first new key to the dirty map.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// Make sure it is allocated and mark the read-only map as incomplete.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">m</span><span class="p">.</span><span class="nf">dirtyLocked</span><span class="p">()</span> <span class="c1">// 给 dirty 分配内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">m</span><span class="p">.</span><span class="nx">read</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">readOnly</span><span class="p">{</span><span class="nx">m</span><span class="p">:</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">,</span> <span class="nx">amended</span><span class="p">:</span> <span class="kc">true</span><span class="p">})</span> <span class="c1">// 修改 amended 为 true
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="p">=</span> <span class="nf">newEntry</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="c1">// 在 dirty 中添加新的 key-value
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">previous</span><span class="p">,</span> <span class="nx">loaded</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">dirtyLocked</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 给 dirty 分配内存
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span> <span class="p">=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">map</span><span class="p">[</span><span class="nx">any</span><span class="p">]</span><span class="o">*</span><span class="nx">entry</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// 将 read 的所有元素拷贝到 dirty 中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">for</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">e</span> <span class="o">:=</span> <span class="k">range</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">!</span><span class="nx">e</span><span class="p">.</span><span class="nf">tryExpungeLocked</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">k</span><span class="p">]</span> <span class="p">=</span> <span class="nx">e</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>大致步骤如下：</p>
+<ul>
+<li>检查 read 中是否有这个 key，如果有，直接原子修改 entry 即可（这个修改在 read 和 dirty 都是可见的），返回</li>
+<li>第一步没有成功：要么 read 中没有这个 key，要么 key 被标记为删除。则先加锁，再进行后续的操作</li>
+<li>双重检查 read，如果 read map 中存在该 key，但 p == expunged，则说明 m.dirty != nil 并且 m.dirty 中不存在该 key 值（被删除了），直接修改 dirty，返回</li>
+<li>否则，检查 dirty 是否为 nil，如果为 nil，分配内存，修改 amended 为 true</li>
+<li><strong>在 dirty 中添加新的 key-value</strong></li>
+</ul>
+<p>可以发现，<strong>新增的 key 都是加在 dirty 中的</strong></p>
+<p>在给 dirty 分配内存时，需要将 read 的所有数据（除了删除过的）拷贝到 dirty 中，以便后续快速将 dirty 提升为 read</p>
+<h3 id="load">Load</h3>
+<p>还是先想想实现 Load 的大方向：</p>
+<ul>
+<li>判断这个 key 是否存在：
+<ul>
+<li>如果存在，那么返回</li>
+<li>否则返回对应类型的零值</li>
+</ul>
+</li>
+</ul>
+<p>核心就在判断 key 是否存在上面</p>
+<p>我们来看看 sync 包是怎么实现的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">Load</span><span class="p">(</span><span class="nx">key</span> <span class="nx">any</span><span class="p">)</span> <span class="p">(</span><span class="nx">value</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">ok</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="nx">read</span><span class="p">.</span><span class="nx">amended</span> <span class="p">{</span> <span class="c1">// 如果 read 中没有，并且 dirty 不为空
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// Avoid reporting a spurious miss if m.dirty got promoted while we were
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// blocked on m.mu. (If further loads of the same key will not miss, it&#39;s
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// not worth copying the dirty map for this key.)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">read</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="nx">read</span><span class="p">.</span><span class="nx">amended</span> <span class="p">{</span> <span class="c1">// 双重检查
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span> <span class="c1">// 在 dirty 中获取 key 对应的 value
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// Regardless of whether the entry was present, record a miss: this key
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// will take the slow path until the dirty map is promoted to the read
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// map.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">m</span><span class="p">.</span><span class="nf">missLocked</span><span class="p">()</span> <span class="c1">// 无论 key 对应的 value 是否存在，都要执行 missLocked（因为访问了 dirty）
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nf">load</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>Load 的实现很简单，主要分为两个大的步骤：在 read 中查找，以及在 dirty 中查找：</p>
+<ul>
+<li>在 read 中查找，如果有，直接返回（相当于 cache hit）</li>
+<li>如果 read 中没有，并且 dirty 不为空，尝试在 dirty 查找（相当于 cache miss）</li>
+<li>双重检查一波，如果确实 read 没有这个 key，那么在 dirty 获取</li>
+<li>因为访问了 dirty，无论 key 对应的 value 是否存在，执行 missLocked</li>
+<li>返回结果</li>
+</ul>
+<p>missLocked 的实现如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">missLocked</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nx">misses</span><span class="o">++</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">m</span><span class="p">.</span><span class="nx">misses</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nx">read</span><span class="p">.</span><span class="nf">Store</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">readOnly</span><span class="p">{</span><span class="nx">m</span><span class="p">:</span> <span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">})</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span> <span class="p">=</span> <span class="kc">nil</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nx">misses</span> <span class="p">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>这个函数主要做了两件事：</p>
+<ul>
+<li>递增 misses</li>
+<li>如果 misses &gt;= dirty 中的 key 总个数，说明出现了较严重的 cache miss，会影响 Store 和 Load 的性能，需要：
+<ul>
+<li><strong>将 dirty 提升为 read</strong></li>
+<li>将原 dirty 置为 nil</li>
+</ul>
+</li>
+</ul>
+<p>从 Store 和 Load 的源码分析可以看出：sync.Map 还是比较 <strong>适合读多写少的场景</strong>，如果写比较多（造成主要的数据都在 dirty 中），会导致部分读取要先读 read，再读 dirty，性能不佳</p>
+<h3 id="delete">Delete</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">Delete</span><span class="p">(</span><span class="nx">key</span> <span class="nx">any</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">m</span><span class="p">.</span><span class="nf">LoadAndDelete</span><span class="p">(</span><span class="nx">key</span><span class="p">)</span> <span class="c1">// 实际上调用的还是 LoadAndDelete
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">m</span> <span class="o">*</span><span class="nx">Map</span><span class="p">)</span> <span class="nf">LoadAndDelete</span><span class="p">(</span><span class="nx">key</span> <span class="nx">any</span><span class="p">)</span> <span class="p">(</span><span class="nx">value</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">loaded</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">read</span> <span class="o">:=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="nx">read</span><span class="p">.</span><span class="nx">amended</span> <span class="p">{</span> <span class="c1">// 如果 read 不存在，并且 dirty 不为 nil
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">read</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nf">loadReadOnly</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">read</span><span class="p">.</span><span class="nx">m</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="o">&amp;&amp;</span> <span class="nx">read</span><span class="p">.</span><span class="nx">amended</span> <span class="p">{</span> <span class="c1">// 双重检查
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">e</span><span class="p">,</span> <span class="nx">ok</span> <span class="p">=</span> <span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span>
+</span></span><span class="line"><span class="cl">			<span class="nb">delete</span><span class="p">(</span><span class="nx">m</span><span class="p">.</span><span class="nx">dirty</span><span class="p">,</span> <span class="nx">key</span><span class="p">)</span> <span class="c1">// 在 dirty 中删除 key
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// Regardless of whether the entry was present, record a miss: this key
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// will take the slow path until the dirty map is promoted to the read
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// map.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">m</span><span class="p">.</span><span class="nf">missLocked</span><span class="p">()</span> <span class="c1">// misses++，进一步的，可能提升 dirty 为 read
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">m</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">if</span> <span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">return</span> <span class="nx">e</span><span class="p">.</span><span class="nb">delete</span><span class="p">()</span> <span class="c1">// 原子删除
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">e</span> <span class="o">*</span><span class="nx">entry</span><span class="p">)</span> <span class="nb">delete</span><span class="p">()</span> <span class="p">(</span><span class="nx">value</span> <span class="nx">any</span><span class="p">,</span> <span class="nx">ok</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">p</span> <span class="o">:=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">p</span><span class="p">.</span><span class="nf">Load</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">if</span> <span class="nx">p</span> <span class="o">==</span> <span class="kc">nil</span> <span class="o">||</span> <span class="nx">p</span> <span class="o">==</span> <span class="nx">expunged</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">false</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="c1">// p 不为 nil，并且 p 之前没有被删除过
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">if</span> <span class="nx">e</span><span class="p">.</span><span class="nx">p</span><span class="p">.</span><span class="nf">CompareAndSwap</span><span class="p">(</span><span class="nx">p</span><span class="p">,</span> <span class="kc">nil</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="k">return</span> <span class="o">*</span><span class="nx">p</span><span class="p">,</span> <span class="kc">true</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="总结">总结</h3>
+<ul>
+<li>sync.map <strong>是线程安全的</strong></li>
+<li>读取，插入，删除保持常数级的时间复杂度。</li>
+<li>通过读写分离（read 负责读，dirty 负责读与写），<strong>降低锁时间</strong> 来提高效率，适用于 <strong>读多写少</strong> 的场景。</li>
+<li>调用 Load 函数时，如果在 read 中没有找到 key，则会将 misses 值原子地增加 1，当 misses 增加到和 dirty 的长度相等时，会将 dirty 提升为 read，<strong>减少「读 miss」</strong>。</li>
+<li><strong>新写入的 key 会保存到 dirty 中</strong>，如果这时 dirty 为 nil，就会先新创建一个 dirty，<strong>并将 read 中未被删除的元素拷贝到 dirty</strong>。</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

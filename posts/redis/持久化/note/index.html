@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Redis 持久化机制 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="AOF 日志 介绍 AOF（append-only file）是 Redis 持久化数据的一种策略 由于 Redis 的数据都存在内存，如果不做持久化，重启后数据就丢失了 AOF 的机制"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Redis 持久化机制" />
+<meta property="og:description" content="Redis 的 AOF、RDB 持久化机制" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-03-07T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-03-07T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Redis 持久化机制"/>
+<meta name="twitter:description" content="Redis 的 AOF、RDB 持久化机制"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/">Redis 持久化机制</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Redis 的 AOF、RDB 持久化机制
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/redis/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Redis
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/redis/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Redis</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/persistence/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Persistence</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-03-07T00:00:00&#43;00:00">
+      2024-03-07
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="aof-日志">AOF 日志</h2>
+<h3 id="介绍">介绍</h3>
+<p>AOF（append-only file）是 Redis 持久化数据的一种策略</p>
+<p>由于 Redis 的数据都存在内存，如果不做持久化，重启后数据就丢失了</p>
+<p>AOF 的机制是：在执行完每一条写命令后，顺便将这条命令追加在 AOF 文件中</p>
+<p>例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">192.168.124.114:6379&gt; <span class="nb">set</span> k1 v1
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">192.168.124.114:6379&gt; <span class="nb">exit</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>root@localhost redis-6.2.13<span class="o">]</span><span class="c1"># cat appendonly.aof</span>
+</span></span><span class="line"><span class="cl">*3  <span class="c1"># 接下来的命令有三个字符串</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$3</span>  <span class="c1"># 接下来的字符串有三个字节</span>
+</span></span><span class="line"><span class="cl"><span class="nb">set</span> <span class="c1"># set 命令</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">k1
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">v1
+</span></span></code></pre></div><p>要配置和启用 AOF 持久化，可以在 Redis 配置文件中设置以下配置项：</p>
+<ul>
+<li>
+<p><code>appendonly yes</code>：启用 AOF 持久化。</p>
+</li>
+<li>
+<p><code>appendfilename</code>：指定 AOF 文件的名称，默认为 <code>appendonly.aof</code>。</p>
+</li>
+<li>
+<p><code>appendfsync</code>：设置 AOF 同步策略</p>
+</li>
+</ul>
+<p>当 Redis 重启或者断电恢复时，就可以使用 AOF 文件做重放，以达到恢复数据的目的</p>
+<h3 id="持久化策略">持久化策略</h3>
+<p>来看看 AOF 持久化的原理图：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-07-18-35-44-777.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>AOF 有三种持久化策略：</p>
+<ul>
+<li>always：每执行一次写命令，就执行一次 fsync，效率最低，安全性最高</li>
+<li>everysec：执行一次写命令，将命令记录到 AOF 缓冲区，每个 1s 将缓冲区的数据刷新（fsync）到磁盘，效率中等，安全性较高</li>
+<li>no：执行一次写命令，将命令记录到 AOF 缓冲区，由 OS 决定将缓冲区的数据刷新到磁盘（只 write，不 fsync），效率高，安全性低</li>
+</ul>
+<h3 id="aof-重写">AOF 重写</h3>
+<p>来看这一个例子：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">192.168.124.114:6379&gt; <span class="nb">set</span> k1 v1
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">192.168.124.114:6379&gt; <span class="nb">set</span> k1 v2
+</span></span><span class="line"><span class="cl">OK
+</span></span><span class="line"><span class="cl">192.168.124.114:6379&gt; del k1
+</span></span><span class="line"><span class="cl"><span class="o">(</span>integer<span class="o">)</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">192.168.124.114:6379&gt; <span class="nb">exit</span>
+</span></span><span class="line"><span class="cl"><span class="o">[</span>root@localhost redis-6.2.13<span class="o">]</span><span class="c1"># cat appendonly.aof</span>
+</span></span><span class="line"><span class="cl">*2
+</span></span><span class="line"><span class="cl"><span class="nv">$6</span>
+</span></span><span class="line"><span class="cl">SELECT
+</span></span><span class="line"><span class="cl"><span class="nv">$1</span>
+</span></span><span class="line"><span class="cl"><span class="m">0</span>
+</span></span><span class="line"><span class="cl">*3
+</span></span><span class="line"><span class="cl"><span class="nv">$3</span>
+</span></span><span class="line"><span class="cl"><span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">k1
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">v1
+</span></span><span class="line"><span class="cl">*3
+</span></span><span class="line"><span class="cl"><span class="nv">$3</span>
+</span></span><span class="line"><span class="cl"><span class="nb">set</span>
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">k1
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">v2
+</span></span><span class="line"><span class="cl">*2
+</span></span><span class="line"><span class="cl"><span class="nv">$3</span>
+</span></span><span class="line"><span class="cl">del
+</span></span><span class="line"><span class="cl"><span class="nv">$2</span>
+</span></span><span class="line"><span class="cl">k1
+</span></span></code></pre></div><p>事实上，对 k1 的修改完全没有必要全部记录下来，但是 AOF 还是将多余的操作记录下来了，这将浪费空间</p>
+<p>而 AOF 重写就是用来解决这个问题的</p>
+<p>AOF 重写的过程：</p>
+<ul>
+<li>新建一个 AOF 文件，记做 tmp</li>
+<li>遍历 Redis 中 <strong>所有的键值对</strong>，生成对应的执行命令（例如，有一个 string 类型的 k1，value 为 v1，就会在 tmp 中记下 <code>SET k1 v1</code>）</li>
+<li>用 tmp 替换原来旧的 AOF 文件，这个过程是 <strong>原子的</strong></li>
+</ul>
+<p>这个重写过程存在问题：</p>
+<p>如果在主进程执行，那么在重写过程中，<strong>主线程就无法接受新的写请求</strong>，会导致 tmp 与 Redis 的数据不一致</p>
+<p>因此，为了保证在 AOF 的重写的过程中，主线程仍然可以接受新的写请求，重写操作实际上是由子 <strong>进程</strong> 完成的</p>
+<p>这里给出 AOF 重写的完整过程：</p>
+<ul>
+<li>新建一个 AOF 文件，记做 tmp</li>
+<li>新建一个 <strong>AOF 重写缓冲区</strong></li>
+<li>fork 一个子进程</li>
+<li>子进程遍历 Redis 中所有的键值对，生成对应的执行命令</li>
+<li>重写过程中，如果有新的写入请求，主进程需要：
+<ul>
+<li>写入到 data 区</li>
+<li>写入到 aof_buffer</li>
+<li><strong>写入到 aof_rewrite_buffer</strong></li>
+</ul>
+</li>
+<li>当子进程的重写操作执行完毕，发送一个信号给主进程</li>
+<li>主进程收到信号后，调用信号处理函数</li>
+<li>信号处理函数会做以下事情：
+<ul>
+<li><strong>将 aof_rewrite_buffer 的数据追加到 tmp 中</strong></li>
+<li>用 tmp 替换原来旧的 AOF 文件</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>AOF 重写（rewrite） 是一个有歧义的名字，该功能是通过读取 <strong>数据库（dataset）中</strong> 的键值对来实现的，程序无须对现有 AOF 文件进行任何读入、分析或者写入操作。</p>
+</blockquote>
+<p>Redis 利用子进程 与 aof_rewrite_buffer 来实现重写时仍能接受新的写请求</p>
+<blockquote>
+<p>为什么要 fork 一个子进程，子线程不行吗？</p>
+</blockquote>
+<p>使用子进程的目的主要还是避免加锁带来的性能开销</p>
+<p>fork 子进程会用到 <strong>写时拷贝</strong>，即使在重写过程中，主进程由于接受用户写请求而修改了部分数据，也不会影响到子进程的内存空间</p>
+<p>只要修改的数据不多（即读多写少），那么子进程带来的性能开销不会很大，比线程加锁的性能开销更低</p>
+<h2 id="rdb-快照">RDB 快照</h2>
+<h3 id="介绍-1">介绍</h3>
+<p>Redis RDB（Redis Database Dump）是 Redis 数据持久化的一种方式，它用于将 Redis 数据快照保存到磁盘上，以便在服务器重启时可以重新加载数据。RDB 是一种 <strong>紧凑且高性能</strong> 的持久化方式，通常用于灾难恢复和 <strong>备份</strong> 。</p>
+<h3 id="持久化策略-1">持久化策略</h3>
+<pre tabindex="0"><code class="language-conf" data-lang="conf"># Unless specified otherwise, by default Redis will save the DB:
+#   * After 3600 seconds (an hour) if at least 1 key changed
+#   * After 300 seconds (5 minutes) if at least 100 keys changed
+#   * After 60 seconds if at least 10000 keys changed
+
+# You can set these explicitly by uncommenting the three following lines.
+
+# save &#34;&#34;  禁用 RDB
+save 3600 1
+save 300 100
+save 60 10000
+</code></pre><p>以 <code>save 3600 1</code> 为例：如果一个小时内，Redis 执行了 1 条写命令，就触发 RDB 持久化</p>
+<p>RDB 持久化也是 fork 一个子进程来处理，但相较于 AOF 来说，RDB 更紧凑，存放的是二进制数据，<strong>占用空间小，恢复速度更快</strong></p>
+<p>也可以手动执行 <code>BGSAVE</code> 来生成一个 RDB 快照</p>
+<h3 id="rdb-与-aof-混合持久化">RDB 与 AOF 混合持久化</h3>
+<ul>
+<li>如果单独使用 RDB，性能较好，恢复较快，但备份的粒度太粗，丢的数据可能较多</li>
+<li>如果单独使用 AOF，性能还行，备份粒度细，丢的数据少，但恢复速度慢</li>
+</ul>
+<p>在 Redis4.0 引入了「混合持久化」，可以将 RDB 与 AOF 混合在一起使用</p>
+<p>混合持久化，其实与 AOF 的重写很类似，就是把「重写」换成了 RDB 而已，重写过程生成的 tmp 实际上是 RDB 快照</p>
+<p>也就是说，AOF 文件的 <strong>前半部分是 RDB 格式的全量数据，后半部分是 AOF 格式的增量数据。</strong></p>
+<p>这样，既能保证恢复的速率，也可以保证数据的可靠性</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-07-19-28-55-436.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>开启混合持久化，只需要修改 <code>aof-use-rdb-preamble</code> 为 yes 即可</p>
+<pre tabindex="0"><code class="language-conf" data-lang="conf"># When rewriting the AOF file, Redis is able to use an RDB preamble in the
+# AOF file for faster rewrites and recoveries. When this option is turned
+# on the rewritten AOF file is composed of two different stanzas:
+#
+#   [RDB file][AOF tail]
+#
+# When loading Redis recognizes that the AOF file starts with the &#34;REDIS&#34;
+# string and loads the prefixed RDB file, and continues loading the AOF
+# tail.
+aof-use-rdb-preamble yes
+</code></pre><blockquote>
+<p>注意：RDB 与 AOF 混合持久化这种方式，是建立在 AOF 持久化基础上的，本质上还是 AOF 持久化</p>
+<p>可以看看这个 <a href="https://github.com/redis/redis/issues/11520" target="_blank" rel="noopener">issue</a>
+</p>
+</blockquote>
+<h2 id="其它">其它</h2>
+<h3 id="aof-vs-rdb">AOF VS. RDB</h3>
+<p>来看看 AOF 的优缺点：</p>
+<p>优点：</p>
+<ul>
+<li>可以控制刷盘策略</li>
+<li>备份粒度细，丢失数据少</li>
+<li>如果 AOF 文件损坏，相较于 RDB 更容易恢复</li>
+<li>可读性较好，可以人为修改（撤销）错误命令</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>文件占用空间相对较大，重启恢复慢</li>
+<li>性能占用平均而言比 RDB 高（需要将数据转换成一条条 Redis Command）</li>
+</ul>
+<p>再来看看 RDB 的优缺点：</p>
+<ul>
+<li>采用二进制编码，占用空间小，重启恢复快</li>
+<li>性能占用平均而言比 AOF 低</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>备份粒度粗，如果仅使用 RDB，可能丢失较多数据（取决于设置的备份间隔）</li>
+<li>如果 RDB 文件损坏，几乎无法恢复</li>
+<li>fork 的频率比 AOF 高（AOF 只有重写时才会 fork，而 RDB fork 的频率取决于设置的备份间隔）</li>
+</ul>
+<blockquote>
+<p>fork 期间，主进程是无法接受客户端的所有请求的，如果 dataset 较大，fork 需要更长的时间</p>
+</blockquote>
+<h3 id="redis-重启后是怎么恢复数据的">Redis 重启后是怎么恢复数据的？</h3>
+<p>分三个情况讨论：</p>
+<ul>
+<li>单独启用 RDB</li>
+<li>单独启用 AOF</li>
+<li>同时启用 RDB 和 AOF</li>
+</ul>
+<p>单独启用 RDB，或者单独启用 AOF，主进程会先读取 RDB 或者 AOF 文件到内存，做数据恢复，然后才能接受客户端的请求</p>
+<p>而如果同时启用了 RDB 和 AOF，那么 Redis 会 <strong>优先使用 AOF 文件做恢复</strong>，因为 AOF 的备份粒度较细，更能保证数据的可靠性（以牺牲恢复速度为代价）</p>
+<blockquote>
+<p>In the case both AOF and RDB persistence are enabled and Redis restarts the AOF file will be used to reconstruct the original dataset since it is guaranteed to be the most complete.</p>
+</blockquote>
+<blockquote>
+<p>既然都优先使用 AOF 了，为什么还要使用 RDB？</p>
+</blockquote>
+<p>Redis 官方给出的解释：</p>
+<blockquote>
+<p>There are many users using AOF alone, but we discourage it since to have an RDB snapshot from time to time is a great idea for <strong>doing database backups</strong>, for <strong>faster restarts</strong>, and in the event of <strong>bugs in the AOF engine</strong>.</p>
+</blockquote>
+<p>简单来说，RDB 更适合做数据备份，可以作为一种兜底方案，如果在 AOF 引擎中出现错误，可能会导致数据丢失。定期创建 RDB 快照可以在这种情况下提供一种恢复数据的方法。通过比较 RDB 快照和当前数据，可以找出丢失的数据并从快照中恢复。</p>
+<h3 id="redis70-后的-aof">Redis7.0 后的 AOF</h3>
+<p>从 Redis 7.0.0 版本开始，Redis 使用 <strong>多部分 AOF 机制</strong>（multi part AOF mechanism）。原来的单 AOF 文件被拆分为 <strong>基础文件</strong>（最多一个）和 <strong>增量文件</strong>（可能多个）。基础文件代表在 AOF 被重写时的数据初始快照（RDB 或 AOF 格式），增量文件包含自上次基础 AOF 文件创建以来的增量更改。所有这些文件都被放在一个单独的目录中，并由一个清单文件（manifest file）跟踪。</p>
+<p>AOF 重写时，Redis 父进程打开一个新的增量 AOF 文件以继续写入。子进程执行重写逻辑并生成一个新的基础 AOF。Redis 将使用一个临时清单文件来跟踪新生成的基础文件和增量文件。当它们准备好时，Redis 将执行一个原子替换操作，使这个临时清单文件生效。</p>
+<h3 id="aof-文件截断或者损坏了怎么办">AOF 文件截断或者损坏了，怎么办？</h3>
+<p>如果 AOF 截断（truncated）了，在重启 Redis 会看到如下提示：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">* Reading RDB preamble from AOF file...
+</span></span><span class="line"><span class="cl">* Reading the remaining AOF tail...
+</span></span><span class="line"><span class="cl"><span class="c1"># !!! Warning: short read while loading the AOF file !!!</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># !!! Truncating the AOF at offset 439 !!!</span>
+</span></span><span class="line"><span class="cl"><span class="c1"># AOF loaded anyway because aof-load-truncated is enabled</span>
+</span></span></code></pre></div><p>默认情况下，Redis 会继续运行，<strong>忽略</strong> 掉截断的部分，保证可用性</p>
+<p>当然我们也可以通过修改 <code>aof-load-truncated</code> 来控制这个行为（yes or no）</p>
+<p>通过提示信息定位到截断的部分，可以人工修改一下</p>
+<p>如果 AOF 损坏了，在重启 Redis 会看到如下提示：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">* Reading the remaining AOF tail...
+</span></span><span class="line"><span class="cl"><span class="c1"># Bad file format reading the append only file: make a backup of your AOF file, then use ./redis-check-aof --fix &lt;filename&gt;</span>
+</span></span></code></pre></div><p>这种情况就需要使用 redis-check-aof 来修复了</p>
+<p>redis-check-aof 工具会提示问题出现的位置，我们可以人工修改</p>
+<blockquote>
+<p>The best thing to do is to run the redis-check-aof utility, initially without the &ndash;fix option, then understand the problem, jump to the given offset in the file, and see if it is possible to manually repair the file: The AOF uses the same format of the Redis protocol and is quite simple to fix manually. Otherwise it is possible to let the utility fix the file for us, but in that case all the AOF portion from the invalid part to the end of the file may be discarded, leading to a massive amount of data loss if the corruption happened to be in the initial part of the file.</p>
+</blockquote>
+<h3 id="如何在-redis-从-rdb-切换到-aof">如何在 Redis 从 RDB 切换到 AOF？</h3>
+<p>如果在仅启用 RDB 快照的情况下，想要启用 AOF，<strong>千万不要直接修改配置文件，然后重启</strong>，会造成数据丢失</p>
+<p><strong>准备工作</strong></p>
+<ul>
+<li>备份 RDB 文件</li>
+</ul>
+<p><strong>在运行的 Redis Server 上迁移</strong></p>
+<ul>
+<li>启用 AOF：
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">redis-cli config <span class="nb">set</span> appendonly yes
+</span></span></code></pre></div></li>
+<li>关闭 RDB（可选）</li>
+<li>更新 Redis 的配置文件，确保启用了 AOF（否则重启使用旧的配置文件，可能造成数据丢失）</li>
+</ul>
+<p>如果要重启 Server，需要等到 AOF 持久化完毕以后才能重启（You can do that by watching INFO persistence, waiting for aof_rewrite_in_progress and aof_rewrite_scheduled to be 0, and validating that aof_last_bgrewrite_status is ok.）</p>
+<h2 id="redis-大-key-对持久化有啥影响">Redis 大 key 对持久化有啥影响？</h2>
+<p>大 Key 指的是占用空间大的 K-V 键值对</p>
+<p>如果启用了 AOF，并且持久化策略为 Always，那么每次对大 Key 写操作，fsync 的时间会很长，<strong>阻塞其它客户端的请求</strong></p>
+<p>在创建 RDB 快照，或者 AOF 重写时，需要 fork 子进程，由于大 Key 的存在，页表也会更大，fork 的时间会更长，<strong>阻塞其它客户端的请求</strong></p>
+<p>此外，在子进程创建 RDB 快照，重写 AOF 时，如果修改了大 Key，主进程会发生 <strong>写时拷贝</strong>，这个过程的时间可能较长，<strong>阻塞其它客户端的请求</strong></p>
+<p>除了影响持久化以外，还有以下影响：</p>
+<ul>
+<li>打满网络 IO：例如一个 1M 的大 key，如果 QPS 为 1k，那么每秒产生 1G 流量，网络 IO 压力大</li>
+<li>删除操作：如果直接 DEL 一个大 Key，可能阻塞较长时间，影响其它客户端的请求</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://redis.io/docs/management/persistence" target="_blank" rel="noopener">Redis 官方文档</a>
+</li>
+<li><a href="https://xiaolincoding.com/redis/storage/aof.html" target="_blank" rel="noopener">AOF 持久化如何实现的</a>
+</li>
+<li><a href="https://xiaolincoding.com/redis/storage/rdb.html" target="_blank" rel="noopener">RDB 快照如何实现的</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

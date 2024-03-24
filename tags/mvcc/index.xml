@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MVCC on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/tags/mvcc/</link>
+    <description>Recent content in MVCC on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Wed, 21 Feb 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/tags/mvcc/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MySQL 事务机制</title>
+      <link>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</link>
+      <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</guid>
+      <description>事务的四大基本特性 事务的四大基本特性指：A（Atomicity）、C（Consistency）、I（Isolation）、D（Durabil</description>
+    </item>
+  </channel>
+</rss>

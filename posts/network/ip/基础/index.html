@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>IP 协议基础 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="IP 协议基础" />
+<meta property="og:description" content="IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-01-31T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-01-31T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="IP 协议基础"/>
+<meta name="twitter:description" content="IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/network/ip/%E5%9F%BA%E7%A1%80/">IP 协议基础</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/network/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Network
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/network/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Network</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/ip/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">IP</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-01-31T00:00:00&#43;00:00">
+      2024-01-31
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      5 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="ip-分类的优缺点">IP 分类的优缺点</h2>
+<p>优点：简单、选路方便</p>
+<p>缺点：</p>
+<ul>
+<li>同一网络下，没有层次</li>
+<li>不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C 类地址，主机号太少，不够用）</li>
+</ul>
+<p>这些缺点均在 CIDR 编址解决</p>
+<h2 id="ipv6-基本认识">IPv6 基本认识</h2>
+<h3 id="标识方法">标识方法</h3>
+<p>IPv6 使用 128 位编码，每 16 位为一组，每组之间使用 <code>:</code> 隔开</p>
+<p>例如：fe80::18f9:e2fe:e673:fe24</p>
+<h3 id="类型">类型</h3>
+<ul>
+<li>回环地址</li>
+<li>链路本地单播地址：不经过路由器转发</li>
+<li>唯一本地地址：相当于 IPv4 的私有 IP</li>
+<li>全局单播地址：相当于 IPv4 的公有 IP</li>
+<li>多播地址</li>
+</ul>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-17-28-12.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/network/4_ip/ip_base.html#ipv6-%E5%9F%BA%E6%9C%AC%E8%AE%A4%E8%AF%86" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h3 id="首部">首部</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-17-30-01.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>删除了首部校验和字段</li>
+<li><strong>删除了是否允许分片字段</strong></li>
+<li>删除了选项字段</li>
+</ul>
+<h3 id="亮点">亮点</h3>
+<ul>
+<li>可以为很多主机分配一个 IPv6 地址，不用担心用不完</li>
+<li>由于可分配的地址很多，可以避免多层 NAT 带来的性能开销</li>
+<li>删除了是否允许分片字段，避免在路由器分片带来的性能开销</li>
+<li>可自动配置，不需要 DHCP 服务器</li>
+</ul>
+<h2 id="ip-相关技术">IP 相关技术</h2>
+<h3 id="arp">ARP</h3>
+<p>ARP 协议用于：根据 IP 地址获取对应主机的 MAC 地址</p>
+<p>由于数据的传输需要经过 IP 层 =&gt; <strong>数据链路层</strong></p>
+<p>而数据链路层是 <strong>点对点</strong> 的，知道下一跳的 IP 还不行，必须知道下一跳的 MAC 地址，这样数据链路层才能知道该发给谁</p>
+<p>ARP 协议获取 MAC 地址的大致流程：</p>
+<ul>
+<li>根据 IP 发送 <strong>广播</strong> ARP 请求</li>
+<li>子网内，每个逐渐会检查自己的 IP 地址与请求的 IP 地址是否一致，如果一致，该主机会广播自己的 MAC 地址</li>
+<li>收到 MAC 地址后，请求方缓存 <code>IP 到 MAC</code> 的映射关系</li>
+</ul>
+<p>还有一种协议：RARP</p>
+<p>与 ARP 相反，RARP 用于：一个主机根据自己的 MAC 地址，获取自己的 IP 地址</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-18-35-32.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="dhcp">DHCP</h3>
+<p>DHCP 协议提供一种机制：即插即用联网。用户可以在不手动配置的情况下，<strong>自动配置</strong> IP 等信息</p>
+<p>DHCP 有如下几种报文：</p>
+<ul>
+<li>DHCP DISCOVER：服务发现报文</li>
+<li>DHCP OFFER：提供配置信息</li>
+<li>DHCP RESQUEST：请求使用配置</li>
+<li>DHCP ACK</li>
+<li>DHCP NACK</li>
+<li>DHCP RELEASE：释放配置</li>
+</ul>
+<p>使用 DHCP 的过程如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-07-13-15-30-43.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>DHCP 协议是基于 UDP 的，在获取到 IP 之前，源 IP 为 0.0.0.0</p>
+<p>问题来了，由于路由器不会转发广播请求，那每个子网都要一个 DHCP 服务器吗？</p>
+<p>如果这样，比较浪费，实际处理时，会引入 DHCP 中继代理</p>
+<p>每个子网都有一个 DHCP 中继，多个 DHCP 中继可以请求同一个 DHCP Server</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-18-49-44.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="nat">NAT</h3>
+<p>IPv4 只有 32 位，再加上分类编址，实际可用的 IP 数不能满足目前的需求</p>
+<p>于是出现了 NAT 技术来 <strong>缓解</strong> 这个问题</p>
+<p>NAT 可以将一个子网内的私有 IP 映射到同一个公网 IP</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-18-52-58.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但是，当子网内有一个设备正在使用 NAT 时，其它设备就得 <strong>等待</strong> 该设备释放 NAT Server 的资源</p>
+<h4 id="napt">NAPT</h4>
+<p>NAPT 就是用来解决上面 <strong>串行化</strong> 的问题的</p>
+<p>大部分应用使用的都是 TCP、UDP 协议，这意味着是 IP + Port 的形式</p>
+<p>NAPT 就是引入了 <strong>端口</strong> 这个概念，实现一个公网 IP + Port 映射多个私有 IP + Port</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-31-18-55-39.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="缺点">缺点</h4>
+<p>但是，NAPT 仍然存在缺点：</p>
+<ul>
+<li><strong>外部无法主动向子网内部建立连接</strong></li>
+<li>通信过程中，如果 NAPT Server 挂了，那么 <strong>所有的</strong> TCP 连接都将被 <strong>重置</strong></li>
+<li>转换过程存在 <strong>性能开销</strong>：实际应用通常有多层 NAT 转换（大内网）</li>
+</ul>
+<p>如何解决这些缺点？</p>
+<ol>
+<li>使用 IPv6，源头上解决问题</li>
+<li><strong>NAT 穿透</strong></li>
+</ol>
+<blockquote>
+<p>NAT 穿透：NAT 内层设备获取 NAT Server 的公网 IP，并手动添加映射</p>
+</blockquote>
+<h3 id="icmp">ICMP</h3>
+<p>ICMP（Internet Control Message Protocol），工作在网络层，用于：</p>
+<ul>
+<li>确认数据报是否到达</li>
+<li>报告数据报丢弃原因</li>
+</ul>
+<p>ICMP 有两大类型：</p>
+<ul>
+<li>查询报文类型：包含 Echo Request 和 Echo Reply 类型</li>
+<li>差错报文类型：用于报告错误原因</li>
+</ul>
+<h4 id="ping-----基于-icmp-查询报文">Ping &mdash; 基于 ICMP 查询报文</h4>
+<p>执行 Ping 命令，实际上用到了 ICMP 的 Echo Request 和 Echo Reply 类型</p>
+<p>IP 首部有一个 TTL 字段，每经过一跳，TTL 减一</p>
+<p>当 TTL 为 0，路由器将会抛弃该报文</p>
+<ul>
+<li>执行 ping 命令，发送 icmp echo request</li>
+<li>如果目的主机收到 icmp echo request，会回复 icmp echo reply</li>
+<li>如果本机收到 reply，说明目的主机可达</li>
+<li>如果本机超时未收到 reply，说明目的主机不可达</li>
+</ul>
+<h4 id="traceroute----基于-icmp-差错报文">traceroute &ndash; 基于 ICMP 差错报文</h4>
+<p>差错报文包括：</p>
+<ul>
+<li>目标不可达</li>
+<li>原点抑制：如果网络拥塞，返回原点抑制报文（不常用）</li>
+<li>重定向：如果有更短的路径，返回重定向报文（包含更近的路由信息）</li>
+<li>超时</li>
+</ul>
+<p>目标不可达包括：</p>
+<ul>
+<li>网络不可达</li>
+<li>主机不可达</li>
+<li>协议不可达</li>
+<li>端口不可达</li>
+<li>需要分片，但是首部设置不允许分片</li>
+</ul>
+<p><strong>traceroute 的使用场景</strong></p>
+<p>==追踪从原主机到目的主机到路由信息==</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-zsh" data-lang="zsh"><span class="line"><span class="cl">Sky_Lee@SkyLeeMacBook-Pro IP % traceroute baidu.com
+</span></span><span class="line"><span class="cl">traceroute: Warning: baidu.com has multiple addresses<span class="p">;</span> using 39.156.66.10
+</span></span><span class="line"><span class="cl">traceroute to baidu.com <span class="o">(</span>39.156.66.10<span class="o">)</span>, <span class="m">64</span> hops max, <span class="m">52</span> byte packets
+</span></span><span class="line"><span class="cl"> <span class="m">1</span>  192.168.0.1 <span class="o">(</span>192.168.0.1<span class="o">)</span>  1.981 ms  1.303 ms  1.055 ms
+</span></span><span class="line"><span class="cl"> <span class="m">2</span>  192.168.1.1 <span class="o">(</span>192.168.1.1<span class="o">)</span>  2.001 ms  1.796 ms  1.740 ms
+</span></span><span class="line"><span class="cl"> <span class="m">3</span>  100.69.0.1 <span class="o">(</span>100.69.0.1<span class="o">)</span>  5.775 ms  8.928 ms  5.350 ms
+</span></span><span class="line"><span class="cl"> <span class="m">4</span>  110.190.151.153 <span class="o">(</span>110.190.151.153<span class="o">)</span>  7.396 ms
+</span></span><span class="line"><span class="cl">    110.190.151.165 <span class="o">(</span>110.190.151.165<span class="o">)</span>  6.344 ms
+</span></span><span class="line"><span class="cl">    110.190.151.153 <span class="o">(</span>110.190.151.153<span class="o">)</span>  5.360 ms
+</span></span><span class="line"><span class="cl"> <span class="m">5</span>  * 110.188.7.25 <span class="o">(</span>110.188.7.25<span class="o">)</span>  9.507 ms
+</span></span><span class="line"><span class="cl">    171.208.196.125 <span class="o">(</span>171.208.196.125<span class="o">)</span>  13.722 ms
+</span></span><span class="line"><span class="cl"> <span class="m">6</span>  * * *
+</span></span><span class="line"><span class="cl"> <span class="m">7</span>  202.97.74.226 <span class="o">(</span>202.97.74.226<span class="o">)</span>  37.816 ms
+</span></span><span class="line"><span class="cl">    202.97.17.74 <span class="o">(</span>202.97.17.74<span class="o">)</span>  37.063 ms
+</span></span></code></pre></div><p>原理：</p>
+<ul>
+<li>第一次的 TTL 设置为 1，到第一个路由器，TTL 为 0，返回超时差错报文</li>
+<li>第二次的 TTL 设置为 2，到第二个路由器，TTL 为 0，返回超时差错报文</li>
+<li>&hellip;&hellip;</li>
+</ul>
+<p>那么，traceroute 怎么知道是否到达目的主机？</p>
+<p>traceroute 在发送 <strong>UDP</strong> 包的时候，为了避免目标误以为这是一个正常的 UDP 通信请求，通常会设置一个不太可能被应用程序使用的较大的端口号值作为目标 UDP 端口号。</p>
+<p>当目的主机收到这个 UDP 包，会返回一个 ICMP 端口不可达报文</p>
+<p>因此，当 traceroute 收到 ICMP 端口不可达报文，说明到达目的主机</p>
+<blockquote>
+<p>如果目的主机恰好监听了这个端口呢？</p>
+<p>这个行为是未定义的</p>
+</blockquote>
+<p>==路径 MTU 发现==</p>
+<p>原理：</p>
+<ol>
+<li>发送端将要传输的数据包大小设置为本地主机的 MTU 大小，并且设置为 <strong>不允许分片</strong></li>
+<li>数据包经过第一个路由器时，如果该路由器的 MTU 小于数据包大小，那么该路由器会丢弃该数据包，并发送一个 ICMPFragmentationNeeded（需要分片，但是首部设置不允许分片） 消息给发送端。</li>
+<li>发送端收到 “ICMPFragmentationNeeded” 消息后，会根据该消息中指示的最小 MTU 大小，将数据包大小缩减为最小 MTU 大小，并重新发送。</li>
+<li>经过多个路由器的重复上述过程，直到数据包能够成功传输到目的主机。</li>
+</ol>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

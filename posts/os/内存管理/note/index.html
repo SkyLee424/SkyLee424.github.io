@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>OS 内存管理 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="虚拟内存 为什么要有虚拟内存？ 如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间 对于单片机而言，采用的就是直接"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="OS 内存管理" />
+<meta property="og:description" content="虚拟内存 为什么要有虚拟内存？ 如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间 对于单片机而言，采用的就是直接" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-02-04T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-02-04T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="OS 内存管理"/>
+<meta name="twitter:description" content="虚拟内存 为什么要有虚拟内存？ 如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间 对于单片机而言，采用的就是直接"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/">OS 内存管理</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/os/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          OS
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/os/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">OS</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/linux/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Linux</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">内存管理</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-02-04T00:00:00&#43;00:00">
+      2024-02-04
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      17 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="虚拟内存">虚拟内存</h2>
+<h3 id="为什么要有虚拟内存">为什么要有虚拟内存？</h3>
+<p>如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间</p>
+<p>对于单片机而言，采用的就是直接使用物理内存，因此，单片机只能运行一个进程</p>
+<p>为了使进程彼此的内存空间隔离，OS 采用虚拟内存机制，每个进程都有自己独立的虚拟内存，相互不干扰，实现：</p>
+<ul>
+<li>多任务处理</li>
+<li>相互隔离，安全性保障</li>
+<li>一个进程可以使用比物理内存更大的空间（swap）</li>
+</ul>
+<h3 id="内存分段">内存分段</h3>
+<p>程序内部可以根据逻辑，分成若干个段：</p>
+<ul>
+<li>代码段</li>
+<li>数据段(.data)</li>
+<li>.bss</li>
+<li>栈</li>
+<li>堆</li>
+</ul>
+<p>分段式管理内存的原理，就是基于程序分段的</p>
+<p>每个进程维护自己的一个 <strong>段表</strong>，段表记录了每一段对应的物理地址</p>
+<p>进程可以通过计算逻辑地址代表的 <strong>段号、段内偏移</strong>，再查段表，来得到真实的物理地址</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-17-48-09.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-17-48-14.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/vmem.html#%E5%86%85%E5%AD%98%E5%88%86%E6%AE%B5" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>内存分段实现了进程彼此的内存隔离，确保了安全性，但是存在以下问题：</p>
+<ul>
+<li>外部碎片</li>
+<li>实现 swap 机制，需要大量的磁盘 IO</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-17-50-40.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><strong>使用分段管理内存，交换的单位是段，而如果一个段太大，要换到磁盘，必然需要大量 IO</strong></p>
+<h3 id="说说内存分页机制">说说内存分页机制？</h3>
+<p>与分段不同，分页机制，OS 会将内存分成若干「页」，一般来说，一页的大小为 4K</p>
+<p>每个进程维护自己的 <strong>页表</strong>，页表记录了每一页对应的起始物理地址</p>
+<p>进程可以计算一个逻辑地址对应的 <strong>页号、页内偏移</strong>，以此得到真实的物理地址</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-17-59-01.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>采用内存分页管理，解决了分段管理的两个痛点，分页管理：</p>
+<ul>
+<li>不会出现外部碎片</li>
+<li>交换基本单位为「页」，粒度小，每页仅为 4K，成本低</li>
+</ul>
+<p><strong>简单内存分页的缺点</strong></p>
+<p>上面的分页方式就是简单内存分页，即只有一级页表</p>
+<p>简单内存分页存在空间浪费的问题，例如，对于 4G 内存的系统来说，假设一页大小为 4K（2^12），那么单个页表就有 2^20 个页表项，所占的空间为 2^20 * 8b = 8M</p>
+<p>对于一个进程而言，8M 看起来并不是很多，但是，一个系统运行的进程会很多，如果有 100 个，就需要 800M 的空间存放页表，太浪费空间了</p>
+<h4 id="如何解决简单内存分页导致的空间浪费问题">如何解决简单内存分页导致的空间浪费问题？</h4>
+<p>在单级页表的基础上，再添加一层，形成多级页表</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-18-54-55.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/vmem.html#%E5%A4%9A%E7%BA%A7%E9%A1%B5%E8%A1%A8" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<p>此时，<strong>完全</strong> 映射 4G 内存，所需空间为 8K（一级页表）+ 8M（二级页表）</p>
+<p>那不是比一级页表占的空间更多了吗？</p>
+<p>看起来是这样，但是，<strong>一个进程往往不会用到这么多内存</strong>，如果一个一级页表项没有用到，自然也不需要分配对应二级页表的空间</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-08-45.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但是每引入一级页表，逻辑地址到物理地址的转换过程就多一步，性能会下降</p>
+<h4 id="如何解决多级页表带来的性能问题">如何解决多级页表带来的性能问题？</h4>
+<p>TLB，也叫快表</p>
+<p>CPU 可以把访问频率较高的页表项缓存到快表中，这样，就 <strong>只需要一次访存</strong></p>
+<p>由于空间局部性原理，快表的命中率还是很高的</p>
+<h3 id="分段和分页是绝对的吗">分段和分页是绝对的吗？</h3>
+<p>不是，还有段页式内存管理</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-11-36.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="谈谈-linux-内存布局">谈谈 Linux 内存布局？</h3>
+<p>Linux 主要采取 <strong>页式管理</strong> ，但是不可避免的涉及了段机制</p>
+<p>由于历史原因，Intel 的 CPU 一律先进行段式映射，再进行页式映射，因此，Linux 无法避免段机制</p>
+<p>但是，Linux 系统的每一个段都是以 0 为起始地址开始的整个内存空间，这样就相当于 <strong>屏蔽</strong> 了段的概念</p>
+<p>Linux 的内存空间分布如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-25-05.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-25-26.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-11-19-38.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="虚拟内存的作用">虚拟内存的作用？</h3>
+<ul>
+<li>保护进程之间的内存空间不受干扰，独立性保障</li>
+<li>使进程可以使用比物理内存更大的空间（swap）</li>
+</ul>
+<h2 id="malloc">malloc</h2>
+<h3 id="malloc-是怎么分配内存的">malloc 是怎么分配内存的？</h3>
+<p>malloc 是一个库函数，调用 malloc，有两种方式分配内存：</p>
+<ul>
+<li>内部调用 brk 系统调用，在堆区分配内存</li>
+<li>内部调用 mmap 系统调用，在文件映射区分配内存</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-36-30.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-36-35.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/malloc.html#malloc-%E6%98%AF%E5%A6%82%E4%BD%95%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98%E7%9A%84" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<h3 id="malloc-分配的是物理内存吗">malloc 分配的是物理内存吗？</h3>
+<p>不是</p>
+<p>malloc 分配的是虚拟内存，调用 malloc，不会真正的分配物理内存</p>
+<p>当进程 <strong>第一次</strong> 使用 malloc 分配的内存时，<strong>会触发缺页中断</strong>，因为对应的页表项还没有物理内存块的分配</p>
+<h3 id="malloc1-会分配多少内存">malloc(1) 会分配多少内存？</h3>
+<p>这个取决于 malloc 的具体实现，但绝对不是 1 个字节</p>
+<p>malloc 在分配内存时，会 <strong>预分配</strong> 部分内存，以减少潜在的系统调用次数</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span><span class="n">addr</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;pid: %d, addr: %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">getpid</span><span class="p">(),</span> <span class="n">addr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">getchar</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-46-01.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-46-09.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，由于拟分配内存大小为 1，调用的是 brk（有 heap 标识），并且实际分配的虚拟内存大小为 132K</p>
+<h3 id="free-释放内存会立即将内存还给-os-吗">free 释放内存，会立即将内存还给 OS 吗？</h3>
+<p>这个要分情况</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span><span class="n">addr</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;pid: %d, addr: %p</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">getpid</span><span class="p">(),</span> <span class="n">addr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;about to free...</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">getchar</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">free</span><span class="p">(</span><span class="n">addr</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;freed.&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">getchar</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-52-39.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，即使调用了 free，也没有真正释放</p>
+<p>再来看一个示例：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span><span class="n">addr</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// ... 省略
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-19-57-29.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现，这次没有 <code>[heap]</code> 标识，说明调用的是 mmap，free 以后，内存也立即释放了</p>
+<p>因此，结论如下：</p>
+<ul>
+<li>malloc 通过 brk() 方式申请的内存，free 释放内存的时候，并不会把内存归还给操作系统，而是缓存在 malloc 的内存池中，待下次使用；</li>
+<li>malloc 通过 mmap() 方式申请的内存，free 释放内存的时候，会把内存归还给操作系统，内存得到真正的释放。</li>
+</ul>
+<h3 id="为什么不全部调用-mmap-申请内存">为什么不全部调用 mmap 申请内存？</h3>
+<p>在上面的示例我们知道，调用 mmap，free 会立即释放内存</p>
+<p>如果我们的程序还要再次调用 malloc，就势必 <strong>会再一次调用 mmap</strong>，<strong>多次的系统调用</strong> 会影响性能</p>
+<h3 id="为什么不全部调用-brk-申请内存">为什么不全部调用 brk 申请内存？</h3>
+<p>我们知道，brk 存在预分配，即分配的内存比要求的要多一些（冗余），下次再调用 malloc，就直接从预分配的取就行，减少系统调用</p>
+<p>但是，free brk 分配的内存，并不会真正的将内存还给 OS，存在潜在的 <strong>内存泄漏</strong>，而且这个内存泄漏无法被 valgrind 检测</p>
+<p>因此，malloc 在：</p>
+<ul>
+<li>分配的内存小于 128K，调用 brk</li>
+<li>分配的内存大于 128K，调用 mmap</li>
+</ul>
+<h3 id="free-仅传入一个起始地址怎么知道该释放多大内存">free 仅传入一个起始地址，怎么知道该释放多大内存？</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-20-03-13.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现：malloc 返回给用户态的内存起始地址比进程的堆空间起始地址多了 16 字节</p>
+<p>而这 16 字节就是用于存储这个 memory block 的大小的</p>
+<p>因此，free 仅传入一个起始地址，就可以通过读取起始地址前 16 个字节的数据，获取要释放的 memory block 的大小</p>
+<h2 id="内存满了会发生什么">内存满了，会发生什么？</h2>
+<h3 id="内存分配的过程">内存分配的过程</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-09-01-11.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="哪些内存可以回收">哪些内存可以回收？</h3>
+<ul>
+<li>文件页
+<ul>
+<li>干净页：没有修改过的</li>
+<li>脏页：修改过，与磁盘内容不一致</li>
+</ul>
+</li>
+<li>匿名页：进程的堆栈区域，由于可能频繁使用，不能直接回收，由 swap 机制回收</li>
+</ul>
+<h3 id="回收内存带来的性能影响">回收内存带来的性能影响</h3>
+<p>有两种方式回收内存：</p>
+<ul>
+<li>后台回收：唤醒 kswapd 内核线程，异步回收</li>
+<li>直接回收：阻塞当前运行的进程，同步回收</li>
+</ul>
+<p>对于文件页：</p>
+<ul>
+<li>干净页的回收，直接释放内存即可，对性能影响不大</li>
+<li>脏页的回收，需要将脏页写回磁盘，影响性能</li>
+</ul>
+<p>对于匿名页，使用 swap 机制回收，将不常用的页换出到磁盘，也有大量磁盘 IO</p>
+<p>可以发现，回收内存的过程，基本上都要涉及到将内存的数据写到磁盘</p>
+<p>并且，这个过程会带来大量磁盘 IO，造成 OS 的响应时间变长，给人的感觉就是很卡</p>
+<h3 id="如何降低回收内存带来的性能影响">如何降低回收内存带来的性能影响？</h3>
+<ul>
+<li>调整回收偏好</li>
+<li>调整后台回收的时间点</li>
+</ul>
+<p>经过上面的分析，可以发现：</p>
+<ul>
+<li>对于文件页的回收，由于干净页的存在，回收影响的性能相对较小</li>
+<li>直接回收是同步的，会带来延迟，可以考虑提前进行后台回收</li>
+</ul>
+<h4 id="调整回收偏好">调整回收偏好</h4>
+<p>在 Linux 中，提供了 /proc/sys/vm/swappiness 选项，用于调整 swap 的偏好，<strong>值越小，越消极使用 swap</strong></p>
+<p>我们可以降低这个值，提高文件页的回收优先级：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="c1"># 已经是 0，无需修改</span>
+</span></span><span class="line"><span class="cl">root@SkyLee:~# cat /proc/sys/vm/swappiness
+</span></span><span class="line"><span class="cl"><span class="m">0</span>
+</span></span></code></pre></div><h4 id="尽早触发-kswapd-后台回收避免直接回收带来的高延迟">尽早触发 kswapd 后台回收，避免直接回收带来的高延迟</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-09-20-44.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>在 Linux 中，提供了 <code>/proc/sys/vm/min_free_kbytes</code> 选项，用于调整 <strong>最小阈值</strong></p>
+<p>最小阈值与页低阈值、页高阈值的关系：</p>
+<pre tabindex="0"><code>pages_min = min_free_kbytes
+pages_low = pages_min*5/4
+pages_high = pages_min*3/2
+</code></pre><p>当 <code>pages_min &lt; pages_free &lt; pages_low</code>，即内存压力大时，就会触发 kswapd 后台回收</p>
+<p><strong>因此，可以适当的调高 pages_low（也就是调节 min_free_kbytes），以提前触发后台回收</strong></p>
+<p>但是，调高 pages_min，意味着可能剩余较多内存时，就会触发直接回收，这在一定程度上浪费了内存，可能导致 OOM 的发生</p>
+<p>因此对于内存使用量敏感的进程，可以延后后台回收的时间点，可以使用更多的内存</p>
+<p><strong>在调整 pages_min 时，要关注进程到底是关注延迟，还是内存使用量</strong></p>
+<h3 id="numa-架构下的内存回收策略">NUMA 架构下的内存回收策略</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-09-37-32.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/mem_reclaim.html#numa-%E6%9E%B6%E6%9E%84%E4%B8%8B%E7%9A%84%E5%86%85%E5%AD%98%E5%9B%9E%E6%94%B6%E7%AD%96%E7%95%A5" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>在 NUMA 架构下，每若干个 CPU 核心组成一个 node，每个 node 都有自己独立的内存，一个 node 也可以访问另一个 node 的内存，但是延迟肯定更高</p>
+<p>在 NUMA 架构下，如果一个 node 发现内存不够，可以回收自己 node 的内存，也可以去寻找其它 node 有没有可用空间</p>
+<p>Linux 提供了 <code>/proc/sys/vm/zone_reclaim_mode</code> 选项来控制：</p>
+<ul>
+<li>0 （默认值）：在回收本地内存之前，在其他 Node 寻找空闲内存；</li>
+<li>1：只回收本地内存；</li>
+<li>2：只回收本地内存，在本地回收内存时，可以将文件页中的脏页写回硬盘，以回收内存。</li>
+<li>4：只回收本地内存，在本地回收内存时，可以用 swap 方式回收内存。</li>
+</ul>
+<p>推荐使用 0，即使延迟高一些，但是比起回收的延迟，根本不算什么</p>
+<p>如果在 Server 发现内存还比较充足，但是却频繁触发直接回收，可能就是 NUMA 架构下的内存回收策略没有设置正确</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">root@SkyLee:~# cat /proc/sys/vm/zone_reclaim_mode
+</span></span><span class="line"><span class="cl"><span class="m">0</span>
+</span></span></code></pre></div><h3 id="如何避免一个进程被-oom-killer-杀掉">如何避免一个进程被 OOM Killer 杀掉？</h3>
+<p>发生 OOM 后，OOM Killer 会为每个进程打分，分数最高的，将会被杀掉，直到剩余内存足够分配</p>
+<p>打分机制：</p>
+<ul>
+<li>进程已经使用的物理内存页面数。</li>
+<li>每个进程的 OOM 校准值 oom_score_adj。它是可以通过 <code>/proc/[pid]/oom_score_adj</code> 来配置的。我们可以在设置 -1000 到 1000 之间的任意一个数值，调整进程被 OOM Kill 的几率。</li>
+</ul>
+<pre tabindex="0"><code>points = process_pages + oom_score_adj*totalpages/1000
+</code></pre><p>想要避免被 OOM Killer 杀掉，可以调低 oom_score_adj，<strong>如果为 -1000，代表不会被杀掉</strong></p>
+<p>但是，对于我们自己的业务程序，不应该设置为 -1000，如果有内存泄漏，由无法被 OOM Killer 杀掉，OOM Killer 就只能被不断唤醒，并杀掉其它进程</p>
+<h2 id="在-4g-内存大小的-server-上申请-8g-内存会怎么样">在 4G 内存大小的 Server 上，申请 8G 内存会怎么样？</h2>
+<h3 id="os-虚拟内存的大小">OS 虚拟内存的大小</h3>
+<ul>
+<li>对于 32 位的 OS 来说，虚拟内存最大大小为 3G</li>
+<li>对于 64 位的 OS 来说，虚拟内存最大大小为 128T</li>
+</ul>
+<h3 id="swap-机制">Swap 机制</h3>
+<p>Swap 机制可以：</p>
+<ul>
+<li>将不常用的页 <strong>换出</strong> 到磁盘</li>
+<li>将磁盘的页 <strong>换入</strong> 到内存供进程使用</li>
+</ul>
+<h4 id="触发条件">触发条件？</h4>
+<ul>
+<li>内存闲置：进程在启动阶段申请的内存，大部分都不会被使用，可以将那些仅用过一次的页面换出到磁盘</li>
+<li>内存不足：如果进程使用的内存超过了物理内存的限制，就会 swap 一部分相对不常用的页到磁盘</li>
+</ul>
+<h4 id="换入换出的是什么类型的内存">换入换出的是什么类型的内存？</h4>
+<p>换入换出的是 <strong>匿名页</strong></p>
+<h3 id="在-4g-内存大小的-server-上申请-8g-内存会怎么样-1">在 4G 内存大小的 Server 上，申请 8G 内存会怎么样？</h3>
+<p>32 位的 OS 由于理论只能申请 3G 的内存，因此，申请 8G 会失败</p>
+<p>64 位的 OS 理论可以申请 128T 的内存</p>
+<p>在我的电脑（16G 的物理内存）下，进程申请 128T 内存是可以成功的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">int</span> <span class="n">SIZE</span> <span class="o">=</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="mi">128</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span><span class="o">*</span> <span class="n">buff</span><span class="p">[</span><span class="n">N</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">size_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="n">buff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nf">malloc</span><span class="p">(</span><span class="n">SIZE</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;申请了 %lu G 内存</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">getchar</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-03-16-42-09.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>申请了以后，能使用多少？</p>
+<p>如果没有开启 swap 机制，那使用量会受到物理内存大小的限制</p>
+<p>如果开启了 swap 机制，由于可以将不常用的页换出到磁盘，因此，实际可使用的内存会大于物理内存的大小</p>
+<p>但是，如果使用的内存太多，swap 就会很频繁，带来很大的磁盘 IO</p>
+<blockquote>
+<p>有了 swap，是不是意味着进程使用的内存没有上限？</p>
+<p>当然不是，在开启了 swap 机制的 64 位 OS 中，一个进程的最大内存使用量通常取决于 RAM 大小，swap 分区大小，以及操作系统的虚拟内存管理策略。</p>
+</blockquote>
+<p>因此，&ldquo;在 4G 内存大小的 Server 上，申请 8G 内存会怎么样&rdquo; 这个问题就可以解答了：</p>
+<ul>
+<li>对于 32 位的 OS，无法申请，进程内存最大使用量理论上限为 3G</li>
+<li>对于 64 位的 OS，可以申请 8G 内存，但是如果要完整使用 8G 内存，需要开启 swap 机制</li>
+</ul>
+<h3 id="如何在-linux-上启用-swap">如何在 Linux 上启用 swap</h3>
+<p>在 Linux 系统中启用 swap（交换空间），可以分为几个步骤：创建 swap 文件或分区、启用 swap、并设置开机自动挂载。以下是具体的步骤：</p>
+<h3 id="创建-swap-文件">创建 Swap 文件</h3>
+<ol>
+<li>
+<p><strong>创建一个 Swap 文件</strong>：
+使用<code>fallocate</code>或<code>dd</code>命令创建一个用于交换的文件。例如，创建一个 4GB 的 swap 文件：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo fallocate -l 4G /swapfile
+</span></span></code></pre></div><p>如果你的系统中没有<code>fallocate</code>命令，可以使用<code>dd</code>命令来创建：</p>
+<pre tabindex="0"><code class="language-ba" data-lang="ba">sudo dd if=/dev/zero of=/swapfile bs=1024 count=4096k
+</code></pre><p>其中<code>bs</code>是块大小，<code>count</code>是块的数量，两者相乘等于 swap 文件大小。</p>
+</li>
+<li>
+<p><strong>设置 Swap 文件权限</strong>：
+出于安全考虑，Swap 文件的权限应该被设置为仅 root 用户可读写。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo chmod <span class="m">600</span> /swapfile
+</span></span></code></pre></div></li>
+<li>
+<p><strong>格式化文件为 Swap 格式</strong>：
+使用<code>mkswap</code>命令将文件设置为 swap 使用：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo mkswap /swapfile
+</span></span></code></pre></div></li>
+</ol>
+<h3 id="启用-swap-文件">启用 Swap 文件</h3>
+<p>执行以下命令来启用 swap 文件：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo swapon /swapfile
+</span></span></code></pre></div><p>执行这个命令之后，系统就会开始使用<code>/swapfile</code>文件作为交换空间。</p>
+<h3 id="设置开机自动挂载-swap-文件">设置开机自动挂载 Swap 文件</h3>
+<p>为了在系统启动时自动启用 swap 文件，需要将它添加到<code>/etc/fstab</code>文件中。</p>
+<ol>
+<li>
+<p><strong>编辑 fstab 文件</strong>:</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo nano /etc/fstab
+</span></span></code></pre></div><p>使用你喜欢的文本编辑器打开<code>/etc/fstab</code>文件。</p>
+</li>
+<li>
+<p><strong>添加 swap 条目</strong>:</p>
+<p>在文件的最后添加下面的行：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">/swapfile none swap sw <span class="m">0</span> <span class="m">0</span>
+</span></span></code></pre></div><p>保存并关闭文件。</p>
+</li>
+<li>
+<p><strong>使配置生效</strong>：</p>
+<p>通常来说，再次启动时修改将生效，或者您可以用<code>mount -a</code>命令来使改动立即生效：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sudo mount -a
+</span></span></code></pre></div></li>
+</ol>
+<p>完成这些步骤后，swap 文件应该会在每次启动时自动启用。可以通过执行<code>free -m</code>或者<code>swapon -s</code>命令来检查 swap 是否已经被系统正确识别和使用。</p>
+<p>有了 swap 文件，还需要设置 OS 使用 swap 的倾向，前面提到可以修改 <code>/proc/sys/vm/swappiness</code> <strong>临时</strong> 修改使用 swap 文件的倾向</p>
+<p>swappiness 的范围为 0 ～ 100，越大，越倾向使用 swap</p>
+<p>为了避免设置重启失效，需要修改 <code>/etc/sysctl.conf</code>，添加：</p>
+<pre tabindex="0"><code class="language-conf" data-lang="conf">vm.swappiness = 30 # 使用 swap 的倾向
+</code></pre><p>再执行：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">sysctl -p
+</span></span></code></pre></div><p>使设置生效</p>
+<h2 id="预读失效与缓存污染">预读失效与缓存污染</h2>
+<h3 id="什么是预读机制">什么是预读机制？</h3>
+<p>OS 在读取文件到内存时，通常会「预读」一部分到内存中，如果下一次要访问预读部分，就不需要再次读取磁盘，减少磁盘 IO</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-10-06-14.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="预读失效是什么会导致什么后果">预读失效是什么？会导致什么后果？</h3>
+<p>如果预读的数据一直不访问，那么预读也就没有作用了</p>
+<p>此外，如果使用传统的 LRU 算法，就会把「预读页」放到 LRU 链表头部，而当内存空间不够的时候，还需要把末尾的页淘汰掉。</p>
+<p><strong>而末尾淘汰的的页可能是热点数据，导致访问热点数据又要重新读磁盘，严重降低性能</strong></p>
+<h3 id="如何避免预读失效带来的影响">如何避免预读失效带来的影响？</h3>
+<p>Linux 通过两个 LRU 链表来解决问题：</p>
+<ul>
+<li>active</li>
+<li>inactive</li>
+</ul>
+<p>一开始预读的数据先放到 inactive，只有访问一次后，才提升到 active</p>
+<p>这样即使预读的页一直不访问，也不会导致热点数据（在 active 中）淘汰</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-10-24-13.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>编号为 20 的页被预读：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-10-24-34.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>即使 20 页一直没有被读取，也不会影响 active，如果被读取，提升到 active，并且 active 的最后一页降级到 inactive 的头部：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-10-25-13.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/cache_lru.html#%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E9%A2%84%E8%AF%BB%E5%A4%B1%E6%95%88%E9%80%A0%E6%88%90%E7%9A%84%E5%BD%B1%E5%93%8D" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h3 id="什么是缓存污染">什么是缓存污染？</h3>
+<p>如果采用 <em>一开始预读的数据先放到 inactive，只有访问一次后，才提升到 active</em> 的机制，会存在缓存污染的问题</p>
+<p>举个例子，在批量读取一批数据（假设为 0 ～ 15）的过程：</p>
+<ul>
+<li>读取 0，预读 1 ～ 15</li>
+<li>读取 1，1 提升到 active</li>
+<li>读取 2，2 提升到 active</li>
+<li>&hellip;</li>
+<li>读取 15，15 提升到 active</li>
+</ul>
+<p>如果之前 active 的 LRU 链表中的热点数据因为这次批量读取而淘汰，并且这一批数据 <strong>仅仅用到了一次</strong>（事实上，这是很常见的），<strong>那么热点数据的淘汰就显得性价比很低了</strong></p>
+<p>这就是缓存污染</p>
+<h3 id="缓存污染会导致什么后果">缓存污染会导致什么后果？</h3>
+<p>缓存污染会导致热点数据可能被淘汰，导致大量磁盘 IO</p>
+<h3 id="如何避免缓存污染带来的影响">如何避免缓存污染带来的影响？</h3>
+<p>问题出在：<em>一开始预读的数据先放到 inactive，只有访问一次后，才提升到 active</em></p>
+<p>如果读一次，还不足以提升到 active，不就解决了吗？</p>
+<p>Linux 会在内存页被访问第二次的时候，才将页从 inactive list 升级到 active list 里</p>
+<p>这样，在批量读取数据时候，如果这些大量数据只会被访问一次，那么它们就不会进入到活跃 LRU 链表，也就不会导致热点数据的淘汰</p>
+<hr>
+<h1 id="linux-虚拟内存管理">Linux 虚拟内存管理</h1>
+<h2 id="进程虚拟内存空间管理">进程虚拟内存空间管理</h2>
+<p>OS 对进程虚拟内存的管理，主要是通过 task_struct 中的 mm_struct</p>
+<p>当我们 fork 一个子进程，OS 会 <strong>拷贝</strong> 父进程的 mm_struct 给子进程，也就是说，父子进程的 mm_struct 是独立的</p>
+<blockquote>
+<p>这个过程是「写时拷贝」</p>
+<p>当一个进程（父进程）试图复制（fork）一个新的进程（子进程）时，按理说，这两个进程应有各自独立的内存空间，互不影响。然而在实际情况下，操作系统并 <strong>不会立即为子进程复制</strong> 一份父进程的内存数据，而是采用了一种叫做写时拷贝的策略：</p>
+<ol>
+<li>初始时，子进程会共享父进程内存中所有尚未修改的页面，而不是复制它们。在此期间，这些内存页面 <strong>被标记为只读</strong>，以防止修改。</li>
+<li>当父进程或子进程想对这些共享页面进行写操作时，发生写保护中断，操作系统调用写保护中断处理函数，会先制作一个新的页面副本，新的写操作会定向到这个副本上，而不影响原来的页面。这就是所谓的写时拷贝。</li>
+</ol>
+<p>这种策略的优点是如果复制的内容没有被修改，则可以节省大量的内存和 CPU 时间。缺点是如果数据经常被修改，每次修改都要复制，反而会增加开销。因此这种方法适用于读多写少的场合。</p>
+</blockquote>
+<p>而调用 vfork 或者 clone 出的子进程，OS 会递增父进程 mm_struct 的引用计数，<strong>子进程与父进程共享虚拟内存空间</strong></p>
+<p>事实上， <code>pthread_create</code> 内部就是调用的 clone 创建的「线程」</p>
+<blockquote>
+<p>进程与线程的本质区别？</p>
+<p><strong>是否共享内存空间，是进程与线程的本质区别</strong>，Linux 并不区分进程与线程，线程对于内核来说，不过是一个共享特定资源的进程而已</p>
+</blockquote>
+<p><strong>内核线程的 mm_struct</strong></p>
+<p>内核线程的 task_struct 包含的 mm_struct 为 NULL，因为 <strong>内核线程间共享内核虚拟内存空间</strong> ，内核线程之间的调度不涉及内存上下文切换</p>
+<h3 id="内核如何划分用户空间与内核空间">内核如何划分用户空间与内核空间？</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-11-19-38.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>mm_struct 中有一个 task_size，记录了用户进程的合法虚拟内存地址空间大小</p>
+<p>在 32 位 OS 下，task_size 的大小为 3G</p>
+<p>而 64 位 OS，这个值为 128T（与 PAGE_SIZE 有关）</p>
+<h3 id="进程虚拟空间的布局">进程虚拟空间的布局</h3>
+<p>mm_struct 的定义如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">mm_struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">task_size</span><span class="p">;</span>    <span class="cm">/* 用户进程的合法虚拟内存地址空间大小，超过这个范围的地址用户进程无法访问 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">start_code</span><span class="p">,</span> <span class="n">end_code</span><span class="p">;</span> <span class="cm">/* 代码段 在虚拟内存中的起始和结束地址 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">start_data</span><span class="p">,</span> <span class="n">end_data</span><span class="p">;</span> <span class="cm">/* 数据段 在虚拟内存中的起始和结束地址 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">start_brk</span><span class="p">,</span> <span class="n">brk</span><span class="p">;</span> <span class="cm">/* 堆 在虚拟内存中的起始地址和当前结束地址（堆可以动态扩展和收缩） */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">start_stack</span><span class="p">;</span> <span class="cm">/* 栈 在虚拟内存中的起始地址 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">arg_start</span><span class="p">,</span> <span class="n">arg_end</span><span class="p">;</span> <span class="cm">/* 程序启动参数在虚拟内存中的范围 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">env_start</span><span class="p">,</span> <span class="n">env_end</span><span class="p">;</span><span class="cm">/* 程序环境变量在虚拟内存中的范围 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">mmap_base</span><span class="p">;</span>  <span class="cm">/* mmap区域的基地址 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">total_vm</span><span class="p">;</span>    <span class="cm">/* 总映射内存页数 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">locked_vm</span><span class="p">;</span>  <span class="cm">/* 被锁定不能换出到磁盘的内存页总数 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">pinned_vm</span><span class="p">;</span>  <span class="cm">/* 既不能换出到磁盘，也不能移动的内存页总数 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">data_vm</span><span class="p">;</span>    <span class="cm">/* 数据段中映射的内存页数目 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">exec_vm</span><span class="p">;</span>    <span class="cm">/* 代码段中存放可执行文件的内存页数目 */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">stack_vm</span><span class="p">;</span>    <span class="cm">/* 栈中所映射的内存页数目 */</span>
+</span></span><span class="line"><span class="cl">        <span class="p">...</span><span class="err">省略</span><span class="p">...</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">vm_area_struct</span> <span class="o">*</span><span class="n">mmap</span><span class="p">;</span>		<span class="cm">/* VMA 链表 */</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-17-28-45.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/linux_mem.html#_5-2-%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E5%B8%83%E5%B1%80%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>而具体到代码段、数据段、BSS 段&hellip; 的管理，Linux 引入了一个结构体 <code>vm_area_struct</code>，简称 VMA，来表示</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">struct</span> <span class="n">vm_area_struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="n">vm_area_struct</span> <span class="o">*</span><span class="n">vm_next</span><span class="p">,</span> <span class="o">*</span><span class="n">vm_prev</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="n">rb_node</span> <span class="n">vm_rb</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">list_head</span> <span class="n">anon_vma_chain</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">	<span class="k">struct</span> <span class="n">mm_struct</span> <span class="o">*</span><span class="n">vm_mm</span><span class="p">;</span>	<span class="cm">/* The address space we belong to. */</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">vm_start</span><span class="p">;</span>     <span class="cm">/* Our start address within vm_mm. */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">vm_end</span><span class="p">;</span>       <span class="cm">/* The first byte after our end address
+</span></span></span><span class="line"><span class="cl"><span class="cm">                       within vm_mm. */</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/*
+</span></span></span><span class="line"><span class="cl"><span class="cm">     * Access permissions of this VMA.
+</span></span></span><span class="line"><span class="cl"><span class="cm">     */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">pgprot_t</span> <span class="n">vm_page_prot</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">vm_flags</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">anon_vma</span> <span class="o">*</span><span class="n">anon_vma</span><span class="p">;</span>  <span class="cm">/* Serialized by page_table_lock */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">struct</span> <span class="n">file</span> <span class="o">*</span> <span class="n">vm_file</span><span class="p">;</span>      <span class="cm">/* File we map to (can be NULL). */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">vm_pgoff</span><span class="p">;</span>     <span class="cm">/* Offset (within vm_file) in PAGE_SIZE
+</span></span></span><span class="line"><span class="cl"><span class="cm">                       units */</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">void</span> <span class="o">*</span> <span class="n">vm_private_data</span><span class="p">;</span>     <span class="cm">/* was vm_pte (shared mem) */</span>
+</span></span><span class="line"><span class="cl">    <span class="cm">/* Function pointers to deal with this struct. */</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="k">struct</span> <span class="n">vm_operations_struct</span> <span class="o">*</span><span class="n">vm_ops</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>许多 VMA 连在一起，组成一个双向链表，在 mm_struct 中，有一个 <code>mmap</code> 变量，记录了 VMA 链表的起始地址</p>
+<p>每个 VMA 的 <code>vm_mm</code> 变量记录了所属 mm_struct 的地址</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-17-34-02.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="进程访问一个虚拟内存地址发生了什么">进程访问一个虚拟内存地址，发生了什么？</h3>
+<p>虽然 mm_struct 数据结构保存了跟进程地址空间相关的信息，但实际上将虚拟地址转换成物理地址的过程（地址翻译）是由内核配合硬件（具体来说就是内存管理单元，MMU）完成的。</p>
+<ul>
+<li>首先，操作系统内核会检查这个地址是否在进程的地址空间——也就是在 mm_struct 中定义的范围内——如果不在，那么就会引发一个段错误（segmentation fault）。</li>
+<li>如果这个地址在有效的地址范围内，那么 MMU 就会接管这个过程。MMU 使用页表（页表的位置和结构由 mm_struct 定义）来将虚拟地址翻译成物理地址。</li>
+<li>MMU 首先在 TLB（快表）中查找这个虚拟地址对应的物理地址。如果在 TLB 中找到了对应条目，那么转换就完成了。</li>
+<li>如果在 TLB 中找不到对应的转换条目，那么 MMU 就会在实际的页表中查找。如果在页表中找到了，那么物理地址就被确定了，同时，这个信息会被添加到 TLB 中以便下次快速查找。如果在页表中也找不到，那么就会发生缺页错误（page fault），这时操作系统会接管，可能会从磁盘中加载所需要的页面到内存中。</li>
+</ul>
+<h2 id="程序编译后的二进制文件如何映射到虚拟内存空间中">程序编译后的二进制文件如何映射到虚拟内存空间中？</h2>
+<p>代码编译过后，会生成一个 ELF 格式的二进制文件</p>
+<p>这个文件内部也分为若干个段</p>
+<p>当我们运行这个程序时，内核实际上做了：</p>
+<ul>
+<li>创建进程，并分配一块虚拟内存空间</li>
+<li>解析 ELF 文件</li>
+<li>将代码段、数据段&hellip;映射到正确的位置</li>
+<li>运行程序</li>
+</ul>
+<p>而映射这个过程是通过 <code>load_elf_binary</code> 这个函数实现的</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="k">static</span> <span class="kt">int</span> <span class="nf">load_elf_binary</span><span class="p">(</span><span class="k">struct</span> <span class="n">linux_binprm</span> <span class="o">*</span><span class="n">bprm</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">      <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 设置虚拟内存空间中的内存映射区域起始地址 mmap_base
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="nf">setup_new_exec</span><span class="p">(</span><span class="n">bprm</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 创建并初始化栈对应的 vm_area_struct 结构。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="c1">// 设置 mm-&gt;start_stack 就是栈的起始地址也就是栈底，并将 mm-&gt;arg_start 是指向栈底的。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">retval</span> <span class="o">=</span> <span class="nf">setup_arg_pages</span><span class="p">(</span><span class="n">bprm</span><span class="p">,</span> <span class="nf">randomize_stack_top</span><span class="p">(</span><span class="n">STACK_TOP</span><span class="p">),</span>
+</span></span><span class="line"><span class="cl">         <span class="n">executable_stack</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 将二进制文件中的代码部分映射到虚拟内存空间中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">error</span> <span class="o">=</span> <span class="nf">elf_map</span><span class="p">(</span><span class="n">bprm</span><span class="o">-&gt;</span><span class="n">file</span><span class="p">,</span> <span class="n">load_bias</span> <span class="o">+</span> <span class="n">vaddr</span><span class="p">,</span> <span class="n">elf_ppnt</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">        <span class="n">elf_prot</span><span class="p">,</span> <span class="n">elf_flags</span><span class="p">,</span> <span class="n">total_size</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl"> <span class="c1">// 创建并初始化堆对应的的 vm_area_struct 结构
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span> <span class="c1">// 设置 current-&gt;mm-&gt;start_brk = current-&gt;mm-&gt;brk，设置堆的起始地址 start_brk，结束地址 brk。 起初两者相等表示堆是空的
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">retval</span> <span class="o">=</span> <span class="nf">set_brk</span><span class="p">(</span><span class="n">elf_bss</span><span class="p">,</span> <span class="n">elf_brk</span><span class="p">,</span> <span class="n">bss_prot</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 将进程依赖的动态链接库 .so 文件映射到虚拟内存空间中的内存映射区域
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">elf_entry</span> <span class="o">=</span> <span class="nf">load_elf_interp</span><span class="p">(</span><span class="o">&amp;</span><span class="n">loc</span><span class="o">-&gt;</span><span class="n">interp_elf_ex</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">              <span class="n">interpreter</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">              <span class="o">&amp;</span><span class="n">interp_map_addr</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">              <span class="n">load_bias</span><span class="p">,</span> <span class="n">interp_elf_phdata</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl">  <span class="c1">// 初始化内存描述符 mm_struct
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>  <span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="o">-&gt;</span><span class="n">end_code</span> <span class="o">=</span> <span class="n">end_code</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="o">-&gt;</span><span class="n">start_code</span> <span class="o">=</span> <span class="n">start_code</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="o">-&gt;</span><span class="n">start_data</span> <span class="o">=</span> <span class="n">start_data</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="o">-&gt;</span><span class="n">end_data</span> <span class="o">=</span> <span class="n">end_data</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">  <span class="n">current</span><span class="o">-&gt;</span><span class="n">mm</span><span class="o">-&gt;</span><span class="n">start_stack</span> <span class="o">=</span> <span class="n">bprm</span><span class="o">-&gt;</span><span class="n">p</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">     <span class="p">......</span> <span class="err">省略</span> <span class="p">........</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="内核虚拟内存空间管理">内核虚拟内存空间管理</h2>
+<p>用户空间，每个进程的内存空间是相互隔离的，那么内核空间呢？</p>
+<p>事实上，内核线程之间 <strong>共享</strong> 内核虚拟内存空间</p>
+<h3 id="32-位-os-内核虚拟内存空间布局">32 位 OS 内核虚拟内存空间布局</h3>
+<h4 id="直接映射区">直接映射区</h4>
+<p>在内核空间的低地址处，有一块直接映射区，大小为 896M，这一部分，虚拟内存与物理内存是一对一的映射关系</p>
+<p>直接映射区映射的起始地址为物理内存的低地址处（0x00）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-18-18-16.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>在 X86 体系下，由于 DMA 只能对内存的前 16M 寻址，因此，直接映射区还有一块区域用于 DMA</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-18-24-48.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>虽然直接映射区的虚拟内存与物理内存是一对一的映射，但还是会为这块区域创建页表</p>
+</blockquote>
+<h4 id="zone_highmem-高端内存">ZONE_HIGHMEM 高端内存</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-18-28-43.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/linux_mem.html#_8-1-5-%E5%9B%BA%E5%AE%9A%E6%98%A0%E5%B0%84%E5%8C%BA" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+<p>这里讲一下动态映射区</p>
+<p>动态映射区使用 vmalloc 进行内存分配，vmalloc 分配的 <strong>虚拟内存是连续的</strong>，但 <strong>物理内存不是连续的</strong>，因此，性能会比直接映射区的性能差一些</p>
+<h4 id="整体布局">整体布局</h4>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-18-40-06.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="64-位-os-内核虚拟内存空间布局">64 位 OS 内核虚拟内存空间布局</h3>
+<p>32 位 OS 的内核空间只有 1G，太小了，所以需要精细的控制</p>
+<p>而 64 位 OS 的内核空间足足有 128T，很大，就不需要那么细粒度的控制</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-04-18-40-35.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><a href="https://xiaolincoding.com/os/3_memory/linux_mem.html#_7-2-1-64%E4%BD%8D%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84%E4%B8%8B-linux-%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E6%95%B4%E4%BD%93%E5%B8%83%E5%B1%80" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>
