@@ -226,6 +226,27 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li>
+      <ul>
+        <li><a href="#集成-context-到-api-中">集成 Context 到 API 中</a></li>
+        <li><a href="#contextwithvalue">Context.WithValue</a></li>
+        <li><a href="#cancellation">Cancellation</a></li>
+        <li><a href="#timeout">TimeOut</a></li>
+        <li><a href="#使用原则">使用原则</a></li>
+        <li><a href="#示例">示例</a></li>
+        <li><a href="#context-到底解决了什么">Context 到底解决了什么？</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <p>在 Go 服务中，每个传入的请求都在其自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问其他后端，如数据库和 RPC 服务。处理请求的 goroutine 通常需要访问特定于请求（request-specific context）的值，例如最终用户的身份、授权令牌和请求的截止日期（deadline）。</p>

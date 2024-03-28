@@ -243,6 +243,49 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#全局锁">全局锁</a></li>
+    <li><a href="#表级锁">表级锁</a>
+      <ul>
+        <li><a href="#表锁-table-lock">表锁 Table Lock</a></li>
+        <li><a href="#元数据锁-mdl">元数据锁 MDL</a></li>
+        <li><a href="#意向锁">意向锁</a></li>
+        <li><a href="#auto-inc-锁">AUTO-INC 锁</a></li>
+      </ul>
+    </li>
+    <li><a href="#行级锁">行级锁</a>
+      <ul>
+        <li><a href="#record-lock">Record Lock</a></li>
+        <li><a href="#gap-lock">Gap Lock</a></li>
+        <li><a href="#next-key-lock">Next-Key Lock</a></li>
+      </ul>
+    </li>
+    <li><a href="#mysql-是怎么加锁的">MySQL 是怎么加锁的？</a>
+      <ul>
+        <li><a href="#唯一索引等值查询">唯一索引等值查询</a></li>
+        <li><a href="#唯一索引范围查询">唯一索引范围查询</a></li>
+        <li><a href="#非唯一索引等值查询">非唯一索引等值查询</a></li>
+        <li><a href="#非唯一索引范围查询">非唯一索引范围查询</a></li>
+        <li><a href="#行锁升级">行锁升级</a></li>
+      </ul>
+    </li>
+    <li><a href="#mvcc--gap-lock-是否完全解决幻读问题">MVCC + Gap Lock 是否完全解决幻读问题？</a></li>
+    <li><a href="#死锁">死锁</a>
+      <ul>
+        <li><a href="#insert-是怎么加行锁的">insert 是怎么加行锁的？</a></li>
+        <li><a href="#死锁的产生">死锁的产生</a></li>
+        <li><a href="#如何避免死锁">如何避免死锁</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="全局锁">全局锁</h2>

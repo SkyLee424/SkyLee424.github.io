@@ -226,6 +226,34 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#什么是-buffer-pool">什么是 Buffer Pool</a>
+      <ul>
+        <li><a href="#buffer-pool-缓存什么">Buffer Pool 缓存什么</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何管理-buffer-pool">如何管理 Buffer Pool</a>
+      <ul>
+        <li><a href="#free-链表">Free 链表</a></li>
+        <li><a href="#flush-链表">Flush 链表</a></li>
+        <li><a href="#lru-链表">LRU 链表</a></li>
+        <li><a href="#脏页什么时候回写磁盘">脏页什么时候回写磁盘</a></li>
+      </ul>
+    </li>
+    <li><a href="#buffer-pool-的并发性能">Buffer Pool 的并发性能</a></li>
+    <li><a href="#基于-buffer-pool-的数据页访问过程">基于 Buffer Pool 的数据页访问过程</a></li>
+    <li><a href="#buffer-pool-预热">Buffer Pool 预热</a></li>
+    <li><a href="#调整-buffer-pool-大小">调整 Buffer Pool 大小</a></li>
+    <li><a href="#innodb-buffer-pool-架构图">InnoDB Buffer Pool 架构图</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h1 id="buffer-pool">Buffer Pool</h1>

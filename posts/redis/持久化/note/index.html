@@ -243,6 +243,41 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#aof-日志">AOF 日志</a>
+      <ul>
+        <li><a href="#介绍">介绍</a></li>
+        <li><a href="#持久化策略">持久化策略</a></li>
+        <li><a href="#aof-重写">AOF 重写</a></li>
+      </ul>
+    </li>
+    <li><a href="#rdb-快照">RDB 快照</a>
+      <ul>
+        <li><a href="#介绍-1">介绍</a></li>
+        <li><a href="#持久化策略-1">持久化策略</a></li>
+        <li><a href="#rdb-与-aof-混合持久化">RDB 与 AOF 混合持久化</a></li>
+      </ul>
+    </li>
+    <li><a href="#其它">其它</a>
+      <ul>
+        <li><a href="#aof-vs-rdb">AOF VS. RDB</a></li>
+        <li><a href="#redis-重启后是怎么恢复数据的">Redis 重启后是怎么恢复数据的？</a></li>
+        <li><a href="#redis70-后的-aof">Redis7.0 后的 AOF</a></li>
+        <li><a href="#aof-文件截断或者损坏了怎么办">AOF 文件截断或者损坏了，怎么办？</a></li>
+        <li><a href="#如何在-redis-从-rdb-切换到-aof">如何在 Redis 从 RDB 切换到 AOF？</a></li>
+      </ul>
+    </li>
+    <li><a href="#redis-大-key-对持久化有啥影响">Redis 大 key 对持久化有啥影响？</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="aof-日志">AOF 日志</h2>

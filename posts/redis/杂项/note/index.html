@@ -239,6 +239,38 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#redis-事务">Redis 事务</a>
+      <ul>
+        <li><a href="#基本使用">基本使用</a></li>
+        <li><a href="#局限性">局限性</a></li>
+        <li><a href="#redis-事务支持回滚吗">Redis 事务支持回滚吗？</a></li>
+        <li><a href="#redis-事务具有原子性嘛">Redis 事务具有原子性嘛？</a></li>
+      </ul>
+    </li>
+    <li><a href="#redis-性能优化">Redis 性能优化</a>
+      <ul>
+        <li><a href="#批量发送数据">批量发送数据</a></li>
+        <li><a href="#bigkey-优化">bigkey 优化</a></li>
+        <li><a href="#hotkey-优化">hotkey 优化</a></li>
+        <li><a href="#内存碎片问题">内存碎片问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#redis-生产问题">Redis 生产问题</a>
+      <ul>
+        <li><a href="#缓存雪崩击穿穿透与缓存一致性">缓存雪崩、击穿、穿透与缓存一致性</a></li>
+        <li><a href="#常见阻塞情况">常见阻塞情况</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="redis-事务">Redis 事务</h2>

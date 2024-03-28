@@ -239,6 +239,70 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#如何理解-tcp-面向字节流">如何理解 TCP 面向字节流？</a></li>
+    <li><a href="#如何解决粘包问题">如何解决粘包问题？</a></li>
+    <li><a href="#为什么-tcp-每次的初始-seq-都要不一样">为什么 TCP 每次的初始 Seq 都要不一样？</a></li>
+    <li><a href="#syn-报文什么时候可能会被丢弃">SYN 报文什么时候可能会被丢弃？</a></li>
+    <li><a href="#已建立连接的-tcp收到-syn-报文会发生什么">已建立连接的 TCP，收到 SYN 报文会发生什么？</a></li>
+    <li><a href="#如何关闭一个-tcp-连接">如何关闭一个 TCP 连接？</a>
+      <ul>
+        <li><a href="#killcx">killcx</a></li>
+        <li><a href="#tcpkill">tcpkill</a></li>
+      </ul>
+    </li>
+    <li><a href="#四次挥手中收到乱序的-fin-报文怎么处理">四次挥手中收到乱序的 FIN 报文怎么处理？</a></li>
+    <li><a href="#处于-time_wait-的连接收到-syn-报文怎么处理">处于 TIME_WAIT 的连接，收到 SYN 报文怎么处理？</a></li>
+    <li><a href="#处于-time_wait-的连接收到-rst-报文怎么处理">处于 TIME_WAIT 的连接，收到 RST 报文怎么处理？</a></li>
+    <li><a href="#tcp-连接客户端进程崩溃与断电分别发生什么">TCP 连接，客户端进程崩溃与断电，分别发生什么？</a></li>
+    <li><a href="#客户端拔掉网线后原本的-tcp-连接还存在吗">客户端拔掉网线后，原本的 TCP 连接还存在吗？</a></li>
+    <li><a href="#linux-为什么默认关闭了-tcp_tw_reuse-选项">Linux 为什么默认关闭了 tcp_tw_reuse 选项？</a></li>
+    <li><a href="#https-中tcp-三次握手与-tls-握手能同时进行吗">HTTPS 中，TCP 三次握手与 TLS 握手能同时进行吗？</a></li>
+    <li><a href="#tcp-的缺点">TCP 的缺点</a></li>
+    <li><a href="#quic-协议">QUIC 协议</a>
+      <ul>
+        <li><a href="#概念">概念</a></li>
+        <li><a href="#三次握手">三次握手</a></li>
+        <li><a href="#重传机制">重传机制</a></li>
+        <li><a href="#流量控制">流量控制</a></li>
+        <li><a href="#如何解决队头阻塞">如何解决队头阻塞</a></li>
+        <li><a href="#连接迁移">连接迁移</a></li>
+        <li><a href="#优势">优势</a></li>
+      </ul>
+    </li>
+    <li><a href="#端口问题">端口问题</a>
+      <ul>
+        <li><a href="#tcp-和-udp-可以使用同一个端口吗">TCP 和 UDP 可以使用同一个端口吗？</a></li>
+        <li><a href="#多个-tcp-服务进程可以使用同一个端口吗">多个 TCP 服务进程可以使用同一个端口吗？</a></li>
+        <li><a href="#如何解决服务器快速重启出现-address-already-in-use">如何解决服务器快速重启，出现 &ldquo;Address already in use&rdquo;？</a></li>
+        <li><a href="#多个-tcp-客户进程可以使用同一端口吗">多个 TCP 客户进程可以使用同一端口吗？</a></li>
+      </ul>
+    </li>
+    <li><a href="#server-没有调用-listenclient-发起连接会发生什么">Server 没有调用 listen，Client 发起连接，会发生什么？</a></li>
+    <li><a href="#半连接队列全连接队列的本质">半连接队列、全连接队列的本质？</a></li>
+    <li><a href="#没有-accept可以建立-tcp-连接吗">没有 accept，可以建立 TCP 连接吗？</a></li>
+    <li><a href="#没有-listen为什么可以建立连接">没有 listen，为什么可以建立连接？</a></li>
+    <li><a href="#用了-tcp数据就一定不会丢失吗">用了 TCP，数据就一定不会丢失吗？</a>
+      <ul>
+        <li><a href="#建立连接丢包">建立连接丢包</a></li>
+        <li><a href="#流量控制丢包">流量控制丢包</a></li>
+        <li><a href="#网卡丢包">网卡丢包</a></li>
+        <li><a href="#接收缓冲区满导致丢包">接收缓冲区满导致丢包</a></li>
+        <li><a href="#两端中间节点丢包">两端中间节点丢包</a></li>
+        <li><a href="#回归问题">回归问题</a></li>
+        <li><a href="#如何解决">如何解决？</a></li>
+      </ul>
+    </li>
+    <li><a href="#shutdown-与-close">shutdown 与 close</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="如何理解-tcp-面向字节流">如何理解 TCP 面向字节流？</h2>

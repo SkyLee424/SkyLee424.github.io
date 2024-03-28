@@ -243,6 +243,34 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#undo-log">undo log</a></li>
+    <li><a href="#redo-log">redo log</a>
+      <ul>
+        <li><a href="#刷盘时机">刷盘时机</a></li>
+        <li><a href="#日志文件组">日志文件组</a></li>
+        <li><a href="#为什么要使用-redo-log">为什么要使用 redo log</a></li>
+      </ul>
+    </li>
+    <li><a href="#binlog">binlog</a>
+      <ul>
+        <li><a href="#记录格式">记录格式</a></li>
+        <li><a href="#写入机制">写入机制</a></li>
+        <li><a href="#与-redo-log-的区别">与 redo log 的区别</a></li>
+        <li><a href="#为什么有了-redo-log还要有-binlog">为什么有了 redo log，还要有 binlog？</a></li>
+      </ul>
+    </li>
+    <li><a href="#两阶段提交">两阶段提交</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h1 id="日志">日志</h1>

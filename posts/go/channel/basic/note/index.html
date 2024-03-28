@@ -243,6 +243,31 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#channel-类型">channel 类型</a></li>
+    <li><a href="#初始化-channel">初始化 channel</a></li>
+    <li><a href="#channel-的操作">channel 的操作</a></li>
+    <li><a href="#channel-的缓冲区">channel 的缓冲区</a>
+      <ul>
+        <li><a href="#无缓冲">无缓冲</a></li>
+        <li><a href="#有缓冲">有缓冲</a></li>
+      </ul>
+    </li>
+    <li><a href="#阻塞时机">阻塞时机</a></li>
+    <li><a href="#多返回值">多返回值</a></li>
+    <li><a href="#for-range">for range</a></li>
+    <li><a href="#单向-channel">单向 channel</a></li>
+    <li><a href="#select-多路复用">select 多路“复用”</a></li>
+    <li><a href="#元素值在经过通道传递时会被复制那么这个复制是是浅拷贝还是深拷贝呢">元素值在经过通道传递时会被复制，那么这个复制是是浅拷贝还是深拷贝呢</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <p>很多并发模型在涉及到线程间通信时，往往采用互斥锁来实现数据的安全性，但这种方式会消耗很多性能</p>

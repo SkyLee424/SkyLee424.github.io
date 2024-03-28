@@ -243,6 +243,35 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#与传统的加锁控制并发的对比">与传统的加锁控制并发的对比</a></li>
+    <li><a href="#channel-实现原理">channel 实现原理</a>
+      <ul>
+        <li><a href="#数据结构">数据结构</a></li>
+        <li><a href="#创建-channel">创建 channel</a></li>
+        <li><a href="#接收数据">接收数据</a></li>
+        <li><a href="#发送数据">发送数据</a></li>
+        <li><a href="#关闭-channel">关闭 channel</a></li>
+      </ul>
+    </li>
+    <li><a href="#channel-进阶">channel 进阶</a>
+      <ul>
+        <li><a href="#发送与接收数据的本质">发送与接收数据的本质</a></li>
+        <li><a href="#happened-before">happened before</a></li>
+        <li><a href="#优雅关闭-channel">优雅关闭 channel</a></li>
+      </ul>
+    </li>
+    <li><a href="#channel-的应用">channel 的应用</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="与传统的加锁控制并发的对比">与传统的加锁控制并发的对比</h2>

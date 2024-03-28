@@ -260,6 +260,49 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#为什么要使用-redis-集群">为什么要使用 Redis 集群</a></li>
+    <li><a href="#redis-集群实现了什么功能">Redis 集群实现了什么功能</a></li>
+    <li><a href="#在-redis-cluster-协议下server-与-client-在-redis-集群中的身份">在 Redis Cluster 协议下，Server 与 Client 在 Redis 集群中的身份</a></li>
+    <li><a href="#如何减少数据丢失">如何减少数据丢失</a></li>
+    <li><a href="#高可用">高可用</a></li>
+    <li><a href="#高性能">高性能</a></li>
+    <li><a href="#redis-集群的基本组件">Redis 集群的基本组件</a>
+      <ul>
+        <li><a href="#key-distribution-model">Key distribution model</a></li>
+        <li><a href="#hash-tags">Hash Tags</a></li>
+        <li><a href="#cluster-属性">Cluster 属性</a></li>
+        <li><a href="#cluster-bus">Cluster bus</a></li>
+      </ul>
+    </li>
+    <li><a href="#重定向与重新分片">重定向与重新分片</a>
+      <ul>
+        <li><a href="#moved-redirection">MOVED Redirection</a></li>
+        <li><a href="#resharding">Resharding</a></li>
+        <li><a href="#ask-redirection">ASK Redirection</a></li>
+        <li><a href="#客户端连接和重定向处理">客户端连接和重定向处理</a></li>
+        <li><a href="#redis-cluster-如何处理读写请求的分发">Redis Cluster 如何处理读写请求的分发</a></li>
+      </ul>
+    </li>
+    <li><a href="#错误忍受fault-tolerance">错误忍受（Fault Tolerance）</a>
+      <ul>
+        <li><a href="#心跳包heartbeat-packet">心跳包（Heartbeat Packet）</a></li>
+        <li><a href="#错误检测">错误检测</a></li>
+        <li><a href="#从节点选举和升级过程">从节点选举和升级过程</a></li>
+        <li><a href="#主节点重新加入集群的过程">主节点重新加入集群的过程</a></li>
+        <li><a href="#副本迁移replica-migration">副本迁移（Replica migration）</a></li>
+      </ul>
+    </li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="为什么要使用-redis-集群">为什么要使用 Redis 集群</h2>

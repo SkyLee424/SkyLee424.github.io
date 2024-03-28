@@ -226,6 +226,101 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#冷热分离">冷热分离</a>
+      <ul>
+        <li><a href="#冷数据与热数据">冷数据与热数据</a></li>
+        <li><a href="#为什么要冷热分离">为什么要冷热分离</a></li>
+        <li><a href="#冷热分离的优缺点">冷热分离的优缺点</a></li>
+        <li><a href="#如何实现">如何实现</a></li>
+      </ul>
+    </li>
+    <li><a href="#深度分页">深度分页</a>
+      <ul>
+        <li><a href="#概念">概念</a></li>
+        <li><a href="#如何优化">如何优化</a></li>
+      </ul>
+    </li>
+    <li><a href="#普通索引和唯一索引应该如何选择">普通索引和唯一索引，应该如何选择？</a>
+      <ul>
+        <li><a href="#查询过程">查询过程</a></li>
+        <li><a href="#更新过程">更新过程</a></li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何给字符串建索引">如何给字符串建索引</a></li>
+    <li><a href="#redo-log-设置得太小会怎么样">redo log 设置得太小会怎么样</a></li>
+    <li><a href="#order-by-是怎么排序的">order by 是怎么排序的？</a>
+      <ul>
+        <li><a href="#全字段排序">全字段排序</a></li>
+        <li><a href="#rowid-排序">rowid 排序</a></li>
+        <li><a href="#避免在-sort_buffer-排序">避免在 sort_buffer 排序</a></li>
+        <li><a href="#总结-1">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#基于临时表的排序机制">基于临时表的排序机制</a>
+      <ul>
+        <li><a href="#内存临时表">内存临时表</a></li>
+        <li><a href="#磁盘临时表">磁盘临时表</a></li>
+        <li><a href="#topk-问题优先队列排序算法">Topk 问题（优先队列排序算法）</a></li>
+        <li><a href="#随机排序的实现方式">随机排序的实现方式</a></li>
+        <li><a href="#为什么-limit-n-order-by-字段-会有重复值">为什么 limit n order by &lt;字段&gt; 会有重复值？</a></li>
+        <li><a href="#总结-2">总结</a></li>
+        <li><a href="#参考资料">参考资料</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何临时提高-mysql-的性能">如何临时“提高” MySQL 的性能</a></li>
+    <li><a href="#误删数据如何及时补救">误删数据如何及时补救？</a></li>
+    <li><a href="#mysql-发送查询结果的过程">MySQL 发送查询结果的过程</a>
+      <ul>
+        <li><a href="#mysql_store_result">mysql_store_result</a></li>
+        <li><a href="#mysql_use_result">mysql_use_result</a></li>
+        <li><a href="#总结-3">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#到底能不能使用-join">到底能不能使用 join？</a>
+      <ul>
+        <li><a href="#被驱动表上join--on-字段有索引">被驱动表上，join &hellip; on 字段有索引</a></li>
+        <li><a href="#被驱动表上join--on-字段无索引">被驱动表上，join &hellip; on 字段无索引</a></li>
+        <li><a href="#join_buffer-太小会发生什么">join_buffer 太小，会发生什么</a></li>
+        <li><a href="#join-时应该让小表驱动大表还是大表驱动小表">join 时，应该让小表驱动大表，还是大表驱动小表</a></li>
+        <li><a href="#总结-4">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#join-如何优化">join 如何优化？</a>
+      <ul>
+        <li><a href="#mrr">MRR</a></li>
+        <li><a href="#bka">BKA</a></li>
+        <li><a href="#bnl-的优化">BNL 的优化</a></li>
+        <li><a href="#hash-join">hash join</a></li>
+        <li><a href="#总结-5">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#group-by-优化">group by 优化</a>
+      <ul>
+        <li><a href="#group-by-的原理">group by 的原理</a></li>
+        <li><a href="#优化">优化</a></li>
+      </ul>
+    </li>
+    <li><a href="#有没有必要使用-memory-引擎">有没有必要使用 Memory 引擎？</a></li>
+    <li><a href="#自增主键为什么不是连续的">自增主键为什么不是连续的？</a>
+      <ul>
+        <li><a href="#插入数据时出现冲突">插入数据时，出现冲突</a></li>
+        <li><a href="#事务回滚">事务回滚</a></li>
+        <li><a href="#为什么在插入冲突事务回滚时mysql-不回滚自增-id-呢">为什么在插入冲突、事务回滚时，MySQL 不回滚自增 id 呢？</a></li>
+        <li><a href="#批量申请-id-策略">批量申请 id 策略</a></li>
+      </ul>
+    </li>
+    <li><a href="#自增-id-用完了会发生什么">自增 id 用完了，会发生什么？</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="冷热分离">冷热分离</h2>

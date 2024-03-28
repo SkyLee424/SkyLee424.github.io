@@ -226,6 +226,39 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#sql-语句-在-mysql-的大致执行流程">SQL 语句 在 MySQL 的大致执行流程</a>
+      <ul>
+        <li><a href="#建立连接-----连接器">建立连接 &mdash; 连接器</a></li>
+        <li><a href="#查询缓存">查询缓存</a></li>
+        <li><a href="#sql-语句解析-----解析器">SQL 语句解析 &mdash; 解析器</a></li>
+        <li><a href="#执行-sql-语句">执行 SQL 语句</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#mysql-的数据存放在哪里">MySQL 的数据存放在哪里？</a></li>
+    <li><a href="#mysql-的表空间结构">MySQL 的表空间结构？</a>
+      <ul>
+        <li><a href="#行row">行（row）</a></li>
+        <li><a href="#页page">页（page）</a></li>
+        <li><a href="#区extent">区（extent）</a></li>
+      </ul>
+    </li>
+    <li><a href="#innodb-的行格式有哪些">InnoDB 的行格式有哪些？</a></li>
+    <li><a href="#compact-行格式">COMPACT 行格式</a></li>
+    <li><a href="#varcharn-的-n-的最大取值为多少">varchar(n) 的 n 的最大取值为多少？</a></li>
+    <li><a href="#行溢出后mysql-是如何处理的">行溢出后，MySQL 是如何处理的？</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h1 id="执行一个-sql-语句发生了什么">执行一个 SQL 语句，发生了什么？</h1>

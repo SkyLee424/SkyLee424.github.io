@@ -273,6 +273,40 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#为什么要有-dma">为什么要有 DMA？</a></li>
+    <li><a href="#传统的网络文件传输性能为什么差">传统的网络文件传输性能为什么差？</a></li>
+    <li><a href="#优化网络传输零拷贝">优化网络传输：零拷贝</a>
+      <ul>
+        <li><a href="#如何实现零拷贝">如何实现零拷贝？</a></li>
+        <li><a href="#大文件传输">大文件传输</a></li>
+      </ul>
+    </li>
+    <li><a href="#reactor-与-proactor">Reactor 与 Proactor</a>
+      <ul>
+        <li><a href="#单-reactor-单线程">单 Reactor 单线程</a></li>
+        <li><a href="#单-reactor-多线程">单 Reactor 多线程</a></li>
+        <li><a href="#多-reactor-单线程">多 Reactor 单线程</a></li>
+        <li><a href="#多-reactor-多线程">多 Reactor 多线程</a></li>
+        <li><a href="#proactor">Proactor</a></li>
+      </ul>
+    </li>
+    <li><a href="#一致性哈希">一致性哈希</a>
+      <ul>
+        <li><a href="#传统的负载均衡策略">传统的负载均衡策略</a></li>
+        <li><a href="#使用普通哈希算法实现负载均衡有什么问题">使用普通哈希算法实现负载均衡有什么问题？</a></li>
+        <li><a href="#一致性哈希-1">一致性哈希</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="为什么要有-dma">为什么要有 DMA？</h2>

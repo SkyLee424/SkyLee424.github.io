@@ -239,6 +239,49 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#重传机制">重传机制</a>
+      <ul>
+        <li><a href="#超时重传">超时重传</a></li>
+        <li><a href="#快重传">快重传</a></li>
+        <li><a href="#sack">SACK</a></li>
+      </ul>
+    </li>
+    <li><a href="#滑动窗口">滑动窗口</a>
+      <ul>
+        <li><a href="#为什么有滑动窗口">为什么有滑动窗口？</a></li>
+        <li><a href="#窗口大小由谁确定">窗口大小由谁确定？</a></li>
+        <li><a href="#发送窗口">发送窗口</a></li>
+        <li><a href="#接收窗口">接收窗口</a></li>
+        <li><a href="#二者大小是否相等">二者大小是否相等？</a></li>
+      </ul>
+    </li>
+    <li><a href="#流量控制">流量控制</a>
+      <ul>
+        <li><a href="#基于滑动窗口的流量控制过程">基于滑动窗口的流量控制过程</a></li>
+        <li><a href="#os-对滑动窗口的控制">OS 对滑动窗口的控制</a></li>
+        <li><a href="#零窗口探测报文">零窗口探测报文</a></li>
+        <li><a href="#糊涂窗口综合征">糊涂窗口综合征</a></li>
+      </ul>
+    </li>
+    <li><a href="#拥塞控制">拥塞控制</a>
+      <ul>
+        <li><a href="#什么是拥塞窗口">什么是拥塞窗口？</a></li>
+        <li><a href="#如何判断是否出现拥塞">如何判断是否出现拥塞？</a></li>
+        <li><a href="#拥塞控制全过程">拥塞控制全过程</a></li>
+        <li><a href="#详细说说快恢复">详细说说快恢复</a></li>
+        <li><a href="#为什么有了流量控制还需要拥塞控制">为什么有了流量控制还需要拥塞控制？</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="重传机制">重传机制</h2>

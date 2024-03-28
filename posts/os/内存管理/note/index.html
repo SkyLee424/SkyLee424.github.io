@@ -256,6 +256,85 @@
 
 
     
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#虚拟内存">虚拟内存</a>
+      <ul>
+        <li><a href="#为什么要有虚拟内存">为什么要有虚拟内存？</a></li>
+        <li><a href="#内存分段">内存分段</a></li>
+        <li><a href="#说说内存分页机制">说说内存分页机制？</a></li>
+        <li><a href="#分段和分页是绝对的吗">分段和分页是绝对的吗？</a></li>
+        <li><a href="#谈谈-linux-内存布局">谈谈 Linux 内存布局？</a></li>
+        <li><a href="#虚拟内存的作用">虚拟内存的作用？</a></li>
+      </ul>
+    </li>
+    <li><a href="#malloc">malloc</a>
+      <ul>
+        <li><a href="#malloc-是怎么分配内存的">malloc 是怎么分配内存的？</a></li>
+        <li><a href="#malloc-分配的是物理内存吗">malloc 分配的是物理内存吗？</a></li>
+        <li><a href="#malloc1-会分配多少内存">malloc(1) 会分配多少内存？</a></li>
+        <li><a href="#free-释放内存会立即将内存还给-os-吗">free 释放内存，会立即将内存还给 OS 吗？</a></li>
+        <li><a href="#为什么不全部调用-mmap-申请内存">为什么不全部调用 mmap 申请内存？</a></li>
+        <li><a href="#为什么不全部调用-brk-申请内存">为什么不全部调用 brk 申请内存？</a></li>
+        <li><a href="#free-仅传入一个起始地址怎么知道该释放多大内存">free 仅传入一个起始地址，怎么知道该释放多大内存？</a></li>
+      </ul>
+    </li>
+    <li><a href="#内存满了会发生什么">内存满了，会发生什么？</a>
+      <ul>
+        <li><a href="#内存分配的过程">内存分配的过程</a></li>
+        <li><a href="#哪些内存可以回收">哪些内存可以回收？</a></li>
+        <li><a href="#回收内存带来的性能影响">回收内存带来的性能影响</a></li>
+        <li><a href="#如何降低回收内存带来的性能影响">如何降低回收内存带来的性能影响？</a></li>
+        <li><a href="#numa-架构下的内存回收策略">NUMA 架构下的内存回收策略</a></li>
+        <li><a href="#如何避免一个进程被-oom-killer-杀掉">如何避免一个进程被 OOM Killer 杀掉？</a></li>
+      </ul>
+    </li>
+    <li><a href="#在-4g-内存大小的-server-上申请-8g-内存会怎么样">在 4G 内存大小的 Server 上，申请 8G 内存会怎么样？</a>
+      <ul>
+        <li><a href="#os-虚拟内存的大小">OS 虚拟内存的大小</a></li>
+        <li><a href="#swap-机制">Swap 机制</a></li>
+        <li><a href="#在-4g-内存大小的-server-上申请-8g-内存会怎么样-1">在 4G 内存大小的 Server 上，申请 8G 内存会怎么样？</a></li>
+        <li><a href="#如何在-linux-上启用-swap">如何在 Linux 上启用 swap</a></li>
+        <li><a href="#创建-swap-文件">创建 Swap 文件</a></li>
+        <li><a href="#启用-swap-文件">启用 Swap 文件</a></li>
+        <li><a href="#设置开机自动挂载-swap-文件">设置开机自动挂载 Swap 文件</a></li>
+      </ul>
+    </li>
+    <li><a href="#预读失效与缓存污染">预读失效与缓存污染</a>
+      <ul>
+        <li><a href="#什么是预读机制">什么是预读机制？</a></li>
+        <li><a href="#预读失效是什么会导致什么后果">预读失效是什么？会导致什么后果？</a></li>
+        <li><a href="#如何避免预读失效带来的影响">如何避免预读失效带来的影响？</a></li>
+        <li><a href="#什么是缓存污染">什么是缓存污染？</a></li>
+        <li><a href="#缓存污染会导致什么后果">缓存污染会导致什么后果？</a></li>
+        <li><a href="#如何避免缓存污染带来的影响">如何避免缓存污染带来的影响？</a></li>
+      </ul>
+    </li>
+  </ul>
+
+  <ul>
+    <li><a href="#进程虚拟内存空间管理">进程虚拟内存空间管理</a>
+      <ul>
+        <li><a href="#内核如何划分用户空间与内核空间">内核如何划分用户空间与内核空间？</a></li>
+        <li><a href="#进程虚拟空间的布局">进程虚拟空间的布局</a></li>
+        <li><a href="#进程访问一个虚拟内存地址发生了什么">进程访问一个虚拟内存地址，发生了什么？</a></li>
+      </ul>
+    </li>
+    <li><a href="#程序编译后的二进制文件如何映射到虚拟内存空间中">程序编译后的二进制文件如何映射到虚拟内存空间中？</a></li>
+    <li><a href="#内核虚拟内存空间管理">内核虚拟内存空间管理</a>
+      <ul>
+        <li><a href="#32-位-os-内核虚拟内存空间布局">32 位 OS 内核虚拟内存空间布局</a></li>
+        <li><a href="#64-位-os-内核虚拟内存空间布局">64 位 OS 内核虚拟内存空间布局</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
       <h2 id="虚拟内存">虚拟内存</h2>
