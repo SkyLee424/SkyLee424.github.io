@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>GMP on Sky_Lee 的个人博客</title>
-    <link>http://localhost:1313/tags/gmp/</link>
+    <link>https://blogs.skylee.top/tags/gmp/</link>
     <description>Recent content in GMP on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Mon, 18 Mar 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:1313/tags/gmp/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blogs.skylee.top/tags/gmp/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Go: Scheduler</title>
-      <link>http://localhost:1313/posts/go/scheduler/note/</link>
+      <link>https://blogs.skylee.top/posts/go/scheduler/note/</link>
       <pubDate>Mon, 18 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/scheduler/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/scheduler/note/</guid>
       <description>前置知识 OS Scheduler 在介绍 Go Scheduler 之前，先要了解一下 OS Scheduler OS Scheduler 是在 OS 层面实现的调度器，调度的基本单位为（内核级）线程，保证在尽可能公平的条件下，充分利用 CPU</description>
     </item>
   </channel>

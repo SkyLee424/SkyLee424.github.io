@@ -2,354 +2,354 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Sky_Lee 的个人博客</title>
-    <link>http://localhost:1313/</link>
+    <link>https://blogs.skylee.top/</link>
     <description>Recent content on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Sun, 24 Mar 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blogs.skylee.top/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>关于</title>
-      <link>http://localhost:1313/about/</link>
+      <link>https://blogs.skylee.top/about/</link>
       <pubDate>Sun, 24 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/about/</guid>
+      <guid>https://blogs.skylee.top/about/</guid>
       <description>个人简介 平平无奇的大二码农&amp;hellip; 目前的目标是进入大厂实习 记录这些博客，主要是为了后续查阅（好记性不如烂笔头），当然能够帮助到你就更</description>
     </item>
     <item>
       <title>Go: Single Flight</title>
-      <link>http://localhost:1313/posts/go/singlefilght/note/</link>
+      <link>https://blogs.skylee.top/posts/go/singlefilght/note/</link>
       <pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/singlefilght/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/singlefilght/note/</guid>
       <description>Single Flight 是 Go pkg 中提供的一个工具，通常用于防止缓存击穿 假设这个场景： 大量客户端请求的缓存均过期了，不得不直接访问 DB，如此高的并发，很有可能将 DB 服</description>
     </item>
     <item>
       <title>Kakfa 核心问题</title>
-      <link>http://localhost:1313/posts/kafka/%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98/note/</link>
+      <link>https://blogs.skylee.top/posts/kafka/%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98/note/</link>
       <pubDate>Thu, 21 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/kafka/%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98/note/</guid>
+      <guid>https://blogs.skylee.top/posts/kafka/%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98/note/</guid>
       <description>Kafka 核心问题 本文仅包括了一些常见问题，后续会持续更新。 topic 分区目的 kafka 为什么这么快？ 幂等性 事务 副本同步机制 AKF ZK 的作用 Offset 持久化 消费逻辑（单线程？多线</description>
     </item>
     <item>
       <title>Go: GC 原理</title>
-      <link>http://localhost:1313/posts/go/gc/note/</link>
+      <link>https://blogs.skylee.top/posts/go/gc/note/</link>
       <pubDate>Tue, 19 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/gc/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/gc/note/</guid>
       <description>标记清扫法 Go 1.3 的 GC 采用标记清扫法，分为两个步骤： 标记 清扫 标记的过程很简单：从对象根节点开始 dfs，每遍历到一个节点就做标记，最后没有标记的节</description>
     </item>
     <item>
       <title>Go: Scheduler</title>
-      <link>http://localhost:1313/posts/go/scheduler/note/</link>
+      <link>https://blogs.skylee.top/posts/go/scheduler/note/</link>
       <pubDate>Mon, 18 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/scheduler/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/scheduler/note/</guid>
       <description>前置知识 OS Scheduler 在介绍 Go Scheduler 之前，先要了解一下 OS Scheduler OS Scheduler 是在 OS 层面实现的调度器，调度的基本单位为（内核级）线程，保证在尽可能公平的条件下，充分利用 CPU</description>
     </item>
     <item>
       <title>Go: Map</title>
-      <link>http://localhost:1313/posts/go/map/map/note/</link>
+      <link>https://blogs.skylee.top/posts/go/map/map/note/</link>
       <pubDate>Sun, 17 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/map/map/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/map/map/note/</guid>
       <description>Map 是 Go 提供的一个 key-value 数据结构，底层使用 hash，就像 std::unordered_map 一样 定义一个 Map 的语法： map[keyType]valueType 定义一个 map，初始值是 nil Map 有容量吗 Go 的 map 类型在语言规范中没有直</description>
     </item>
     <item>
       <title>Go: sync.Map</title>
-      <link>http://localhost:1313/posts/go/map/sync.map/note/</link>
+      <link>https://blogs.skylee.top/posts/go/map/sync.map/note/</link>
       <pubDate>Sun, 17 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/map/sync.map/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/map/sync.map/note/</guid>
       <description>原生的 Map 有并发访问的安全问题： var m map[int]int = make(map[int]int, 4) func Store(key, val int) { m[key] = val } func Load(key int) (int, bool) { val, ok := m[key] return val, ok } func main() { var wg sync.WaitGroup wg.Add(100) for i := 0; i &amp;lt; 100; i++ { go func(key int) { defer wg.Done() Store(key, key) Load(key) }(i)</description>
     </item>
     <item>
       <title>Go: Channel</title>
-      <link>http://localhost:1313/posts/go/channel/basic/note/</link>
+      <link>https://blogs.skylee.top/posts/go/channel/basic/note/</link>
       <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/channel/basic/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/channel/basic/note/</guid>
       <description>很多并发模型在涉及到线程间通信时，往往采用互斥锁来实现数据的安全性，但这种方式会消耗很多性能 Go 采用的 CSP 并发模型提倡：通过 通信共享内存 而不是通</description>
     </item>
     <item>
       <title>Go: Channel 底层机制</title>
-      <link>http://localhost:1313/posts/go/channel/core/note/</link>
+      <link>https://blogs.skylee.top/posts/go/channel/core/note/</link>
       <pubDate>Sat, 16 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/channel/core/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/channel/core/note/</guid>
       <description>与传统的加锁控制并发的对比 在访问临界资源时，可以使用传统的加锁方式，但如果项目变得复杂，这种方式容易出现 bug，编码困难 Go 使用 channel 配合 select 来做并</description>
     </item>
     <item>
       <title>Go: Context</title>
-      <link>http://localhost:1313/posts/go/context/basic/note/</link>
+      <link>https://blogs.skylee.top/posts/go/context/basic/note/</link>
       <pubDate>Fri, 15 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/context/basic/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/context/basic/note/</guid>
       <description>在 Go 服务中，每个传入的请求都在其自己的 goroutine 中处理。请求处理程序通常启动额外的 goroutine 来访问其他后端，如数据库和 RPC 服务。处理请求的 goroutine 通常需要访问特定于</description>
     </item>
     <item>
       <title>Go: Slice</title>
-      <link>http://localhost:1313/posts/go/slice/note/</link>
+      <link>https://blogs.skylee.top/posts/go/slice/note/</link>
       <pubDate>Wed, 13 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/slice/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/slice/note/</guid>
       <description>与数组最大的不同，切片支持动态扩容 切片（Slice）是一个拥有相同类型元素的可变长度的序列。它是基于数组类型做的一层封装。它非常灵活，支持自</description>
     </item>
     <item>
       <title>Go: sync.Pool</title>
-      <link>http://localhost:1313/posts/go/sync.pool/note/</link>
+      <link>https://blogs.skylee.top/posts/go/sync.pool/note/</link>
       <pubDate>Wed, 13 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/go/sync.pool/note/</guid>
+      <guid>https://blogs.skylee.top/posts/go/sync.pool/note/</guid>
       <description>介绍 Pool&amp;rsquo;s purpose is to cache allocated but unused items for later reuse, relieving pressure on the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. However, it is not suitable for all free lists. sync.Pool 是 sync 包的一个组件，用于 复用对象，避免频繁创建销毁对象带来</description>
     </item>
     <item>
       <title>Redis 杂项</title>
-      <link>http://localhost:1313/posts/redis/%E6%9D%82%E9%A1%B9/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E6%9D%82%E9%A1%B9/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E6%9D%82%E9%A1%B9/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>Redis 事务 基本使用 redis 的事务与传统关系性数据库的事务不同，没有 ACID 特性 开启事务可以使用 MULTI 命令 回滚事务可以使用 DISCARD 命令 提交事务可以使用 EXEC 命令 为了防止多客</description>
     </item>
     <item>
       <title>Redis 集群</title>
-      <link>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E9%9B%86%E7%BE%A4/note/</guid>
       <description>为什么要使用 Redis 集群 前面的文章 提到了基于 哨兵集群 的「一主多从」模型 这种模型实际上也是一种 Redis 集群，优点如下： 实现数据的冗余备份 基于故障转移，可以</description>
     </item>
     <item>
       <title>缓存的几种操作模式</title>
-      <link>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E7%9A%84%E5%87%A0%E7%A7%8D%E6%93%8D%E4%BD%9C%E6%A8%A1%E5%BC%8F/note/</guid>
       <description>Cache-Aside 应用代码需要首先在缓存中查找数据，如果未找到，再从数据库中加载数据，并将其添加到缓存中。 当应用程序需要修改 DB 的数据，只需要先更新 DB，再删</description>
     </item>
     <item>
       <title>缓存雪崩、缓存击穿、缓存穿透</title>
-      <link>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</link>
       <pubDate>Sun, 10 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/</guid>
       <description>缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定</description>
     </item>
     <item>
       <title>Redis 主从复制（同步）</title>
-      <link>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%90%8C%E6%AD%A5/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%90%8C%E6%AD%A5/note/</link>
       <pubDate>Fri, 08 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%90%8C%E6%AD%A5/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%90%8C%E6%AD%A5/note/</guid>
       <description>介绍 Redis 主从复制（同步）是指将一个 Redis 服务器的数据复制（同步）到多个 Redis 服务器的过程。这样，当主服务器出现故障时，其他从服务器可以接管其工作，从而</description>
     </item>
     <item>
       <title>Redis 哨兵</title>
-      <link>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E5%93%A8%E5%85%B5/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E5%93%A8%E5%85%B5/note/</link>
       <pubDate>Fri, 08 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E5%93%A8%E5%85%B5/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E9%AB%98%E5%8F%AF%E7%94%A8/%E5%93%A8%E5%85%B5/note/</guid>
       <description>为什么要有哨兵 Redis 哨兵主要负责： 集群健康状态监测 集群故障转移 通知 可以说，Redis 的高可用离不开哨兵 如何判断主节点故障 主观下线 前面提到，哨兵具</description>
     </item>
     <item>
       <title>Redis 常见数据结构与实现原理</title>
-      <link>http://localhost:1313/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/</link>
       <pubDate>Thu, 07 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E5%B8%B8%E8%A7%81%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86/note/</guid>
       <description>底层数据结构 SDS（简单动态字符串） 传统的 C 字符串存在以下问题： 获取 strlen 效率低 无法存储文本以外的数据（二进制不安全） 不支持动态扩容，appen</description>
     </item>
     <item>
       <title>Redis 持久化机制</title>
-      <link>http://localhost:1313/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/</link>
       <pubDate>Thu, 07 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E6%8C%81%E4%B9%85%E5%8C%96/note/</guid>
       <description>AOF 日志 介绍 AOF（append-only file）是 Redis 持久化数据的一种策略 由于 Redis 的数据都存在内存，如果不做持久化，重启后数据就丢失了 AOF 的机制</description>
     </item>
     <item>
       <title>Redis 过期删除与内存淘汰策略</title>
-      <link>http://localhost:1313/posts/redis/%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E4%B8%8E%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0/note/</link>
+      <link>https://blogs.skylee.top/posts/redis/%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E4%B8%8E%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0/note/</link>
       <pubDate>Thu, 07 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/redis/%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E4%B8%8E%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0/note/</guid>
+      <guid>https://blogs.skylee.top/posts/redis/%E8%BF%87%E6%9C%9F%E5%88%A0%E9%99%A4%E4%B8%8E%E5%86%85%E5%AD%98%E6%B7%98%E6%B1%B0/note/</guid>
       <description>过期删除策略 Redis 实际上使用了一个哈希表来记录每个 key 的过期时间 在给 Redis 的 key 设置 TTL，实际上就是新增（修改）哈希表中的数据 在获取 key 的 value 时，首先要先</description>
     </item>
     <item>
       <title>MySQL 杂项</title>
-      <link>http://localhost:1313/posts/mysql/%E6%9D%82%E9%A1%B9/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/</link>
       <pubDate>Mon, 04 Mar 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E6%9D%82%E9%A1%B9/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>冷热分离 冷数据与热数据 冷数据指不经常访问，但是需要长期保存的数据 可以按照两个常见维度来区分冷数据与热数据： 时间维度：按照时间来区分冷热数据，</description>
     </item>
     <item>
       <title>MySQL 主从复制、读写分离、分库分表</title>
-      <link>http://localhost:1313/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</link>
       <pubDate>Mon, 26 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</guid>
       <description>主从复制 常见主从模型 常见的主从模型有以下几种： 一主一从 一主多从 互为主从 主从复制原理 简单来说，就是从库的 IO_Thread 将主库发来的 binlog 写到本地的 relay log，然</description>
     </item>
     <item>
       <title>InnoDB Buffer Pool</title>
-      <link>http://localhost:1313/posts/mysql/buffer-pool/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</link>
       <pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/buffer-pool/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</guid>
       <description>Buffer Pool 什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要</description>
     </item>
     <item>
       <title>MySQL 日志</title>
-      <link>http://localhost:1313/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
       <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
       <description>日志 MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我</description>
     </item>
     <item>
       <title>MySQL 有哪些锁？</title>
-      <link>http://localhost:1313/posts/mysql/%E9%94%81/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</link>
       <pubDate>Thu, 22 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E9%94%81/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</guid>
       <description>全局锁 全局锁就是 对整个数据库实例加锁，加锁后整个实例就处于 只读状态，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 阻塞 。 全局</description>
     </item>
     <item>
       <title>MySQL 事务机制</title>
-      <link>http://localhost:1313/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</link>
       <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</guid>
       <description>事务的四大基本特性 事务的四大基本特性指：A（Atomicity）、C（Consistency）、I（Isolation）、D（Durabil</description>
     </item>
     <item>
       <title>MySQL 索引</title>
-      <link>http://localhost:1313/posts/mysql/%E7%B4%A2%E5%BC%95/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</link>
       <pubDate>Tue, 20 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E7%B4%A2%E5%BC%95/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</guid>
       <description>索引有哪些？ B+ 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&amp;</description>
     </item>
     <item>
       <title>MySQL 基础</title>
-      <link>http://localhost:1313/posts/mysql/%E5%9F%BA%E7%A1%80/note/</link>
+      <link>https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/</link>
       <pubDate>Mon, 19 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/mysql/%E5%9F%BA%E7%A1%80/note/</guid>
+      <guid>https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/</guid>
       <description>执行一个 SQL 语句，发生了什么？ SQL 语句 在 MySQL 的大致执行流程 先来看看整体流程： 图片来自小林 coding Client 先与 Server 建立连接，确定 Client 的权限，后续请求的权限都基于此 执</description>
     </item>
     <item>
       <title>Linux Network IO</title>
-      <link>http://localhost:1313/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
       <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>为什么要有 DMA？ 传统的方式，要发送一个数据包，实现方式如下： 用户调用 read，读取待发送的数据 用户调用 write，写入待发送的数据 图片来自</description>
     </item>
     <item>
       <title>OS 进程管理</title>
-      <link>http://localhost:1313/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</link>
       <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</guid>
       <description>一个进程最多创建多少个线程？ 由于每个线程都有自己独立的栈空间，因此，创建的线程数量会受到栈空间大小的限制 我们使用 ulimit -s 查看栈的大小： [root@localhost test]# ulimit -s 8192</description>
     </item>
     <item>
       <title>Linux File System</title>
-      <link>http://localhost:1313/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</link>
       <pubDate>Wed, 07 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>本文讨论的都是 Ext 系列的文件系统 基本组成 Linux 的每个文件都有两个基本结构： 索引节点 inode 目录项 dentry inode 记录了一个文件的元数据，包括：文件类型、权限、所有者</description>
     </item>
     <item>
       <title>OS 内存管理</title>
-      <link>http://localhost:1313/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</link>
       <pubDate>Sun, 04 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</guid>
       <description>虚拟内存 为什么要有虚拟内存？ 如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间 对于单片机而言，采用的就是直接</description>
     </item>
     <item>
       <title>Linux Hardware</title>
-      <link>http://localhost:1313/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</link>
       <pubDate>Sat, 03 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</guid>
       <description>32 位 CPU 最大只能操作 4G 内存吗？ 两个基本概念： CPU 位宽 地址总线 位宽 地址总线： 如果地址总线只有 1 条，只能表示：0、1 两种地址 如果地址总线有 2 条，能表</description>
     </item>
     <item>
       <title>IP 协议基础</title>
-      <link>http://localhost:1313/posts/network/ip/%E5%9F%BA%E7%A1%80/</link>
+      <link>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</link>
       <pubDate>Wed, 31 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/ip/%E5%9F%BA%E7%A1%80/</guid>
+      <guid>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</guid>
       <description>IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C</description>
     </item>
     <item>
       <title>TCP 杂项知识点</title>
-      <link>http://localhost:1313/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</link>
+      <link>https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</link>
       <pubDate>Sun, 28 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &amp;ldquo;114514&amp;rdquo; 经过分片后，</description>
     </item>
     <item>
       <title>TCP 的优化</title>
-      <link>http://localhost:1313/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</link>
+      <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</link>
       <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</guid>
       <description>TCP 三次握手优化 客户端 客户端优化的手段主要是控制 SYN 报文的重传次数 比如，在公司内网，或者服务之间相互调用，不需要多次重传（网络环境比较好），就可</description>
     </item>
     <item>
       <title>TCP 的半连接队列和全连接队列</title>
-      <link>http://localhost:1313/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</link>
+      <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</link>
       <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</guid>
       <description>什么是半连接队列？什么是全连接队列？ 半连接队列是指：用于存储处于 SYN_RECV 状态的连接的队列 当内核收到一个 SYN 报文，就将该连接放到半连接队列，并发送 ACK 给</description>
     </item>
     <item>
       <title>TCP 三次握手/四次挥手</title>
-      <link>http://localhost:1313/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</link>
+      <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</link>
       <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</guid>
       <description>TCP 基本认识 什么是 TCP ？ TCP 是一种 面向连接、可靠、基于字节流的协议 什么是 TCP 连接？ Socket + Seq + WindowSize Socket：IP + Port Seq：序列号 WindowSize</description>
     </item>
     <item>
       <title>TCP 重传机制、滑动窗口、流量控制、拥塞控制</title>
-      <link>http://localhost:1313/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</link>
+      <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</link>
       <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</guid>
       <description>重传机制 超时重传 发送完一个 TCP 报文后，发送方会启动重传计时器 若在超时时间内，都没有收到 ack，就会触发超时重传，以保证可靠传输 重传时间 RTO 的确定</description>
     </item>
     <item>
       <title>HTTP 协议基础</title>
-      <link>http://localhost:1313/posts/network/http/note/</link>
+      <link>https://blogs.skylee.top/posts/network/http/note/</link>
       <pubDate>Thu, 25 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/http/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/http/note/</guid>
       <description>HTTP 是啥 HTTP 是一种在 两个设备 间，用于传输文字、图片、音频等 超文本内容 的协议 常见状态码 200 304 403 404 500 502 常见字段 Host Content-Length Content-Type Content-Encoding GET 与 POST 都是安全和幂等的吗？ 一般来</description>
     </item>
     <item>
       <title>网络基础</title>
-      <link>http://localhost:1313/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</link>
+      <link>https://blogs.skylee.top/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</link>
       <pubDate>Wed, 24 Jan 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</guid>
+      <guid>https://blogs.skylee.top/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</guid>
       <description>以 “键入 URL 到网页显示，发生了什么？” 来跑一遍整个 TCP/IP 体系 Linux 接收数据的过程 发送数据的过程类似，但是要注意发送数据的拷贝次数 发送网络数据的时候，涉</description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.es/</link>
+      <link>https://blogs.skylee.top/search/_index.es/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.es/</guid>
+      <guid>https://blogs.skylee.top/search/_index.es/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.fr/</link>
+      <link>https://blogs.skylee.top/search/_index.fr/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.fr/</guid>
+      <guid>https://blogs.skylee.top/search/_index.fr/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.hi/</link>
+      <link>https://blogs.skylee.top/search/_index.hi/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.hi/</guid>
+      <guid>https://blogs.skylee.top/search/_index.hi/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.jp/</link>
+      <link>https://blogs.skylee.top/search/_index.jp/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.jp/</guid>
+      <guid>https://blogs.skylee.top/search/_index.jp/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.pl/</link>
+      <link>https://blogs.skylee.top/search/_index.pl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.pl/</guid>
+      <guid>https://blogs.skylee.top/search/_index.pl/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.ru/</link>
+      <link>https://blogs.skylee.top/search/_index.ru/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.ru/</guid>
+      <guid>https://blogs.skylee.top/search/_index.ru/</guid>
       <description></description>
     </item>
     <item>
       <title></title>
-      <link>http://localhost:1313/search/_index.zh-cn/</link>
+      <link>https://blogs.skylee.top/search/_index.zh-cn/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/search/_index.zh-cn/</guid>
+      <guid>https://blogs.skylee.top/search/_index.zh-cn/</guid>
       <description></description>
     </item>
   </channel>

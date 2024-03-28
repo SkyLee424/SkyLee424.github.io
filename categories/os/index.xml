@@ -2,46 +2,46 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>OS on Sky_Lee 的个人博客</title>
-    <link>http://localhost:1313/categories/os/</link>
+    <link>https://blogs.skylee.top/categories/os/</link>
     <description>Recent content in OS on Sky_Lee 的个人博客</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 08 Feb 2024 00:00:00 +0000</lastBuildDate>
-    <atom:link href="http://localhost:1313/categories/os/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://blogs.skylee.top/categories/os/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux Network IO</title>
-      <link>http://localhost:1313/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
       <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>为什么要有 DMA？ 传统的方式，要发送一个数据包，实现方式如下： 用户调用 read，读取待发送的数据 用户调用 write，写入待发送的数据 图片来自</description>
     </item>
     <item>
       <title>OS 进程管理</title>
-      <link>http://localhost:1313/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</link>
       <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</guid>
       <description>一个进程最多创建多少个线程？ 由于每个线程都有自己独立的栈空间，因此，创建的线程数量会受到栈空间大小的限制 我们使用 ulimit -s 查看栈的大小： [root@localhost test]# ulimit -s 8192</description>
     </item>
     <item>
       <title>Linux File System</title>
-      <link>http://localhost:1313/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</link>
       <pubDate>Wed, 07 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>本文讨论的都是 Ext 系列的文件系统 基本组成 Linux 的每个文件都有两个基本结构： 索引节点 inode 目录项 dentry inode 记录了一个文件的元数据，包括：文件类型、权限、所有者</description>
     </item>
     <item>
       <title>OS 内存管理</title>
-      <link>http://localhost:1313/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</link>
       <pubDate>Sun, 04 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/note/</guid>
       <description>虚拟内存 为什么要有虚拟内存？ 如果每个进程都直接操作物理内存，存在安全问题：一个进程可以操作另一个进程的内存空间 对于单片机而言，采用的就是直接</description>
     </item>
     <item>
       <title>Linux Hardware</title>
-      <link>http://localhost:1313/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</link>
+      <link>https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</link>
       <pubDate>Sat, 03 Feb 2024 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</guid>
+      <guid>https://blogs.skylee.top/posts/os/%E7%A1%AC%E4%BB%B6%E7%BB%93%E6%9E%84/note/</guid>
       <description>32 位 CPU 最大只能操作 4G 内存吗？ 两个基本概念： CPU 位宽 地址总线 位宽 地址总线： 如果地址总线只有 1 条，只能表示：0、1 两种地址 如果地址总线有 2 条，能表</description>
     </item>
   </channel>
