@@ -924,6 +924,8 @@ pages_high = pages_min*3/2
 <p>如果读一次，还不足以提升到 active，不就解决了吗？</p>
 <p>Linux 会在内存页被访问第二次的时候，才将页从 inactive list 升级到 active list 里</p>
 <p>这样，在批量读取数据时候，如果这些大量数据只会被访问一次，那么它们就不会进入到活跃 LRU 链表，也就不会导致热点数据的淘汰</p>
+<p>当然，InnoDB 自己也有应对预读失效和缓存污染的策略，可以看看这篇文章：<a href="https://blogs.skylee.top/posts/mysql/buffer-pool/note/#lru-%e9%93%be%e8%a1%a8" target="_blank" rel="noopener">InnoDB Buffer Pool</a>
+</p>
 <hr>
 <h1 id="linux-虚拟内存管理">Linux 虚拟内存管理</h1>
 <h2 id="进程虚拟内存空间管理">进程虚拟内存空间管理</h2>

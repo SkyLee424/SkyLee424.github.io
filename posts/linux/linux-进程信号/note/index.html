@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Linux 进程信号 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="查看信号列表的方式 可以使用 kill -l指令查看信号列表： 信号的产生 通过终端按键产生信号 常见的按键组合和相应的信号： Ctrl&#43;C (SIGINT): 发送SIGINT信号 Ctrl&#43;(SIGQUIT): 发送S"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Linux 进程信号" />
+<meta property="og:description" content="Linux 进程信号简述" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E4%BF%A1%E5%8F%B7/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-06-18T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-06-18T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Linux 进程信号"/>
+<meta name="twitter:description" content="Linux 进程信号简述"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E4%BF%A1%E5%8F%B7/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E4%BF%A1%E5%8F%B7/note/">Linux 进程信号</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Linux 进程信号简述
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/linux/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Linux
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/linux/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Linux</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/os/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">OS</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2023-06-18T00:00:00&#43;00:00">
+      2023-06-18
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      9 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#查看信号列表的方式">查看信号列表的方式</a></li>
+    <li><a href="#信号的产生">信号的产生</a>
+      <ul>
+        <li><a href="#通过终端按键产生信号">通过终端按键产生信号</a></li>
+        <li><a href="#由软件条件产生的信号">由软件条件产生的信号</a></li>
+        <li><a href="#由硬件异常产生信号">由硬件异常产生信号</a></li>
+      </ul>
+    </li>
+    <li><a href="#信号集">信号集</a>
+      <ul>
+        <li><a href="#信号的状态">信号的状态</a></li>
+        <li><a href="#信号在内核的表示">信号在内核的表示</a></li>
+        <li><a href="#sigset_t-类型">sigset_t 类型</a></li>
+        <li><a href="#信号集操作函数">信号集操作函数</a></li>
+        <li><a href="#实例-1">实例</a></li>
+      </ul>
+    </li>
+    <li><a href="#捕捉信号再探">捕捉信号再探</a>
+      <ul>
+        <li><a href="#内核捕捉信号的过程">内核捕捉信号的过程</a></li>
+        <li><a href="#引入信号集">引入信号集</a></li>
+      </ul>
+    </li>
+    <li><a href="#volatile-关键字">Volatile 关键字</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="查看信号列表的方式">查看信号列表的方式</h2>
+<p>可以使用 <code>kill -l</code>指令查看信号列表：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-25-14-20-54.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="信号的产生">信号的产生</h2>
+<h3 id="通过终端按键产生信号">通过终端按键产生信号</h3>
+<p>常见的按键组合和相应的信号：</p>
+<ul>
+<li>Ctrl+C (SIGINT): 发送SIGINT信号</li>
+<li>Ctrl+(SIGQUIT): 发送SIGQUIT信号，通常用于终止程序，并 <strong>生成core dump文件。</strong></li>
+<li>Ctrl+Z (SIGTSTP): 发送SIGTSTP信号，用于挂起程序的执行，将其放入后台运行。</li>
+<li>Ctrl+D (EOF): 发送EOF（End of File）信号，表示输入流已经结束。</li>
+</ul>
+<h4 id="coredump">CoreDump</h4>
+<p>Core Dump（核心转储）是指在程序发生严重错误时，操作系统将程序的内存状态保存到一个特殊的文件中，以便进行后续的调试和分析。核心转储文件通常称为core文件。</p>
+<p>当程序发生严重错误，比如段错误（Segmentation Fault）或其他致命错误时，操作系统会捕获这些错误，并生成一个core文件。该文件包含了导致程序崩溃的内存状态，包括程序代码、堆栈信息、寄存器状态以及其他相关的调试信息。</p>
+<p>由于 coredump 中可能会包含敏感信息，不安全，并且生成 coredump 文件还会占据很大的磁盘空间，因此，生成 coredump 文件默认是禁用的</p>
+<p>在开发时，可以通过设置ulimit来启用。通常情况下，core文件会被保存在当前工作目录下，并以core或者core.&lt;进程ID&gt;的文件名格式命名。</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-20-08-09.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以看到，此时的 <code>core file size = 0</code>，可以使用 <code>ulimit -c</code> 指令来设置文件的大小：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-20-11-19.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h5 id="实例">实例</h5>
+<p>编写一个访问空指针的程序：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>运行后，查看 coredump 文件：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-20-36-51.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="由软件条件产生的信号">由软件条件产生的信号</h3>
+<p>在 <a href="https://blog.csdn.net/Sky_Lee_1/article/details/131374654" target="_blank" rel="noopener">Linux 进程通信</a>
+中，介绍过 SIGPIPE 信号，它是一种软件条件产生的信号</p>
+<p>接下来主要介绍 SIGALRM 信号</p>
+<h4 id="alarm-系统调用">alarm 系统调用</h4>
+<p><code>alarm</code> 函数是一个用于设置定时器的系统调用。它允许我们在指定的时间间隔后接收一个<code>SIGALRM</code>信号，从而可以在程序中实现定时操作。</p>
+<p>使用<code>alarm</code>函数需要包含头文件<code>&lt;unistd.h&gt;</code>。函数原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">unsigned</span> <span class="kt">int</span> <span class="nf">alarm</span><span class="p">(</span><span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">seconds</span><span class="p">);</span>
+</span></span></code></pre></div><ul>
+<li>
+<p><code>seconds</code>参数指定定时器的时间间隔，单位为秒。当定时器到期时，将发送一个<code>SIGALRM</code>信号给调用进程。</p>
+</li>
+<li>
+<p><code>alarm</code>函数的返回值为之前设置的定时器剩余的时间。</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">sigHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Received SIG signal</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">signal</span><span class="p">(</span><span class="n">SIGALRM</span><span class="p">,</span> <span class="n">sigHandler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="n">s0</span> <span class="o">=</span> <span class="nf">alarm</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span> <span class="c1">// 0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="n">s1</span> <span class="o">=</span> <span class="nf">alarm</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>  <span class="c1">// s1 = 10，重设闹钟
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">unsigned</span> <span class="n">s2</span> <span class="o">=</span> <span class="nf">alarm</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// 3 - 1 = 2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">s2</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    
+</span></span><span class="line"><span class="cl">    <span class="kt">time_t</span> <span class="n">startTime</span> <span class="o">=</span> <span class="nf">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span> <span class="c1">// 在睡了 1s 后，内核发出 SIGALRM 信号给进程，进程被唤醒
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">time_t</span> <span class="n">endTime</span> <span class="o">=</span> <span class="nf">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Sleeped for %lf seconds.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">difftime</span><span class="p">(</span><span class="n">endTime</span><span class="p">,</span> <span class="n">startTime</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-20-45-33.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="信号捕捉">信号捕捉</h4>
+<p>在刚才的例子中，有一个 <code>void sigHandler(int signum)</code> 函数，它是一个用于捕捉信号的函数</p>
+<p>但是，光有这个函数是不能捕捉到信号的，还需要「注册」</p>
+<p>怎么注册捏？</p>
+<h4 id="signal-系统调用">signal 系统调用</h4>
+<p><code>signal</code>函数是一个用于处理信号的系统调用。它允许我们为特定的信号指定信号处理函数，以定义在接收到信号时需要执行的操作。</p>
+<p>使用<code>signal</code>函数需要包含头文件<code>&lt;signal.h&gt;</code>。函数原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="nf">signal</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">handler</span><span class="p">)(</span><span class="kt">int</span><span class="p">)))(</span><span class="kt">int</span><span class="p">);</span>
+</span></span></code></pre></div><ul>
+<li>
+<p><code>signum</code>参数指定要处理的信号的编号，可以是预定义的信号宏（如<code>SIGINT</code>、<code>SIGALRM</code>等）或自定义的信号。</p>
+</li>
+<li>
+<p><code>handler</code>参数是一个函数指针，指向用户定义的信号处理函数。信号处理函数的原型为<code>void handler(int signum)</code>，其中<code>signum</code>是接收到的信号编号。</p>
+</li>
+<li>
+<p><code>signal</code>函数返回一个函数指针，指向之前注册的信号处理函数。如果之前没有注册过该信号的处理函数，则返回<code>SIG_DFL</code>（默认的信号处理行为）。</p>
+</li>
+</ul>
+<p>使用<code>signal</code>函数的一般流程如下：</p>
+<ol>
+<li>
+<p>调用<code>signal</code>函数，并传递要处理的信号编号和相应的信号处理函数，这一步就是前面提到的「注册」</p>
+</li>
+<li>
+<p>当程序接收到指定的信号时，操作系统会调用相应的信号处理函数。</p>
+</li>
+<li>
+<p>信号处理函数执行特定的操作，可以是自定义的任何有效函数。</p>
+</li>
+<li>
+<p>信号处理函数执行完毕后，程序 <strong>将继续执行原来的流程。</strong></p>
+</li>
+</ol>
+<!-- 在使用`signal`函数时，需要注意信号处理函数的可重入性和异步安全性。为了避免潜在的问题，推荐使用`sigaction`函数进行信号处理，它提供了更灵活和可靠的信号处理方式。 -->
+<h3 id="由硬件异常产生信号">由硬件异常产生信号</h3>
+<p>下面是一个空指针异常（也就是硬件异常）产生 SIGSEGV 信号的例子：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">sigHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Received SIG signal</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;[%d]</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">getpid</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">signal</span><span class="p">(</span><span class="n">SIGSEGV</span><span class="p">,</span> <span class="n">sigHandler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span> <span class="c1">// 会一直输出 &#34;Received SIG signal&#34;，因为 SIGSEGV 是一种严重错误
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 操作系统会反复发送SIGSEGV信号，以确保程序得到处理。
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-20-55-00.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="信号集">信号集</h2>
+<h3 id="信号的状态">信号的状态</h3>
+<p>一般来说，信号有两种状态：</p>
+<ul>
+<li>未决态（Pending），即信号从产生到递达之间的状态</li>
+<li>递达态（Delivery）</li>
+</ul>
+<p>其中：</p>
+<ul>
+<li>进程可以阻塞（Block）一个信号</li>
+<li>一个信号若被阻塞，则其在产生时就处于未决状态</li>
+<li><strong>阻塞与忽略不同</strong>，只要信号被阻塞，就不会递达，而忽略是信号 <strong>递达以后</strong> ，进程可以选择的操作</li>
+</ul>
+<h3 id="信号在内核的表示">信号在内核的表示</h3>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-19-09-46-34.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
+<p>在这张图中：</p>
+<ul>
+<li>每个信号均有一个 block 位，pending 位，还有一个 hander 位，这个 hander 是一个指向处理当前信号的函数指针</li>
+<li>一个信号产生时，OS 会将 pending 位「置位」，直到该信号递达时，将 pending 位「复位」</li>
+<li>对于图中的 SIGHUP，它没有阻塞，也没有产生过，处理函数为默认函数 SIG_DFL</li>
+<li>对于图中的 SIGINT，它被阻塞，且产生过，因此处于未决态，处理函数为 SIG_IGN，即忽略该信号</li>
+<li>对于图中的 SIGQUIT，它被阻塞，但没有产生过，一旦产生，将处于未决态，直到进程主动取消对它的阻塞，处理函数为用户自定义的函数，即 sighandler</li>
+</ul>
+<h3 id="sigset_t-类型">sigset_t 类型</h3>
+<p>从上面的分析，我们发现：无论是 <code>未决</code> 还是 <code>阻塞</code>，对于一个信号，只需要一个 bit 位就能反应该信号是否处于 未决（或阻塞）态，因此，一个进程的 <code>阻塞信号集</code> 和 <code>未决信号集</code> 都可以用 <code>sigset_t</code> 这种数据类型（其实就是无符号整型）来存储</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/IMG_2789.jpg"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p><strong>注意：</strong> 不要试图直接打印一个 sigset_t 类型的数据，这通常是没有任何意义的</p>
+<h3 id="信号集操作函数">信号集操作函数</h3>
+<p>常见的信号集操作函数如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;signal.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="kt">int</span> <span class="nf">sigemptyset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sigfillset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sigaddset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signo</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sigdelset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signo</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sigismember</span><span class="p">(</span><span class="k">const</span> <span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">int</span> <span class="n">signo</span><span class="p">);</span>
+</span></span></code></pre></div><ul>
+<li>sigemptyset 函数用于将信号集 set 复位，表示不含任何信号</li>
+<li>sigfillset 函数用于将信号集 set 置位，表示包含所有系统支持的信号</li>
+<li>sigaddset 函数用于添加一个信号到 set 中，signo 是要添加的信号的编号</li>
+<li>sigdelset 函数用于在 set 中删除一个信号，signo 是要删除的信号的编号</li>
+<li>sigismember 函数用于判断一个信号是否在信号集 set 中，signo 是要查询的信号的编号</li>
+</ul>
+<h4 id="sigprocmask">sigprocmask</h4>
+<p><code>sigprocmask</code> 函数用于设置或修改进程的屏蔽信号集。</p>
+<p>函数原型：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">sigprocmask</span><span class="p">(</span><span class="kt">int</span> <span class="n">how</span><span class="p">,</span> <span class="k">const</span> <span class="kt">sigset_t</span> <span class="o">*</span><span class="n">set</span><span class="p">,</span> <span class="kt">sigset_t</span> <span class="o">*</span><span class="n">oldset</span><span class="p">);</span>
+</span></span></code></pre></div><p>参数说明：</p>
+<ul>
+<li><code>how</code>：用于指定信号屏蔽字的设置方式，可取三个值：
+<ul>
+<li><code>SIG_BLOCK</code>：将 <code>set</code> 中的信号添加到当前信号屏蔽字中，相当于 <code>|=</code> 操作。</li>
+<li><code>SIG_UNBLOCK</code>：从当前信号屏蔽字中移除 <code>set</code> 中的信号，相当于 <code>mask = mask &amp; ~set</code>。</li>
+<li><code>SIG_SETMASK</code>：将当前信号屏蔽字替换为 <code>set</code>，相当于 <code>mask = set</code>。</li>
+</ul>
+</li>
+<li><code>set</code>：指向一个 <code>sigset_t</code> 类型的数据结构，用于设置新的信号屏蔽字。</li>
+<li><code>oldset</code>：可选参数，用于获取调用该函数前的旧信号屏蔽字。</li>
+</ul>
+<p>函数返回值：</p>
+<ul>
+<li>成功：返回 0。</li>
+<li>失败：返回 -1，并设置相应的错误码。</li>
+</ul>
+<p>使用 <code>sigprocmask</code> 函数可以实现以下操作：</p>
+<ul>
+<li>阻塞或解除阻塞特定信号：通过设置信号屏蔽字，可以选择阻塞或解除阻塞某些信号的传递。</li>
+<li>保护临界区：在进入临界区前，通过设置信号屏蔽字来阻塞某些信号，以避免在关键时刻被中断。</li>
+<li>防止竞态条件：通过阻塞某些信号来避免并发执行引起的竞态条件。</li>
+</ul>
+<p><strong>注意：</strong> <code>sigprocmask</code> 函数只会影响当前进程的信号屏蔽字，对其他进程无影响。</p>
+<h4 id="sigpending">sigpending</h4>
+<p><code>sigpending</code> 函数用于读取进程的未决信号集</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;signal.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span><span class="kt">int</span> <span class="nf">sigpending</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="o">*</span><span class="p">)</span>
+</span></span></code></pre></div><h3 id="实例-1">实例</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">printSigset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="n">sigSet</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buff</span><span class="p">[</span><span class="mi">33</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 1 ~ 31
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// for (int curSig = SIGHUP; curSig &lt;= SIGUSR2; ++curSig) // 不同的机器，SIGUSER2 的编号不同，在 macOS 上，该信号的编号为 31
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">curSig</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">curSig</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">;</span> <span class="o">++</span><span class="n">curSig</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// if ((sig &gt;&gt; curSig) &amp; 1)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="nf">sigismember</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sigSet</span><span class="p">,</span> <span class="n">curSig</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="n">buff</span><span class="p">[</span><span class="n">curSig</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;1&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span> <span class="n">buff</span><span class="p">[</span><span class="n">curSig</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buff</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">buff</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">sigset_t</span> <span class="n">blockSigSet</span><span class="p">,</span> <span class="n">oldSigSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">blockSigSet</span><span class="p">);</span> <span class="c1">// 初始化信号，置 0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigaddset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">blockSigSet</span><span class="p">,</span> <span class="n">SIGINT</span><span class="p">);</span> <span class="c1">// 将 SIGINT（中断信号）加入至阻塞信号集
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// 将当前进程的阻塞信号集设置为 blockSigSet ，并将进程原来的阻塞信号集存放在 oldSigSet 中
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">sigprocmask</span><span class="p">(</span><span class="n">SIG_BLOCK</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">blockSigSet</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">oldSigSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Original block signal set: &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printSigset</span><span class="p">(</span><span class="n">oldSigSet</span><span class="p">);</span> <span class="c1">// 0000 ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Current block signal set: &#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printSigset</span><span class="p">(</span><span class="n">blockSigSet</span><span class="p">);</span> <span class="c1">// 0010 ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="kt">sigset_t</span> <span class="n">pendingSigSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">sigpending</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pendingSigSet</span><span class="p">);</span> <span class="c1">// 获取未决信号集
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="nf">printSigset</span><span class="p">(</span><span class="n">pendingSigSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-19-11-12-51.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="捕捉信号再探">捕捉信号再探</h2>
+<h3 id="内核捕捉信号的过程">内核捕捉信号的过程</h3>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-19-10-54-50.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+
+引用自 <a href="https://developer.aliyun.com/article/1154727" target="_blank" rel="noopener">博主Mindtechnist</a>
+</p>
+</blockquote>
+<p>例如，用户程序注册了 SIGQUIT 信号的处理函数 sigaction_user。</p>
+<p>当前正在执行 main函数,这时发生中断或异常 <strong>切换到内核态</strong> 。</p>
+<p>在 <strong>中断处理完毕</strong> 后要返回用户态的main函数之前 <strong>检查到有信号 SIGQUIT递达</strong> 。</p>
+<p>内核决定 <strong>返回用户态</strong> 后不是恢复main函数的上下文继续执行,而是 <strong>执行 sigaction_user 函数</strong> 。</p>
+<p>sigaction_user 和 main 函数使用不同的堆栈空间，它们之间不存在调用和被调用的关系，是两个独立的控制流程。</p>
+<p>sigaction_user 函数返回后自动 <strong>执行特殊的系统调用 sigreturn 再次进入内核态</strong> 。</p>
+<p>如果没有新的信号要递达,这次再 <strong>返回用户态就是恢复 main函数的上下文继续执行</strong> 了。</p>
+<p>可以发现，如果使用默认的信号处理函数，状态切换两次</p>
+<p>如果使用自定义的信号处理函数，状态切换四次</p>
+<h3 id="引入信号集">引入信号集</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">printSigset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="n">sigSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">sigHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;---In function sigHander---</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span><span class="p">(</span><span class="n">signum</span> <span class="o">==</span> <span class="n">SIGINT</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Received SIGINT signal</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">else</span> <span class="k">if</span><span class="p">(</span><span class="n">signum</span> <span class="o">==</span> <span class="n">SIGSEGV</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Received SIGSEGV signal</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">sigset_t</span> <span class="n">curBlockSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">sigset_t</span> <span class="n">curPendingSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">curBlockSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">curPendingSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">sigprocmask</span><span class="p">(</span><span class="n">SIG_BLOCK</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">curBlockSet</span><span class="p">);</span> <span class="c1">// 由于不修改阻塞信号集，因此获取的是当前阻塞信号集
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">sigpending</span><span class="p">(</span><span class="o">&amp;</span><span class="n">curPendingSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Cur Block Signal Set:</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printSigset</span><span class="p">(</span><span class="n">curBlockSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Cur Pending Signal Set:</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printSigset</span><span class="p">(</span><span class="n">curPendingSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// exit(0);
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">printSigset</span><span class="p">(</span><span class="kt">sigset_t</span> <span class="n">sigSet</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">char</span> <span class="n">buff</span><span class="p">[</span><span class="mi">33</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 1～31
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// for (int curSig = SIGHUP; curSig &lt;= SIGUSR2; ++curSig) // 不同的机器，SIGUSER2 的编号不同，在 macOS 上，该信号的编号为 31
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">curSig</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="n">curSig</span> <span class="o">&lt;=</span> <span class="mi">31</span><span class="p">;</span> <span class="o">++</span><span class="n">curSig</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// if ((sig &gt;&gt; curSig) &amp; 1)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="nf">sigismember</span><span class="p">(</span><span class="o">&amp;</span><span class="n">sigSet</span><span class="p">,</span> <span class="n">curSig</span><span class="p">))</span>
+</span></span><span class="line"><span class="cl">            <span class="n">buff</span><span class="p">[</span><span class="n">curSig</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;1&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">else</span> <span class="n">buff</span><span class="p">[</span><span class="n">curSig</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buff</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">buff</span><span class="p">[</span><span class="mi">32</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%s</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">buff</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;---In function main---</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">signal</span><span class="p">(</span><span class="n">SIGSEGV</span><span class="p">,</span> <span class="n">sigHandler</span><span class="p">);</span> <span class="c1">// 注册 SIGSEGV 信号
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nf">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">sigHandler</span><span class="p">);</span>  <span class="c1">// 注册 SIGINT 信号
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="kt">sigset_t</span> <span class="n">curBlockSet</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigemptyset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">curBlockSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sigprocmask</span><span class="p">(</span><span class="n">SIG_BLOCK</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">curBlockSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Cur Block Signal Set:</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printSigset</span><span class="p">(</span><span class="n">curBlockSet</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-13-55-20.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>为什么发出 SIGINT 信号后，在 sigHandler 函数中，阻塞信号集包含 SIGINT 信号，即使我们之前并没有将其添加到阻塞信号集中？</p>
+<p>原因是，当信号处理函数执行时，内核会自动将相应的信号添加到阻塞信号集中，以防止同一信号的重复递送。这样做是 <strong>为了保护信号处理函数不会被同一信号中断</strong> 。因此，当 SIGINT 信号处理函数 sigHandler 执行时，阻塞信号集中可能包含 SIGINT 信号</p>
+<p>现在请你结合之前讲的内容，分析一下，在 sigHandler 函数中，为什么 SIGSEGV 一直出现在阻塞信号集中？</p>
+<p>此外，为什么未决信号集中，始终不包含 SIGINT 和 SIGSEGV 信号？</p>
+<p>你想想，为什么会从 main 函数切换到 sigHandler 函数？肯定是因为程序收到了 SIGINT 或者 SIGSEGV 信号啊，而未决信号集是指：从信号产生到信号递达到过程</p>
+<p>在打印未决信号集的时候，信号已经递达了，内核会自动将该信号从未决信号集中移除。这样做是为了确保每个信号只被处理一次，防止信号的重复触发。</p>
+<p>所以，打印的未决信号集不包含这两个信号</p>
+<h2 id="volatile-关键字">Volatile 关键字</h2>
+<p><code>volatile</code> 是一个关键字，用于 <strong>告诉编译器不要对被修饰的变量进行优化</strong>。它通常 <strong>用于修饰那些可能被程序之外的因素修改的变量</strong>，以确保每次访问该变量都从内存中读取最新的值，而不是使用缓存的值。</p>
+<p>来看一个与信号相关的例子：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="n">flag</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">void</span> <span class="nf">sigHandler</span><span class="p">(</span><span class="kt">int</span> <span class="n">signum</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Changing flag from 0 to 1</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">flag</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">time_t</span> <span class="n">startTime</span> <span class="o">=</span> <span class="nf">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">signal</span><span class="p">(</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">sigHandler</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">flag</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">time_t</span> <span class="n">endTime</span> <span class="o">=</span> <span class="nf">time</span><span class="p">(</span><span class="nb">NULL</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;Process quit normaly with running time %lf s.</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="nf">difftime</span><span class="p">(</span><span class="n">endTime</span><span class="p">,</span> <span class="n">startTime</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>可以看出，只要我们不向该进程发出 <code>SIGINT</code> 信号，它就会一直执行，直到我们发出 <code>SIGINT</code> 信号，被 <code>sigHander</code> 捕获</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-18-19-46-37.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>如果我们在编译时，加上 <code>-O2</code> 选项（优化）呢？</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-19-11-22-18.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现，无论怎么发出 <code>SIGINT</code> 信号，进程都不会退出！</p>
+<p>为啥？</p>
+<p>编译器在进行优化时，会尽力利用各种优化策略来提高程序的执行效率。其中一项优化策略是基于所谓的局部性原理，即认为在某个时间段内访问的数据很可能在不久的将来再次被访问。</p>
+<p>在循环中使用的变量，如果编译器能够确定它们在循环体内部不会被修改，就可以将其缓存到寄存器或者CPU的高速缓存中，以减少对内存的读取操作。这样可以提高程序的执行效率，因为访问寄存器或高速缓存比访问内存要快得多。</p>
+<p>在这里，编译器判断 <code>flag</code> 并不会在循环中改变，因此，会把 <code>flag</code> 放在寄存器中缓存，以换取更快的执行速度</p>
+<p>这种优化行为导致了信号处理函数中对全局变量的修改无法被循环条件及时检测到，因为 <strong>循环条件使用了被缓存的旧值</strong> ，而 <strong>不是从内存中读取最新的值</strong> 。</p>
+<p>即使信号处理函数修改了全局变量的值，由于是在内存修改，寄存器的 <code>flag</code> 仍然是一开始缓存的 0，因此，循环仍然会继续执行。</p>
+<p>通过使用 <code>volatile</code> 关键字修饰变量，可以告诉编译器不要对这个变量进行优化，每次访问都从内存中读取最新的值。这样可以确保循环条件能够及时检测到变量的变化，从而正确退出循环。</p>
+<p>加上  <code>volatile</code> 关键字，即 <code>volatile int flag = 0;</code>：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-19-11-26-31.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAAJoklEQVR4nO2deWwU1x3HX8Cec7237d219731gS8MJlzGnAEKJSm0kAgwVyGFoKSHqKI24QjhVJukSlQgjYRSJXhnFlSnsDu7JtBI1GrVkihAW7WhpYmQELJn7BwQpWmDz6nGYBVZUHbmzTLH7lf6/bvze5/vO2feewuATfXdR9xo2Qzn76vCdI+DJeWgjxqYNc5xZcMC13Kjc7O9Fjc5lgZ8ZB9JEvLIYGhCXjbdccToHG2ruQ3OFe4CcvBO8IeDpgi5eY7rh0bnajvNTgP+cFSH6X8Zna+tNGecY7m7gBxIB/5wLG301hqdty00azz9mFr4SjTPda4wOndbwHdpgK/E6rn+SUbnb2nNqKeXaYUfCVA3jM7f0po9nl7icWqDr8TDUx0HjC6DZTW9jv6mlj5/OOrL6IsAgFFGl8OSahrLLMap+RUlzBUAgMPoclhSTfXMN3DgV5YwV3PwDYJfVcp0AgAK9K0SWaIHK5hFbifZrx0+Lebga1RDJbMQE76Ug28Q/Jow3e3xAJfW52e1GjDhjymlPw0VAJ/R5chO+CX0Zzn4BsGvCtPXx5eDIn2rRJaoARM+ClDyhYOlhyUOPSS3gzyjy2M5+B4M+AEfJbe/UCJLPLoZHPpE4tHezljQb3TZTK9xZezXcOAXeSn5nf2h/8G/LUQefakY8eGBStLocppStZCdjwO/0HN3+CPiohQrm2p0eU2lqhJyHi7836QH/1a3BHtEDq41utymUB3Eh396nwr4w10ShwalGHwWZLPKg9QMr4vqu9/wRxixA2Sj9IB/am8QC/5tsQ1kk0wGXx6KbOmOYIiajg1/n87wh8eEKPw+sLNQiGryuqherfD97tvhw69EHokihy5LHLqmlwkij54EdlS4kJrpcd55oyyZJvzjOwKXxBjcLLagWlkGD9z++1K0mO2KhheIPDp4a9Gl2YQuDm4CdhIqoqf5MGp+RYgeeGVT4Q/SfZ7y2kHk4DHNJvBoQOLRBmAHBT3UDI+T1Ax/LGJ6Xtnsm6zl2RIPnxnq27W1hH7LL9aKvXQjTp8/rozpObTZPxEnh6Eu62aN1mRCZwyuARaG34MBv/e1p/TZsynxcCOOCVIMNQMrqdhLT8Wq+eVM7y+/p63buZtEHq4bgqlpTIC9yrcFYB34pPaaX870Ht5S3JiJ3CQ+slLkUJ/GlnBZPjwpH5hZASc9BQd+QwXT98bThdMzmaPIo0eVt6EaZ0hzgX3hs30tTxfOvB+5SjxcLHHwhupWEENPATPK58ybjAN/QiXbxz1bfF/72M5Y5OsSh/6j0oQNpoTvcWqHP7ma7f/1tmJDmrYUhfPUrJo7uEg1MJOCPqLG7ya/wqj5/W9tDS40sgydXHiWyMMv7mkAB08DM4ll2eIiD/mlVvgTx7ADx3cEFgETqCuGmkQOfv5/Xk2IHccqwsBEGlUD6Q8xav5Ack/xEmAiiRysk3h07g41/22zwQdTqtlf4MA/uatoKTChZBk8IMbgJJGLrO/i0eruY+EKYDZVI1dE64nEhgp2sG1PIHdJBo4mjWHPaVxkDZ7eW7Qa6+HZrupQQbVyy4ha+HWIkdt2BTcbnb/lNa2WPa0Wfn0ZM9i2O7jR6NztIMLvVvd6WdmlnNodMufy3WqqK6OXq4HvdJDyq0/6Dxqdt200qYpOqTHgOwvd/xz54TwnDJUHqS41e3f4HxXOADqptbV1dCqReCIpxN9LConPkon4NZOHlBTiJ1InTui2CzufZdKf+z82y9Wh14Pb29vzkkJcSAkJ2YLRLwhx/DeoJElWqul+dq72vaELfQBASojvMQFIzZEUEr2CIIzHgkBRebPVGJDYWbRMD/jt7e1USoh/YTREbBMScQ4LBEEQS9KFryzULr9eguf4LaXi8VlGw9Mn4sr9FNpFEMSj6RrgdZFyd7S0EuggQRC+ZTw8XVoA3q1cBEE8rKYLentPaL4eBiSTySn2MCBxGQsETec1qjHg5U2+H+s1/Uwm4pINWsAhLBAMwwTUGPD4Ave7QCelEoknjAaIGdfj8Tj+Bx23ig/vE8ewPXpuYkoJ8ZesCj8Vj+uz26M6TP9DTSt4Zrn3JaCjkskTM1OJxJupROJsUkicN3fEf5sS4vvb2toCugGYUMm8qsaA8eVMz7s/LyrWLYFsl89B1KgxQIk185xXTL+f0koqL6E/VmvC82u853I3luikplrmObUGKCvj3Wv97+dM0EdUyE/dUGsCyxDyvm/7/iC3gtE65ZG9emgCu0+tAcMm7F/vP5szAV+j6hDTrcUEpTvaucr7O3lX7r5mLM2sLWh0OtL7i5A7tYS96/xnzGhCF186TuTQAZFHZ5TNuMoFT6bbljishRMdu7QYMNwSnlvlPWOmb8aScqT1Tgf5lDMEUfQ4MKMmVNBtWk1wMKS8d53vlBlMEHn403ucDxvsjCJT7mcdVYvoP+KYsGet76RRJijPlXj4cloHNDh41ayLytF1EeYsTne0baX3pCE7oXl0yC6H9LBMcDCkvGuNP3G/klUmABKHDtvmkN4t5ddA6jyOCc+v8R3PdJLKOkTk4Jsaj6ma75DeCOVXh+kLWCas9rVmKjnldYjIwZgW+MpA3NFSVgUsoPwaSP8Jx4Qdzd5jeielDKASj97SWPOVQTjjrVNP5ddC+s+aTWBJeXuzN6ZXMh+01hEiBxOa4fPwUkdLyHJX4OO1BHbIBB43CeWqYpFHglb4Io8+unqktARYVEQ1pP+CY8LOZl+L1od3Hg4yIo/eweh2rkjHUARYXEQdov+GY8LWld642reonxwNh0QOnsWBL/IRBGwisg7RH2g1oYAl5fYXQu91R+H0dPp75dI9kYcSBvyrUhSWAZuJrIX037WasH2lbxjQBYlDP+vi0KouDs6XopFGMYYeUaBLPDyinGrXPtgORYdeWyttZcLKOS4cqGnO9WGXcmIe2FzE2Ah9Ua0B6xe4Mwufh93S0fBYkCVSWoLajV5yxgzg4MdStLQeZJmoWkhfSgc+RRHymZ/gXVN/94DXlfshQJaKqo8wH93LgC1LPZmD3xLW9XZGK4qYWe94/27wNy3yyJ1cJgZc1NkdjTQYXXjTaPsq/4vzH3T0F3upoRP2S6Y55V9tDWSoz0fn7bTI0k3S0fDYoXl+5mY6vSKHXlQWa0aX1bSSla9VPNw4tBrVDTwaUF7IdcZQjdHls4zkdpAnceEVEg9PYVy02qHs88mBx9S11nKXFAsvkXi4X+RQUuTQXyUefSrx6N83B1T4+c1/04BnJQ7xXVx4izK7MePmr7vpv0zsN1appP/hAAAAAElFTkSuQmCC" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

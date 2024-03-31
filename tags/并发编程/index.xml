@@ -51,5 +51,12 @@
       <guid>https://blogs.skylee.top/posts/go/sync.pool/note/</guid>
       <description>介绍 Pool&amp;rsquo;s purpose is to cache allocated but unused items for later reuse, relieving pressure on the garbage collector. That is, it makes it easy to build efficient, thread-safe free lists. However, it is not suitable for all free lists. sync.Pool 是 sync 包的一个组件，用于 复用对象，避免频繁创建销毁对象带来</description>
     </item>
+    <item>
+      <title>Linux 多线程</title>
+      <link>https://blogs.skylee.top/posts/linux/linux-%E5%A4%9A%E7%BA%BF%E7%A8%8B/note/</link>
+      <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/linux/linux-%E5%A4%9A%E7%BA%BF%E7%A8%8B/note/</guid>
+      <description>Linux 线程概念 在 Linux 系统中，进程实际上是由线程来实现的，没有独立的、与线程完全分离的进程实体。实际上，进程可以被视为线程的容器，线程是进程的执行单</description>
+    </item>
   </channel>
 </rss>

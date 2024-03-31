@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Linux 基础 IO - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="文件描述符（fd） 文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Linux 基础 IO" />
+<meta property="og:description" content="文件描述符（fd） 文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2023-06-13T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-06-13T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Linux 基础 IO"/>
+<meta name="twitter:description" content="文件描述符（fd） 文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/">Linux 基础 IO</a>
+    </h1>
+
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/linux/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Linux
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/linux/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Linux</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/os/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">OS</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/io/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">IO</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2023-06-13T00:00:00&#43;00:00">
+      2023-06-13
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      12 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#文件描述符fd">文件描述符（fd）</a>
+      <ul>
+        <li><a href="#分配规则">分配规则</a></li>
+      </ul>
+    </li>
+    <li><a href="#open-系统调用">open 系统调用</a></li>
+    <li><a href="#close-系统调用">close 系统调用</a></li>
+    <li><a href="#read-系统调用">read 系统调用</a></li>
+    <li><a href="#write-系统调用">write 系统调用</a></li>
+    <li><a href="#重定向">重定向</a>
+      <ul>
+        <li><a href="#对-close1-的解释">对 close(1) 的解释</a></li>
+      </ul>
+    </li>
+    <li><a href="#dup2-系统调用">dup2 系统调用</a></li>
+    <li><a href="#在-myshell-中添加重定向功能">在 myShell 中添加重定向功能</a></li>
+    <li><a href="#file">FILE</a>
+      <ul>
+        <li><a href="#实例">实例</a></li>
+      </ul>
+    </li>
+    <li><a href="#理解文件系统">理解文件系统</a>
+      <ul>
+        <li><a href="#inode">Inode</a></li>
+        <li><a href="#创建一个文件到底做了什么">创建一个文件到底做了什么</a></li>
+        <li><a href="#硬链接">硬链接</a></li>
+        <li><a href="#软链接">软链接</a></li>
+        <li><a href="#软链接和硬链接的区别">软链接和硬链接的区别</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="文件描述符fd">文件描述符（fd）</h2>
+<p>文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述符是一种抽象概念，用于在进程中访问文件、设备、管道等输入/输出资源。</p>
+<p>每个进程在运行时都有一个 <strong>文件描述符表</strong> （File Descriptor Table），其中存储了与文件相关的信息。文件描述符表是一个数组，索引从0开始，每个索引对应一个文件描述符。标准输入（stdin）、标准输出（stdout）、标准错误（stderr）通常预先分配了文件描述符0、1和2。</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-13-14-56-27.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
+<p>当打开或创建文件时，操作系统会分配一个未使用的文件描述符并返回给进程。进程可以使用文件描述符来执行各种操作，如读取文件内容、写入数据、改变文件的属性等。文件描述符是进程访问文件的关键工具，它允许进程通过标准的I/O操作对文件进行读写。</p>
+<p>文件描述符的整数值通常是非负整数。常见的文件描述符值如下：</p>
+<ul>
+<li>0：标准输入（stdin）</li>
+<li>1：标准输出（stdout）</li>
+<li>2：标准错误（stderr）</li>
+</ul>
+<p>需要注意的是， <strong>文件描述符在进程中是独立的</strong> ，即 <strong>每个进程都有自己的文件描述符表</strong> 。不同进程中的文件描述符可以指向相同的文件，但它们的文件描述符值是独立的。因此，同一个文件在不同进程中可以具有不同的文件描述符值。</p>
+<p>在使用文件描述符后，应该确保及时关闭不再使用的文件描述符，以释放系统资源。使用 close 系统调用可以关闭文件描述符。</p>
+<h3 id="分配规则">分配规则</h3>
+<p>在 files_struct 数组当中，找到当前 <strong>没有被使用</strong> 的 <strong>最小</strong> 的一个下标，作为新的文件描述符。</p>
+<p>验证如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">close</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span> <span class="c1">// 关闭 fd = 0
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="nf">open</span><span class="p">(</span><span class="s">&#34;test.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="nf">printf</span><span class="p">(</span><span class="s">&#34;fd = %d</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">,</span> <span class="n">fd</span><span class="p">);</span> <span class="c1">// 0，因为此时 fd = 0 是空闲中最小的
+</span></span></span></code></pre></div><p>如果将 <code>close(0);</code> 改成 <code>close(2);</code>，将输出 <code>fd = 2</code></p>
+<p>如果将 <code>close(0);</code> 改成 <code>close(1);</code>，<strong>终端不会有任何输出</strong></p>
+<p>为什么？</p>
+<p>这就是后面要讲的重定向</p>
+<h2 id="open-系统调用">open 系统调用</h2>
+<p>open系统调用是一个在UNIX和类UNIX操作系统中常见的系统调用之一。它用于打开或创建文件，并 <strong>返回一个文件描述符</strong> （file descriptor），以便后续的读取、写入或其他文件操作。</p>
+<p>open 系统调用的原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/types.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;sys/stat.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">open</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">open</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">path</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">,</span> <span class="kt">mode_t</span> <span class="n">mode</span><span class="p">);</span>
+</span></span></code></pre></div><p>参数说明：</p>
+<ul>
+<li>path：要打开或创建的文件的路径。</li>
+<li>flags：打开文件的模式和选项，如只读、只写、追加等。</li>
+<li>mode：创建文件时的权限（仅在创建新文件时使用）。</li>
+</ul>
+<p>open 系统调用返回的文件描述符可以用于后续对文件的读取、写入或其他操作。文件描述符是一个非负整数，通常是最小的可用文件描述符。</p>
+<p>open 系统调用的常见 flags 选项包括：</p>
+<ul>
+<li>O_RDONLY：只读模式打开文件。</li>
+<li>O_WRONLY：只写模式打开文件。</li>
+<li>O_RDWR：读写模式打开文件。</li>
+<li>O_CREAT：如果文件不存在，则创建文件。</li>
+<li>O_APPEND：在文件末尾追加写入。</li>
+<li>O_TRUNC：将文件截断为空。</li>
+</ul>
+<p>open 系统调用的返回值表示操作成功与否，若成功则返回文件描述符，若失败则返回 -1，并设置 errno 变量来指示具体的错误原因。</p>
+<p>需要注意的是，在使用 open 系统调用打开文件后，应该在不再需要使用文件时，<strong>使用 close 系统调用来关闭文件描述符</strong>，以释放系统资源。</p>
+<h2 id="close-系统调用">close 系统调用</h2>
+<p><code>close</code>是一个系统调用，用于关闭一个已打开的文件描述符。它的原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">close</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">);</span>
+</span></span></code></pre></div><p><code>close</code>系统调用会关闭文件描述符 <code>fd</code> 所引用的文件。关闭文件时会释放与之关联的资源，并且不能再对该文件进行读写操作。</p>
+<p><strong>注意：</strong></p>
+<ol>
+<li>
+<p><code>close</code>调用成功返回0，失败返回-1，并设置相应的错误码。在错误发生时，可以使用<code>errno</code>全局变量获取具体的错误信息。</p>
+</li>
+<li>
+<p>关闭文件描述符后，不能再对其进行读写操作。如果尝试使用已关闭的文件描述符进行操作，将导致未定义的行为。</p>
+</li>
+<li>
+<p>关闭文件描述符时，操作系统会减少该文件描述符的引用计数。当引用计数降至零时，相关资源（如文件描述符表中的条目）将被释放。</p>
+</li>
+</ol>
+<h2 id="read-系统调用">read 系统调用</h2>
+<p><code>read</code> 系统调用用于从文件描述符中读取数据。它的原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">read</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count</span><span class="p">);</span>
+</span></span></code></pre></div><p><code>read</code> 系统调用从文件描述符 <code>fd</code> 引用的文件中读取最多 <code>count</code> 字节的数据，并将其存储到 <code>buffer</code> 指向的缓冲区中。</p>
+<p><strong>注意：</strong></p>
+<ol>
+<li>
+<p><code>fd</code> 是一个已打开文件的文件描述符。可以是标准输入（0），标准输出（1），标准错误（2），或者其他通过 <code>open</code> 等系统调用获得的文件描述符。</p>
+</li>
+<li>
+<p><code>buffer</code> 是一个指向存储读取数据的内存缓冲区的指针。调用 <code>read</code> 时，读取的数据将被存储到这个缓冲区中。</p>
+</li>
+<li>
+<p><code>count</code> 是要读取的最大字节数。<code>read</code> 系统调用将尽可能多地读取数据，但不超过 <code>count</code>。</p>
+</li>
+<li>
+<p><code>read</code> 系统调用返回实际读取的字节数。如果返回值为 0，表示已到达文件末尾（EOF）。如果返回值为 -1，表示读取出错。可以通过检查 <code>errno</code> 全局变量获取具体的错误信息。</p>
+</li>
+<li>
+<p><code>read</code> 系统调用是一个阻塞调用，即在没有可用数据时，会一直等待直到有数据可读。可以通过将文件描述符设置为非阻塞模式（使用 <code>fcntl</code> 系统调用）来改变这种行为。</p>
+</li>
+<li>
+<p><code>read</code> 系统调用是按字节进行读取的，即使指定了较大的 <code>count</code> 值，也不保证一次性读取完整的数据块。因此，在循环中多次调用 <code>read</code> 来读取所需的数据是常见的做法。</p>
+</li>
+</ol>
+<h2 id="write-系统调用">write 系统调用</h2>
+<p>write系统调用用于将数据从缓冲区写入到已打开的文件或文件描述符。</p>
+<p>write系统调用的原型与 read 系统调用类似，具体如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">ssize_t</span> <span class="nf">write</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="k">const</span> <span class="kt">void</span> <span class="o">*</span><span class="n">buf</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">count</span><span class="p">);</span>
+</span></span></code></pre></div><p>返回值：</p>
+<ul>
+<li>
+<p>如果write成功写入了指定的字节数count，它会返回一个非负整数，表示成功写入的字节数。这意味着写入操作完成且没有发生错误。</p>
+</li>
+<li>
+<p>如果write写入的字节数少于指定的count，但没有出现错误，它仍然返回一个非负整数，表示成功写入的字节数。</p>
+</li>
+<li>
+<p>如果write返回0，表示没有数据被写入。这通常发生在写入一个长度为0的空缓冲区时。</p>
+</li>
+<li>
+<p>如果write返回-1，表示发生了错误。这时需要检查errno变量来确定具体的错误原因。常见的错误可能包括文件描述符无效、文件系统已满、I/O错误等。</p>
+</li>
+</ul>
+<h2 id="重定向">重定向</h2>
+<p>文件的重定向是一种操作，通过它可以改变程序的标准输入、标准输出和标准错误的来源或目标。在Unix-like系统中，文件的重定向使用特定的符号来实现。</p>
+<p>下面是常见的文件重定向符号：</p>
+<ul>
+<li>
+<p><code>&gt;</code>：将标准输出重定向到文件，覆盖文件中的内容。例如：<code>command &gt; file.txt</code>，将命令的输出写入到file.txt中，如果文件不存在则创建，如果文件已存在则覆盖原有内容。</p>
+</li>
+<li>
+<p><code>&gt;&gt;</code>：将标准输出重定向到文件，追加到文件末尾。例如：<code>command &gt;&gt; file.txt</code>，将命令的输出追加到file.txt的末尾，如果文件不存在则创建。</p>
+</li>
+<li>
+<p><code>&lt;</code>：将文件作为标准输入。例如：<code>command &lt; input.txt</code>，将input.txt文件中的内容作为命令的输入。</p>
+</li>
+</ul>
+<p>需要注意的是，文件重定向是由shell来处理的，它将执行命令并处理重定向操作。因此，文件重定向符号在不同的shell中可能会有些差异，具体的用法和行为可能会略有不同。</p>
+<h3 id="对-close1-的解释">对 close(1) 的解释</h3>
+<p>之前我们提到了：如果将 <code>close(0);</code> 改成 <code>close(1);</code>，<strong>终端不会有任何输出</strong></p>
+<p>因为此时发生了重定向，即将 <code>标准输出(fd = 1)</code> 重定向到了 <code>test.txt</code> 中</p>
+<p>这样对于任何的标准输出，最终都会输出到 <code>test.txt</code> 中</p>
+<p>下面这张图很好地解释了重定向的本质</p>
+<blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2023-06-13-15-13-17.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
+<h2 id="dup2-系统调用">dup2 系统调用</h2>
+<p><code>dup2</code>是一个用于复制文件描述符的系统调用，其原型如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">dup2</span><span class="p">(</span><span class="kt">int</span> <span class="n">oldfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">newfd</span><span class="p">);</span>
+</span></span></code></pre></div><p><code>dup2</code>系统调用将一个已有的文件描述符 <code>oldfd</code> 复制到另一个文件描述符 <code>newfd</code>。如果 <code>newfd</code> 已经打开，则首先关闭 <code>newfd</code> 引用的文件，然后将 <code>oldfd</code> 复制到 <code>newfd</code>。</p>
+<p><code>dup2</code>的常见用法是将一个文件描述符重定向到标准输入、标准输出或标准错误。通过将 <code>oldfd</code> 设置为已打开文件描述符，<code>newfd</code> 设置为标准输入（0）、标准输出（1）或标准错误（2），可以实现文件描述符的重定向。</p>
+<p>例如，我们可以利用 <code>dup2</code> 来实现上面将 标准输出重定向到 <code>test.txt</code> 的操作：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;fcntl.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp">
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">test1</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="nf">open</span><span class="p">(</span><span class="s">&#34;test.txt&#34;</span><span class="p">,</span> <span class="n">O_RDWR</span> <span class="o">|</span> <span class="n">O_APPEND</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="p">(</span><span class="n">fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">perror</span><span class="p">(</span><span class="s">&#34;open error</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">dup2</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// 将 1（标准输出）重定向到 fd
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="kt">char</span> <span class="n">buff</span><span class="p">[</span><span class="mi">1024</span><span class="p">];</span>
+</span></span><span class="line"><span class="cl">    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="c1">// 读 5 行
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="kt">int</span> <span class="n">bytes</span> <span class="o">=</span> <span class="nf">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">if</span> <span class="p">(</span><span class="n">bytes</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="nf">perror</span><span class="p">(</span><span class="s">&#34;read error</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">        <span class="n">buff</span><span class="p">[</span><span class="n">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;\0&#39;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;line %d: %s&#34;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">buff</span><span class="p">);</span> <span class="c1">// 重定向到 test.txt，不会有标准输出
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="在-myshell-中添加重定向功能">在 myShell 中添加重定向功能</h2>
+<p>这里只添加了 <code>&gt;</code> 和 <code>&gt;&gt;</code> 两种重定向</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-cpp" data-lang="cpp"><span class="line"><span class="cl"><span class="k">auto</span> <span class="n">parse</span> <span class="o">=</span> <span class="p">[</span><span class="o">&amp;</span><span class="p">](</span><span class="kt">void</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">command</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="n">std</span><span class="o">::</span><span class="n">getline</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">cin</span><span class="p">,</span> <span class="n">command</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="n">size_t</span> <span class="n">cur</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">size</span> <span class="o">=</span> <span class="n">command</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">    <span class="n">size_t</span> <span class="n">curArgPos</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">while</span> <span class="p">(</span><span class="nb">true</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="p">{</span>   
+</span></span><span class="line"><span class="cl">        <span class="k">if</span><span class="p">(</span><span class="n">curArgPos</span> <span class="o">==</span> <span class="n">MAX_COMMAND_LENGTH</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">// 还要留一个空间放 NULL
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="k">return</span> <span class="n">PARSE_ERROR</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="k">auto</span> <span class="n">next</span> <span class="o">=</span> <span class="n">command</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="sc">&#39; &#39;</span><span class="p">,</span> <span class="n">cur</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">        <span class="k">auto</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">command</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">cur</span><span class="p">,</span> <span class="n">next</span> <span class="o">-</span> <span class="n">cur</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1">// 重定向
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">temp</span> <span class="o">==</span> <span class="s">&#34;&gt;&#34;</span> <span class="o">||</span> <span class="n">temp</span> <span class="o">==</span> <span class="s">&#34;&gt;&gt;&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="p">{</span>
+</span></span><span class="line"><span class="cl">            <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">fileName</span> <span class="o">=</span> <span class="n">command</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">next</span> <span class="o">+</span> <span class="mi">1</span><span class="p">).</span><span class="n">c_str</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl">            <span class="kt">int</span> <span class="n">fd</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">            <span class="k">if</span><span class="p">(</span><span class="n">temp</span> <span class="o">==</span> <span class="s">&#34;&gt;&#34;</span><span class="p">)</span> <span class="c1">// 覆写
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>                <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">O_TRUNC</span> <span class="o">|</span> <span class="n">O_WRONLY</span><span class="p">,</span> <span class="mo">0664</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="k">else</span> <span class="c1">// 追加
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>                <span class="n">fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="n">fileName</span><span class="p">,</span> <span class="n">O_CREAT</span> <span class="o">|</span> <span class="n">O_APPEND</span> <span class="o">|</span> <span class="n">O_WRONLY</span><span class="p">,</span> <span class="mo">0664</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">            <span class="n">dup2</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// 将标准输出重定向到 fd
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="c1">// close(fd);
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="n">args</span><span class="p">[</span><span class="n">curArgPos</span><span class="p">]</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">temp</span><span class="p">.</span><span class="n">size</span><span class="p">()];</span>
+</span></span><span class="line"><span class="cl">        <span class="n">strcpy</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="n">curArgPos</span><span class="o">++</span><span class="p">],</span> <span class="n">temp</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// std::cout &lt;&lt; &#34;debug: &#34; &lt;&lt; args[curArgPos - 1] &lt;&lt; std::endl;
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>        <span class="k">if</span><span class="p">(</span><span class="n">next</span> <span class="o">==</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">::</span><span class="n">npos</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">            <span class="k">break</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">        <span class="n">cur</span> <span class="o">=</span> <span class="n">next</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="n">args</span><span class="p">[</span><span class="n">curArgPos</span><span class="p">]</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">return</span> <span class="n">PARSE_SUCCESS</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl"><span class="p">};</span>
+</span></span></code></pre></div><h2 id="file">FILE</h2>
+<p>根据上面的介绍以及对 C 语言的库函数（fread、fwrite、fopen、fclose）的了解，我们可以发现：</p>
+<ul>
+<li>库函数封装系统调用</li>
+<li>访问文件实质上都是通过 fd 访问的</li>
+</ul>
+<p>因此，FILE 结构体里面必定封装了 fd</p>
+<h3 id="实例">实例</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg0</span> <span class="o">=</span> <span class="s">&#34;printf</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg1</span> <span class="o">=</span> <span class="s">&#34;fwrite</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg2</span> <span class="o">=</span> <span class="s">&#34;write</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">msg0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">fwrite</span><span class="p">(</span><span class="n">msg1</span><span class="p">,</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">msg1</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">msg2</span><span class="p">,</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">msg2</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>输出：</p>
+<pre tabindex="0"><code>printf
+fwrite
+write
+</code></pre><p>看起来很正常对吧</p>
+<p>那如果我们将标准输出重定向到 <code>test.txt</code> 呢？</p>
+<pre tabindex="0"><code>Sky_Lee@SkyLeeMBP test % ./cfile &gt; test.txt
+Sky_Lee@SkyLeeMBP test % cat test.txt
+write
+printf
+fwrite
+</code></pre><p>可以发现，输出顺序并没有按照预期</p>
+<p>为啥？</p>
+<p>一般 C 库函数写入文件时是 <strong>全缓冲</strong> 的，而写入显示器是 <strong>行缓冲</strong> 。</p>
+<p><code>printf</code> <code>fwrite</code> 库函数会自带缓冲区，当发生重定向到普通文件时，数据的缓冲方式由行缓冲变成了全缓冲。</p>
+<p>而我们放在缓冲区中的数据，就不会被立即刷新，甚至 <code>fork</code> 之后</p>
+<p>但是 <strong>进程退出之后，会统一刷新</strong>，写入文件当中。</p>
+<p>简单来说，上面的例子就是先将待输出的内容装在缓冲区，最后一次性吐出来，顺序就有可能与预期不同</p>
+<p>再来一个例子，加深理解：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg0</span> <span class="o">=</span> <span class="s">&#34;printf</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg1</span> <span class="o">=</span> <span class="s">&#34;fwrite</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">msg2</span> <span class="o">=</span> <span class="s">&#34;write</span><span class="se">\n</span><span class="s">&#34;</span><span class="p">;</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">printf</span><span class="p">(</span><span class="s">&#34;%s&#34;</span><span class="p">,</span> <span class="n">msg0</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">fwrite</span><span class="p">(</span><span class="n">msg1</span><span class="p">,</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">msg1</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">msg2</span><span class="p">,</span> <span class="nf">strlen</span><span class="p">(</span><span class="n">msg2</span><span class="p">));</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nf">fork</span><span class="p">();</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>与之前不同的是，这次我们 <code>fork</code> 了一个子进程，如果直接输出到终端，结果：</p>
+<pre tabindex="0"><code>printf
+fwrite
+write
+</code></pre><p>仍然按照预期</p>
+<p>重定向呢？</p>
+<pre tabindex="0"><code>write
+printf
+fwrite
+printf
+fwrite
+</code></pre><p>神奇的事情发生了：<code>write（系统调用）</code> 输出了一次，而 <code>printf</code>、<code>fwrite（库函数）</code> 竟然输出了两次！</p>
+<p>原因就是在 <code>fork</code> 上</p>
+<p>当我们 <code>fork</code> 了一个子进程后，由于父进程 <strong>即将退出，会刷新缓冲区</strong> ，也就意味着父进程要修改缓冲区的数据，此时，父子进程 <strong>发生写时拷贝</strong> ，导致父子进程的缓冲区各有一份数据，最终导致 <code>printf（库函数）</code>、<code>fwrite（库函数）</code> 输出两次</p>
+<p><del>而 <code>write（系统调用）</code> 输出了一次，说明系统调用没有缓冲区</del></p>
+<blockquote>
+<p>2024.2.6 补充</p>
+<p>printf、fwrite 的缓冲区，是在 <strong>用户层次</strong> 实现的，即在库中实现</p>
+<p>在用户层有一个独立的缓冲区，可以减少对 write 的调用次数（缓冲区到达一定大小，或者用户主动调用 fflush 时，才调用 write）即减少系统调用的次数（涉及变态），提高性能</p>
+<p>而 write 并非没有缓冲区，write 也是有一个写缓冲区的，这个缓冲区是 <strong>内核级别</strong> 的，只是这个刷新的时机由内核去控制，对用户不可见</p>
+<p>当然用户也可以主动要求内核刷新 write 缓冲区的内容到磁盘（使用 fsync 或 fdatasync 函数： 这两个系统调用可以让你显式地要求操作系统立即将指定文件的所有待写入数据刷新到磁盘。它们的区别在于 fsync 会同时刷新文件数据和元数据，而 fdatasync 只刷新文件数据），<strong>避免数据的丢失</strong>，但是会影响性能，<strong>通常让 OS 来决定何时刷新是一个比较明智的选择</strong></p>
+</blockquote>
+<h2 id="理解文件系统">理解文件系统</h2>
+<p>可以使用 <code>stat</code> 指令查看某个文件的 Inode 信息：</p>
+<pre tabindex="0"><code>Sky_Lee@SkyLeeMBP test % stat -x test.cpp
+  File: &#34;test.cpp&#34;
+  Size: 3345         FileType: Regular File
+  Mode: (0644/-rw-r--r--)         Uid: (  501/ Sky_Lee)  Gid: (   20/   staff)
+Device: 1,9   Inode: 7567874    Links: 1
+Access: Tue Jun 13 11:38:37 2023
+Modify: Tue Jun 13 11:38:23 2023
+Change: Tue Jun 13 11:38:23 2023
+ Birth: Tue May 30 18:56:31 2023
+</code></pre><h3 id="inode">Inode</h3>
+<p>在Linux和类Unix系统中，每个文件和目录都有一个与之关联的inode（索引节点）。inode是文件系统中的一个数据结构，用于 <strong>存储文件的元信息</strong> （metadata），而不是文件的实际内容。</p>
+<p>inode元信息包括以下内容：</p>
+<ol>
+<li>
+<p>文件类型：指示文件是普通文件、目录、符号链接等类型。</p>
+</li>
+<li>
+<p>文件访问权限：指定了文件的所有者、组和其他用户的读、写和执行权限。</p>
+</li>
+<li>
+<p>文件大小：指示文件的大小，以字节为单位。</p>
+</li>
+<li>
+<p>文件所属用户和组：指示文件的所有者和所属组。</p>
+</li>
+<li>
+<p>文件时间戳：记录了文件的三个时间戳：访问时间（atime），修改时间（mtime）和状态更改时间（ctime）。访问时间表示最后一次读取或访问文件的时间，修改时间表示最后一次修改文件内容的时间，状态更改时间表示最后一次更改inode元信息的时间。</p>
+</li>
+<li>
+<p>硬链接计数：指示有多少个目录项指向同一个inode。当创建一个文件时，初始的硬链接计数为1，每创建一个硬链接都会增加这个计数。</p>
+</li>
+<li>
+<p><strong>文件数据块的指针</strong> ：指示文件数据在磁盘上的位置</p>
+</li>
+</ol>
+<p><strong>Unix/Linux系统内部不使用文件名，而使用inode号码来识别文件</strong></p>
+<p>可以看出，<strong>文件的属性与数据是分开存储的</strong></p>
+<h3 id="创建一个文件到底做了什么">创建一个文件到底做了什么</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Sky_Lee@SkyLeeMBP <span class="nb">test</span> % touch abc
+</span></span><span class="line"><span class="cl">Sky_Lee@SkyLeeMBP <span class="nb">test</span> % ls -i abc
+</span></span><span class="line"><span class="cl"><span class="m">8369476</span> abc
+</span></span></code></pre></div><p>创建一个新文件主要有一下4个操作:</p>
+<ol>
+<li>存储属性：内核先找到一个空闲的 inode (这里是8369476)，内核把文件信息记录到其中。</li>
+<li>存储数据：假设该文件需要存储在三个磁盘块，内核找到了三个空闲块：300，500，800。将内核缓冲区的第一块数据复制到 300，下一块复制到 500，以此类推。</li>
+<li>记录分配情况：文件内容按顺序 300, 500, 800 存放。内核在 inode 上的磁盘分布区记录了上述块列表。</li>
+<li>添加文件名到目录：内核将入口(8369476，abc)添加到目录文件。文件名和 inode 之间的对应关系将文件名和文件的内容及属性连接起来。</li>
+</ol>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/IMG_2788.jpg"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="硬链接">硬链接</h3>
+<p>之前提到：<strong>Unix/Linux系统内部不使用文件名，而使用inode号码来识别文件</strong></p>
+<p>实际上，还可以让多个文件对应同一个 inode：</p>
+<pre tabindex="0"><code>Sky_Lee@SkyLeeMBP test % ln abc def
+Sky_Lee@SkyLeeMBP test % ls -1i
+8369476 abc
+8369476 def
+</code></pre><p>可以看到，abc 与 def 的 inode 值是一样的，它们被称为硬链接，此时，查看 abc 的硬链接数：</p>
+<pre tabindex="0"><code>Sky_Lee@SkyLeeMBP test % stat -x abc
+  File: &#34;abc&#34;
+  Size: 1            FileType: Regular File
+  Mode: (0644/-rw-r--r--)         Uid: (  501/ Sky_Lee)  Gid: (   20/   staff)
+Device: 1,9   Inode: 8369476    Links: 2
+Access: Tue Jun 13 15:57:21 2023
+Modify: Tue Jun 13 15:57:21 2023
+Change: Tue Jun 13 16:50:34 2023
+ Birth: Tue Jun 13 15:56:50 2023
+</code></pre><p>可以看到，Links 的值为 2</p>
+<p>我们对 abc 做出的任何修改都会反应到 def 上，同样的，对 def 做出的任何修改都会反应到 abc 上，这不难理解，因为它们的 inode 值相同，文件的 blocks 肯定也相同，本质上就是同一个文件</p>
+<p>当我们删除一个文件时，实际上是让 Links 的值减 1，如果 Links = 0，那么系统将会回收这个 inode，以及对应的 blocks</p>
+<h3 id="软链接">软链接</h3>
+<p>软链接类似 windows 上的快捷方式</p>
+<p>可以使用 <code>ln -s</code> 来创建软链接：</p>
+<pre tabindex="0"><code>Sky_Lee@SkyLeeMBP test % ln -s abc softabc
+Sky_Lee@SkyLeeMBP test % ls -1i | grep abc           
+8369476 abc
+8370725 softabc
+</code></pre><p>可以看到，abc 与 softabc 的 inode 值不同，说明是不同的文件</p>
+<h3 id="软链接和硬链接的区别">软链接和硬链接的区别</h3>
+<ol>
+<li>
+<p>定义不同</p>
+<p>软链接又叫符号链接，这个文件包含了另一个文件的路径名。可以是任意文件或目录，可以链接不同文件系统的文件。</p>
+<p>硬链接就是一个文件的一个或多个文件名。把文件名和计算机文件系统使用的 inode 链接起来。因此我们可以用多个文件名与同一个文件进行链接，这些文件名可以在同一目录或不同目录。</p>
+</li>
+<li>
+<p>限制不同</p>
+<p>硬链接只能对已存在的文件进行创建，不能交叉文件系统进行硬链接的创建；</p>
+<p>软链接可对不存在的文件或目录创建软链接；可交叉文件系统；</p>
+</li>
+<li>
+<p>创建方式不同</p>
+<p>硬链接不能对目录进行创建，只可对文件创建；</p>
+<p>软链接可对文件或目录创建；</p>
+</li>
+<li>
+<p>影响不同</p>
+<p>删除一个硬链接文件并不影响其他有相同 inode 号的文件。</p>
+<p>删除软链接并不影响被指向的文件，但若被指向的原文件被删除，则相关软连接被称为死链接（即 dangling link，若被指向路径文件被重新创建，死链接可恢复为正常的软链接）。</p>
+</li>
+</ol>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>
