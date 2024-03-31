@@ -232,7 +232,7 @@
 
     </i>
     <span>
-      15 minutes to read
+      16 minutes to read
     </span>
   </div>
 </div>
@@ -429,7 +429,22 @@
   </figure></div>
 </p>
 <p>key_len = 90，说明 status 索引用于加速</p>
-<p><strong>因此，如果业务逻辑允许 <code>&gt;=</code> 和 <code>&lt;=</code>，尽量使用，避免索引失效</strong></p>
+<p><del><strong>因此，如果业务逻辑允许 <code>&gt;=</code> 和 <code>&lt;=</code>，尽量使用，避免索引失效</strong></del></p>
+<blockquote>
+<p>2024.3.31 更新</p>
+<p>虽然使用 <code>&gt;=</code>，key_len = 90，看起来 status 部分被用于加速了</p>
+<p>但是我们要关注 Extra 部分：<strong>Using Index Condition</strong>，说明使用了索引下推，在判断 status = 1 时，还是回表了的（在存储引擎层做的）</p>
+<p>因此，这个 key_len = 90，更像是一种显示上的假象，<strong>status 部分并没有被用于加速</strong></p>
+<p>而 status 部分真正用上，输出应该像这样：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-31-16-36-06-811.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+</blockquote>
 <hr>
 <h2 id="什么时候需要创建索引什么时候不需要">什么时候需要创建索引？什么时候不需要？</h2>
 <p>索引虽然可以带来读取速度的提升，但是也会带来一定的不良影响：</p>
