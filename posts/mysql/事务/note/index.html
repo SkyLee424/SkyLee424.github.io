@@ -274,6 +274,8 @@
     <li><a href="#事务机制如何实现">事务机制如何实现</a>
       <ul>
         <li><a href="#aid">A、I、D</a></li>
+        <li><a href="#mvcc">MVCC</a></li>
+        <li><a href="#实现原理mvcc--undo-log">实现原理：MVCC + undo log</a></li>
       </ul>
     </li>
     <li><a href="#为什么-rc-的性能还比-rr-好">为什么 RC 的性能还比 RR 好</a></li>
@@ -388,10 +390,10 @@
 <p>update、insert、delete 这三个操作就是当前读，读取的是 <strong>已提交</strong> 的最新数据，这很好理解，在 update、insert、delete 前需要先读取，判断这一行记录是否存在</p>
 <p>此外，<code>select ... for update</code>、<code>select ... in share mode</code> 也是当前读</p>
 <p>当前读的实现 <strong>需要加锁</strong>，是一种阻塞的行为，并发保证是「锁」提供的</p>
-<h4 id="mvcc">MVCC</h4>
+<h3 id="mvcc">MVCC</h3>
 <p>MVCC，即多版本并发控制协议，用于 <strong>实现事务隔离</strong></p>
 <p>MVCC 维护了一个记录的多个版本，使得不同的事务可以读取到对应版本的记录</p>
-<h4 id="实现原理mvcc--undo-log">实现原理：MVCC + undo log</h4>
+<h3 id="实现原理mvcc--undo-log">实现原理：MVCC + undo log</h3>
 <p>MVCC 的实现，基于：</p>
 <ul>
 <li>Record Row：主要是 trx_id、roll_ptr</li>

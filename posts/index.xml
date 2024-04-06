@@ -7,8 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Thu, 21 Mar 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 06 Apr 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>树节点的第 K 个祖先</title>
+      <link>https://blogs.skylee.top/posts/algorithm/binary-tree/lc.1483.-%E6%A0%91%E8%8A%82%E7%82%B9%E7%9A%84%E7%AC%AC-k-%E4%B8%AA%E7%A5%96%E5%85%88/note/</link>
+      <pubDate>Sat, 06 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/algorithm/binary-tree/lc.1483.-%E6%A0%91%E8%8A%82%E7%82%B9%E7%9A%84%E7%AC%AC-k-%E4%B8%AA%E7%A5%96%E5%85%88/note/</guid>
+      <description>链接 常规解法 容易想到使用记忆化搜索： type TreeAncestor struct { memo [][]int // memo[node][k] parent []int n int } func Constructor(n int, parent []int) TreeAncestor { memo := make([][]int, n) for i := 0; i &amp;lt; n; i++{ memo[i] = make([]int, n) for j := 0; j &amp;lt; n; j++ { memo[i][j] = -2 } } return TreeAncestor{</description>
+    </item>
     <item>
       <title>Go: Single Flight</title>
       <link>https://blogs.skylee.top/posts/go/singlefilght/note/</link>
