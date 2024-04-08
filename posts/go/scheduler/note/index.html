@@ -357,6 +357,16 @@
     >
   </figure></div>
 </p>
+<blockquote>
+<p>2024.4.7：</p>
+<p>Global Runnable Queue：存储全局可运行的 goroutine 的队列，这些 goroutine 还没有分配到任意的 P</p>
+<p>那么，一个 goroutine 在什么时候会被存放到全局队列（GRQ）？</p>
+<ol>
+<li>刚刚创建的 goroutine 可能被分配到 GRQ 中</li>
+<li>goroutine 运行时间过长：Go scheduler 会启动一个后台线程 sysmon，用来检测长时间（超过 10 ms）运行的 goroutine，将其调度到 GRQ，以示惩罚（优先级较低）</li>
+<li>待补充。。。</li>
+</ol>
+</blockquote>
 <h3 id="scheduler-的目标">Scheduler 的目标</h3>
 <ul>
 <li>仅使用较少的 kernel thread（复用 M）</li>
