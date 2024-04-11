@@ -354,6 +354,13 @@
     </item>
     <item>
       <title></title>
+      <link>https://blogs.skylee.top/posts/algorithm/segment-tree/note/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/algorithm/segment-tree/note/</guid>
+      <description>线段树 线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。 线段树可以在 O(log N) 的时间复杂度内实现： 单点修改 区间修改 区间查询（区间求和，求区间最大</description>
+    </item>
+    <item>
+      <title></title>
       <link>https://blogs.skylee.top/search/_index.es/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/search/_index.es/</guid>
