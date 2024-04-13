@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
 <head>
-  <title> - Sky_Lee 的个人博客</title>
+  <title>线段树 - Sky_Lee 的个人博客</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta
   name="description"
-  content="线段树 线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。 线段树可以在 O(log N) 的时间复杂度内实现： 单点修改 区间修改 区间查询（区间求和，求区间最大"
+  content="线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。 线段树可以在 O(log N) 的时间复杂度内实现： 单点修改 区间修改 区间查询（区间求和，求区间最大值，求"
 />
 <meta
   name="keywords"
   content="Sky_Lee, 博客, blogs"
 />
 <meta name="robots" content="noodp" />
-<meta property="og:title" content="" />
-<meta property="og:description" content="线段树 线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。 线段树可以在 O(log N) 的时间复杂度内实现： 单点修改 区间修改 区间查询（区间求和，求区间最大" />
+<meta property="og:title" content="线段树" />
+<meta property="og:description" content="倍增法的介绍与模版" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://blogs.skylee.top/posts/algorithm/segment-tree/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-11T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-11T00:00:00+00:00" />
 
-
-
-<meta name="twitter:card" content="summary"/><meta name="twitter:title" content=""/>
-<meta name="twitter:description" content="线段树 线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。 线段树可以在 O(log N) 的时间复杂度内实现： 单点修改 区间修改 区间查询（区间求和，求区间最大"/>
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="线段树"/>
+<meta name="twitter:description" content="倍增法的介绍与模版"/>
 
 
 <link rel="canonical" href="https://blogs.skylee.top/posts/algorithm/segment-tree/note/" />
@@ -143,14 +143,71 @@
 <div class="w-full max-w-4xl lg:max-w-5xl">
   <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
     <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
-      <a href="/posts/algorithm/segment-tree/note/"></a>
+      <a href="/posts/algorithm/segment-tree/note/">线段树</a>
     </h1>
 
     
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      倍增法的介绍与模版
+    </h2>
     
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/algorithm/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Algorithm
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E7%BA%BF%E6%AE%B5%E6%A0%91/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">线段树</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
 
 
     <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-11T00:00:00&#43;00:00">
+      2024-04-11
+    </time>
+  </div>
+
   <div class="flex flex-row text-base gap-x-1">
     <i class="h-6 w-6 flex-none">
       <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -187,8 +244,7 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h1 id="线段树">线段树</h1>
-<p>线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。</p>
+      <p>线段树是算法竞赛中常用的用来维护 区间信息 的数据结构。</p>
 <p>线段树可以在 O(log N) 的时间复杂度内实现：</p>
 <ul>
 <li>单点修改</li>
