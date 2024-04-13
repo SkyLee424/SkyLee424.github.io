@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>分布式系统 - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="分布式系统是由 多个 独立的计算机或者节点组成的系统，这些计算机通过网络进行通信和协作，共同完成特定的任务或提供服务。 分布式系统的设计目标是：提"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="分布式系统" />
+<meta property="og:description" content="如何学习分布式系统" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/intro/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-13T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-13T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="分布式系统"/>
+<meta name="twitter:description" content="如何学习分布式系统"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/intro/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/intro/note/">分布式系统</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      如何学习分布式系统
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          分布式系统
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-13T00:00:00&#43;00:00">
+      2024-04-13
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      5 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#分布式系统解决了什么问题">分布式系统解决了什么问题？</a></li>
+    <li><a href="#分布式系统带来了什么问题">分布式系统带来了什么问题</a></li>
+    <li><a href="#分布式计算带来了什么问题">分布式计算带来了什么问题</a>
+      <ul>
+        <li><a href="#如何找到服务">如何找到服务</a></li>
+        <li><a href="#如何找到实例节点">如何找到（实例）节点</a></li>
+        <li><a href="#如何避免服务雪崩">如何避免服务雪崩</a></li>
+        <li><a href="#如何监控告警">如何监控告警</a></li>
+      </ul>
+    </li>
+    <li><a href="#分布式存储带来了什么问题">分布式存储带来了什么问题？</a>
+      <ul>
+        <li><a href="#cap-理论">CAP 理论</a></li>
+        <li><a href="#如何做数据分片">如何做数据分片</a></li>
+        <li><a href="#如何做节点间数据复制">如何做节点间数据复制</a></li>
+        <li><a href="#如何实现分布式事务">如何实现分布式事务</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>分布式系统是由 <strong>多个</strong> 独立的计算机或者节点组成的系统，这些计算机通过网络进行通信和协作，共同完成特定的任务或提供服务。</p>
+<p>分布式系统的设计目标是：提高系统的性能、可伸缩性、可靠性和可用性，以及实现系统资源的有效利用。</p>
+<p>接下来，主要围绕 <strong>如何学习分布式系统</strong> 来讨论</p>
+<h2 id="分布式系统解决了什么问题">分布式系统解决了什么问题？</h2>
+<p>为什么要引入分布式系统？</p>
+<p>在传统单体架构下，存在以下问题：</p>
+<ul>
+<li>可用性低：一个机器挂了，整个服务就不可用了</li>
+<li>扩展性成本高：单个机器的性能提升是比较有限的，升级成本高</li>
+</ul>
+<p>因此，引入分布式系统，来解决单体架构下的 <strong>可用性问题</strong> 和 <strong>扩展成本问题</strong></p>
+<p>那么分布式系统是如何解决这两个问题的呢？</p>
+<p>简单理解：就是通过网络，将许多物理机连起来，组成一个集群，对外提供服务，并通过在系统中提供冗余来保障可用性</p>
+<h2 id="分布式系统带来了什么问题">分布式系统带来了什么问题</h2>
+<p>整个分布式系统具有多个物理节点，那么如何协调这些节点，就是一个比较重要的问题</p>
+<p>我们将分布式系统分为两类：</p>
+<ul>
+<li>分布式计算</li>
+<li>分布式存储</li>
+</ul>
+<h2 id="分布式计算带来了什么问题">分布式计算带来了什么问题</h2>
+<h3 id="如何找到服务">如何找到服务</h3>
+<p>在整个分布式系统中，物理节点间的身份可能不同</p>
+<p>那么节点间如何发现彼此呢？</p>
+<p>常见的解决方案是「服务注册与发现」</p>
+<p>实现这个功能，通常需要一个「服务注册中心」</p>
+<ul>
+<li>服务注册：当一个服务启动时，它会向服务注册中心注册自己的信息，包括服务名称、IP 地址、端口号等。注册中心会将这些信息保存起来，以便其他服务或客户端查询。</li>
+<li>服务发现：当一个服务需要调用其他服务时，它会向服务发现组件发送查询请求，询问特定服务的位置信息。服务发现组件会从注册中心获取服务的信息，并将其返回给请求方，使得请求方能够直接与目标服务通信。</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-13-16-52-02-978.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="如何找到实例节点">如何找到（实例）节点</h3>
+<p>确定了服务以后，如何确定将当前请求路由到哪个节点上呢？</p>
+<p>分两种情况：</p>
+<ul>
+<li>无状态：同一个服务之间，每个（实例）节点完全一致，例如 Redis 集群，主从节点存储数据（几乎）一致</li>
+<li>有状态：同一个服务之间，（实例）节点不完全一致，例如 Redis 集群，主节点之间存储的数据不一致</li>
+</ul>
+<p>对于「无状态」这种情况，做好普通的负载均衡就 ok 了，例如：</p>
+<ul>
+<li>简单的轮询机制</li>
+<li>一致性哈希</li>
+<li>fair 公平调度</li>
+</ul>
+<p>对于「有状态」这种情况，由于节点间不一致，这种情况通常需要一个「路由服务」，因提前确定要请求的数据在哪个节点上，然后再访问</p>
+<h3 id="如何避免服务雪崩">如何避免服务雪崩</h3>
+<p>一个服务内，某个节点挂了，那么该节点负责的请求就会打到其它节点上</p>
+<p>如果剩余节点中，有一个节点因为承受不了多的请求，挂了，那么该节点负责的请求又会打到其它节点上</p>
+<p>如此循环，导致整个服务的节点依次挂掉，就像「雪崩」一样</p>
+<p>如何避免？</p>
+<p>整体分为两个思路：</p>
+<ul>
+<li>快速失败与降级机制：服务降级、熔断机制、限流</li>
+<li>弹性扩容：添加新的节点到服务中</li>
+</ul>
+<p>快速失败会导致部分请求无法正确响应</p>
+<p>而弹性扩容成本较高，并且扩容这个过程本身需要时间</p>
+<h3 id="如何监控告警">如何监控告警</h3>
+<p>对于分布式系统，如果我们不知道整个系统的负载情况（状态），那么整个系统的可用性是无法得到保障的</p>
+<p>可以监控某个接口的时延、成功响应数</p>
+<p>也可以监控整个系统的负载，并在高负载时告警</p>
+<h2 id="分布式存储带来了什么问题">分布式存储带来了什么问题？</h2>
+<h3 id="cap-理论">CAP 理论</h3>
+<p>CAP 理论是分布式系统设计中的一个重要理论，描述了分布式系统中三个核心属性之间的冲突：</p>
+<ul>
+<li>一致性（Consistency）：即所有的节点在同一时间具有相同的数据视图。在一致性模型中，如果一个操作在一个节点上执行成功后，其他节点上的数据也应该立即变为一致。</li>
+<li>可用性（Availability）：即系统能够对用户的请求做出响应，即使系统中的一部分组件出现故障。在可用性模型中，系统在出现故障时仍然能够继续对外提供服务。</li>
+<li>分区容错性（Partition Tolerance）：即系统能够容忍网络分区（分布式系统中节点之间的通信可能出现故障），而不会导致系统的整体性能下降。在分区容错性模型中，系统能够在网络分区的情况下继续运行，并且不会受到太大影响。</li>
+</ul>
+<p>一般来说，C 和 A 无法同时保障：</p>
+<ul>
+<li>
+<p>保证强一致性 C，那么在数据同步期间，整个服务无法读取（避免读到过期数据）</p>
+</li>
+<li>
+<p>保证高可用性 A，那么即使数据未同步完毕，也要对外提供服务，弱一致性保障</p>
+</li>
+<li>
+<p>对于银行这类系统，一致性非常重要，保障 CP；</p>
+</li>
+<li>
+<p>对于互联网应用，可能不需要强一致性，最终一致就行，保障 AP</p>
+</li>
+</ul>
+<h3 id="如何做数据分片">如何做数据分片</h3>
+<p>随着数据量的增加，单机肯定无法存储所有数据，因此需要将数据分配到多个节点存储</p>
+<p>常见分片方式：</p>
+<ul>
+<li>范围分片</li>
+<li>哈希分片</li>
+<li>一致性哈希分片</li>
+</ul>
+<h3 id="如何做节点间数据复制">如何做节点间数据复制</h3>
+<p>为了保障可用性：即使一个节点挂了，它所负责的数据也要能获取到</p>
+<p>可用性的保障，是基于数据的冗余存储的</p>
+<p>那么如何将数据复制到其它节点呢？</p>
+<ul>
+<li>中心化方案（主从复制、一致性协议比如 Raft）</li>
+<li>去中心化方案</li>
+</ul>
+<p>这两种方案，对外表现的一致性是不同的</p>
+<h3 id="如何实现分布式事务">如何实现分布式事务</h3>
+<p>要实现事务，首先需要有对并发事务进行排序的能力，这样在事务冲突的时候，确认哪个事务提供成功，哪个事务提交失败。</p>
+<p>对于单机系统，只需要 <code>时间戳 + TxID</code> 即可</p>
+<p>但是分布式系统，每个节点的时间肯定无法完全同步，这种方式就不太行了</p>
+<p>不过可以 <strong>整体分布式，局部单体</strong> 来实现：用一台机器负责生成 <code>时间戳 + TxID</code></p>
+<p>这种方式在节点到中心节点的 <strong>距离较短</strong> 还可以，但是，如果节点到中心节点的距离较长，那么请求的 TTL 可能就不太能够接受了，时间成本太高</p>
+<h2 id="总结">总结</h2>
+<p>学习分布式系统，可以从以下问题入手：</p>
+<ul>
+<li>如何实现服务注册、服务发现</li>
+<li>如何将请求路由到正确的节点</li>
+<li>如何监控集群状态</li>
+<li>C、A 如何做权衡（trade-off）</li>
+<li>如何做数据分片</li>
+<li>数据如何同步（复制）到各个节点</li>
+<li>如何实现分布式事务</li>
+</ul>
+<p>进一步地，可以：</p>
+<ul>
+<li>从实践出发：学习 MySQL（传统关系型数据库）、Redis（分布式缓存）、Kafka（分布式 MQ）的分布式实现方式</li>
+<li>从理论出发：学习 <a href="https://juejin.cn/post/6844904129655996423" target="_blank" rel="noopener">MIT-6.824</a>
+</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://juejin.cn/post/6875134797228802056" target="_blank" rel="noopener">掘金：如何系统性地学习分布式系统?</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+
+
+
+</body>
+</html>
