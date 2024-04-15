@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>分布式系统——MySQL - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="作为传统关系型数据库，MySQL 的分布式倾向于存储方面：将数据分散存储到各个节点，减少单个节点的读写压力、存储压力 同时，MySQL 原生支持了"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="分布式系统——MySQL" />
+<meta property="og:description" content="MySQL 在分布式上是怎么做的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-14T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-14T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="分布式系统——MySQL"/>
+<meta name="twitter:description" content="MySQL 在分布式上是怎么做的"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/">分布式系统——MySQL</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      MySQL 在分布式上是怎么做的
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/mysql/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          MySQL
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mysql/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MySQL</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-14T00:00:00&#43;00:00">
+      2024-04-14
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      5 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构">结构</a></li>
+    <li><a href="#如何实现服务注册服务发现">如何实现服务注册、服务发现</a></li>
+    <li><a href="#如何将请求路由到正确的节点">如何将请求路由到正确的节点</a>
+      <ul>
+        <li><a href="#应用层代码手动实现">应用层代码手动实现</a></li>
+        <li><a href="#基于-proxy代理层实现">基于 Proxy（代理层）实现</a></li>
+      </ul>
+    </li>
+    <li><a href="#ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</a>
+      <ul>
+        <li><a href="#强制走主库">强制走主库</a></li>
+        <li><a href="#强制走从库">强制走从库</a></li>
+        <li><a href="#sleep">Sleep</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何做数据分片">如何做数据分片</a></li>
+    <li><a href="#数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</a></li>
+    <li><a href="#如何实现故障转移">如何实现故障转移</a></li>
+    <li><a href="#如何实现分布式事务">如何实现分布式事务</a></li>
+    <li><a href="#总结">总结</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>作为传统关系型数据库，MySQL 的分布式倾向于存储方面：将数据分散存储到各个节点，减少单个节点的读写压力、存储压力</p>
+<p>同时，MySQL 原生支持了主从复制，实现了数据的冗余存储，保障了可用性</p>
+<h2 id="结构">结构</h2>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-14-11-51-21-565.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>数据分散存储到各个主节点，减少单个节点的读写压力、存储压力</li>
+<li>从节点冗余存储主节点数据，保障了可用性，还可以实现读写分离，进一步减少主节点读压力</li>
+<li><strong>子集群之间没有直接关联</strong>，需要应用层实现</li>
+</ul>
+<h2 id="如何实现服务注册服务发现">如何实现服务注册、服务发现</h2>
+<p>假设有一个主节点，我们要想为这个主节点添加从节点，需要在从节点上 <strong>手动</strong> 指定主节点的位置：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">CHANGE</span><span class="w"> </span><span class="n">MASTER</span><span class="w"> </span><span class="k">TO</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_HOST</span><span class="o">=</span><span class="err">$</span><span class="n">host_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PORT</span><span class="o">=</span><span class="err">$</span><span class="n">port</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_USER</span><span class="o">=</span><span class="err">$</span><span class="n">user_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="err">$</span><span class="n">password</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="w">  </span><span class="c1">-- 指定使用 GTID 确定位点
+</span></span></span></code></pre></div><p>指定以后，从节点就知道了主节点的位置，同样的，主节点也会知道从节点的位置</p>
+<p>但是主节点之间是无法发现彼此的，此外，对于应用层来说，MySQL 原生并不支持服务注册、服务发现，通常需要手动实现，或者引入一个 <strong>Proxy 层</strong></p>
+<h2 id="如何将请求路由到正确的节点">如何将请求路由到正确的节点</h2>
+<p>我们将请求分为两类：</p>
+<ul>
+<li>读请求</li>
+<li>写请求</li>
+</ul>
+<p>假设我们做了数据分片（分库分表），那么在执行读写请求前，就要先确定数据存储的位置</p>
+<p>实现方式有两种：</p>
+<ul>
+<li>应用层代码手动实现</li>
+<li>引入 Proxy 层</li>
+</ul>
+<h3 id="应用层代码手动实现">应用层代码手动实现</h3>
+<p>应用程序主动做负载均衡，这种模式下一般会把数据库的连接信息放在客户端的连接层。也就是说，<strong>由客户端来选择后端数据库进行查询。</strong></p>
+<p>这种方式的性能较好，缺点就是需要对已有代码进行修改</p>
+<h3 id="基于-proxy代理层实现">基于 Proxy（代理层）实现</h3>
+<p>这个方式就是在 Client 到 Server 之间引入一个代理，自动分发客户端的请求：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-27-11-02-06-320.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Proxy 会负责请求的分发与负载均衡</p>
+<p>这种方式的优点就是不用修改已有代码，但是有一定的性能损耗</p>
+<p>如果要实现读写分离，同样的，也是上面两种方式</p>
+<h2 id="ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</h2>
+<p>这里讨论的主要是读写分离的情况</p>
+<p>由于主从复制会存在延迟，在读写分离的情况下，我们就需要在 C、A 之间做 trade-off，通常有以下几种实现方式</p>
+<h3 id="强制走主库">强制走主库</h3>
+<p>一些对数据一致性要求很高的业务（如金融），可以采取这种方式，保证绝对的数据一致性，纯粹的 C</p>
+<p>缺点就是：如果很多业务都有很高实时性要求，都走主库，会 <strong>对主库造成很大压力</strong></p>
+<h3 id="强制走从库">强制走从库</h3>
+<p>一些对数据一致性要求不高的业务（如互联网应用），可以采取这种方式，保证可用性，纯粹的 A</p>
+<h3 id="sleep">Sleep</h3>
+<p>既然同步需要时间，那我们可以「sleep」一下，等它同步完了再去访问不就好了吗</p>
+<p>例如，一个用户发布了一个商品，前端可以基于本地已有信息进行展示，就好像获取到了最新的数据一样</p>
+<p>用户待会刷新页面，其实已经过了一段时间，也就达到了 sleep 的目的，只要等待时间内同步完成，访问的就是最新的数据</p>
+<p>这种方式适用于对数据实时性要求低的业务，就算访问到过期数据也影响不大</p>
+<p>缺点就是：我们无法保证在规定时间内主从同步完毕，还是 <strong>有访问到过期数据的可能性</strong></p>
+<p><strong>判断主从无延迟方案</strong></p>
+<p>这种方式比较折中</p>
+<ol>
+<li>在访问数据之前，<strong>判断主从是否同步完毕</strong>：</li>
+<li>如果同步完毕，那么走从库，获取的是最新数据</li>
+<li>如果没有，可以等待一段时间，重复第一个步骤</li>
+<li>如果等待时间 <strong>超过一定阈值</strong>，那么根据实际需求，看看是走主库，获取最新数据；或者走从库，获取过期数据</li>
+</ol>
+<h2 id="如何做数据分片">如何做数据分片</h2>
+<p>我们可以将数据分散存储到不同的主节点上</p>
+<p>通常的实现方式有：</p>
+<ul>
+<li>哈希分片</li>
+<li>一致性哈希</li>
+<li>范围分片</li>
+</ul>
+<p><strong>哈希分片</strong></p>
+<p>根据指定 key（比如 id） 的哈希值，算出这个数据在哪个库（表）中</p>
+<p>哈希分片算法比较适合 <strong>随机</strong> 查询的场景，并能 <strong>一定程度避免单个库上的热点问题</strong>，<strong>不适合范围查询</strong></p>
+<p><strong>范围分片</strong></p>
+<p>按照指定范围区间来分配数据，例如，将 id 为 1 ～ 10000 的存在第一个 DB，id 为 10001 ～ 20000 的存在第二个 DB</p>
+<p>范围分片算法比较适合 <strong>范围</strong> 查询的场景，但有可能 <strong>存在</strong> 单个库上的 <strong>热点问题</strong></p>
+<h2 id="数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</h2>
+<p>这里讨论的是 MySQL 的主从复制</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-26-19-16-04-455.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>简单来说，就是从库的 IO_Thread 将主库发来的 <strong>binlog</strong> 写到本地的 <strong>relay log</strong>，然后由 <strong>SQL_Thread</strong> 负责拉取 relay log 完成主从复制</p>
+<blockquote>
+<p>binlog 是主库主动推送，还是从库主动拉取？</p>
+<p><strong>一开始创建主备关系的时候，是由备库指定的。</strong></p>
+<p>比如基于位点的主备关系，备库说“我要从 binlog 文件 A 的位置 P”开始同步， 主库就从这个指定的位置开始往后发。</p>
+<p>而主备复制关系搭建 <strong>完成以后</strong>，是 <strong>主库</strong> 来 <strong>决定“要发数据给备库”</strong> 的。</p>
+<p>所以主库有生成新的日志，就会发给备库。</p>
+</blockquote>
+<h2 id="如何实现故障转移">如何实现故障转移</h2>
+<p>主节点挂了，从节点怎么办？</p>
+<p>MySQL 没有自动的故障转移，需要手动转移</p>
+<p>大致步骤如下：</p>
+<ul>
+<li>选择一个从库</li>
+<li>将其设置为新的主库</li>
+<li>修改剩余从库的 master 为新的主库</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-02-27-10-38-39-051.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>但问题是：其它从节点应该怎么去同步新的主节点的数据呢？</p>
+<p>难点：从库去同步新的主库的数据，不是全量同步，而是增量同步，如何寻找这个同步的「起始点」？</p>
+<p>MySQL 5.6 引入了 <strong>全局事务 ID（GTID）</strong>，是一个事务的唯一标识</p>
+<p>在 GTID 模式下，从库获取新的主库的位点这件事情就在 MySQL 内部做好了：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="n">CHANGE</span><span class="w"> </span><span class="n">MASTER</span><span class="w"> </span><span class="k">TO</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_HOST</span><span class="o">=</span><span class="err">$</span><span class="n">host_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PORT</span><span class="o">=</span><span class="err">$</span><span class="n">port</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_USER</span><span class="o">=</span><span class="err">$</span><span class="n">user_name</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">MASTER_PASSWORD</span><span class="o">=</span><span class="err">$</span><span class="n">password</span><span class="w">
+</span></span></span><span class="line"><span class="cl"><span class="w"></span><span class="n">master_auto_position</span><span class="o">=</span><span class="mi">1</span><span class="w">  </span><span class="c1">-- 指定使用 GTID 确定位点
+</span></span></span></code></pre></div><p>想要更深入的了解 GTID 的实现，可以看看这篇文章：<a href="https://time.geekbang.org/column/article/77427" target="_blank" rel="noopener">27 | 主库出问题了，从库怎么办？</a>
+</p>
+<h2 id="如何实现分布式事务">如何实现分布式事务</h2>
+<p>MySQL 使用两阶段提交（2PC）实现分布式事务：</p>
+<p>两阶段提交将 <strong>事务提交过程</strong> 分为两个阶段，保证主从节点间数据的一致性：</p>
+<ul>
+<li>准备阶段（prepare）</li>
+<li>提交阶段（commit）</li>
+</ul>
+<p>使用两阶段提交时，MySQL 内部开启一个 XA 事务：</p>
+<p>在 prepare 阶段，将 XID 写入 redo log，并 <strong>将 redo log 状态设置为 prepare</strong>，然后调用 write、fsync（类似于 innodb_flush_log_at_trx_commit = 1），将 redo log 持久化到磁盘</p>
+<p>在 commit 阶段，将 XID 写入 binlog，然后调用 write、fsync（类似于 sync_binlog = 1），将 binlog 持久化到磁盘，并 <strong>将 redo log 状态设置为 commit</strong></p>
+<p>当然，上面所指的事务，涉及到的数据应该仅在同一个主库中，分布式体现在 <strong>一主多从</strong></p>
+<p>如果涉及到多个主库（多主多从），MySQL 原生就无能为力了，可以使用：</p>
+<ul>
+<li><strong>基于消息队列的异步处理</strong>：将事务操作写入消息队列，由消费者进行处理。这种方式可以利用 MQ 的事务机制实现跨多个数据库的分布式事务，但可能会引入一定程度的异步性和延迟。</li>
+<li><strong>分布式事务中间件</strong>：使用第三方的分布式事务中间件（如 Seata）来实现分布式事务。这些中间件通常提供了对分布式事务的原生支持，能够简化开发和管理复杂的分布式事务场景。</li>
+<li><strong>应用程序层面的解决方案</strong>：在应用程序层面实现分布式事务逻辑。例如，通过在应用程序中使用 <strong>分布式锁</strong>、分布式协调服务（如 ZooKeeper）、分布式一致性算法（如 Paxos 或 Raft）等技术来保证事务的一致性。</li>
+</ul>
+<h2 id="总结">总结</h2>
+<p>MySQL 作为传统关系型数据库的代表，其在分布式上的实现 <strong>并不完善</strong>，原生仅支持主从节点的复制</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

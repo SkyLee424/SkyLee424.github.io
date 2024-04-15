@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>分布式系统——Redis - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster），支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="分布式系统——Redis" />
+<meta property="og:description" content="Redis 在分布式上是怎么做的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-14T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-14T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="分布式系统——Redis"/>
+<meta name="twitter:description" content="Redis 在分布式上是怎么做的"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/">分布式系统——Redis</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Redis 在分布式上是怎么做的
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/redis/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Redis
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/redis/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Redis</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-14T00:00:00&#43;00:00">
+      2024-04-14
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构">结构</a></li>
+    <li><a href="#如何实现服务注册服务发现">如何实现服务注册、服务发现</a>
+      <ul>
+        <li><a href="#节点间怎么通信的">节点间怎么通信的？</a></li>
+        <li><a href="#什么是-gossip-协议">什么是 Gossip 协议？</a></li>
+        <li><a href="#总结">总结</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何将请求路由到正确的节点">如何将请求路由到正确的节点</a></li>
+    <li><a href="#ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</a></li>
+    <li><a href="#如何做数据分片">如何做数据分片</a></li>
+    <li><a href="#数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</a>
+      <ul>
+        <li><a href="#第一次同步全量复制">第一次同步（全量复制）</a></li>
+        <li><a href="#增量同步">增量同步</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何实现故障转移">如何实现故障转移</a>
+      <ul>
+        <li><a href="#检测">检测</a></li>
+        <li><a href="#转移">转移</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何实现分布式事务">如何实现分布式事务</a></li>
+    <li><a href="#总结-1">总结</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster），支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转移</p>
+<h2 id="结构">结构</h2>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-14-14-31-38-584.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>数据分散存储到各个主节点，减少单个节点的读写压力、存储压力</li>
+<li>从节点冗余存储主节点数据，保障了可用性，还可以实现读写分离，进一步减少主节点读压力</li>
+<li>主节点之间互相关联，分享集群状态，支持故障转移、副本迁移</li>
+</ul>
+<h2 id="如何实现服务注册服务发现">如何实现服务注册、服务发现</h2>
+<p>首先看看怎么向已有集群添加一个主节点</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-zsh" data-lang="zsh"><span class="line"><span class="cl">redis-cli --cluster add-node &lt;new_host:new_port&gt; &lt;existing_host:existing_port&gt;
+</span></span></code></pre></div><p>可以看到：只需要指定集群中任意一个节点的 <code>host+ip</code> 即可，那么新的节点是怎么发现其它节点的位置的呢？</p>
+<p>实际上，集群中的每一个节点都会缓存 <code>节点与 host</code> 的映射关系，添加新节点时，会与集群中任意一个节点建立 TCP 链接，该节点会发送 <code>节点与 host</code> 的映射关系给新的节点</p>
+<p>这样，新的节点就知道其余节点的网络位置了</p>
+<h3 id="节点间怎么通信的">节点间怎么通信的？</h3>
+<p>和 Redis-Server 与 Redis-Client 的 RESP 通信协议不同，集群中任意节点通过 Cluster Bus（集群总线）通信</p>
+<blockquote>
+<p>Cluster bus protocol: a <strong>binary</strong> protocol composed of frames of different types and sizes. Every node is connected to every other node in the cluster using the cluster bus.</p>
+</blockquote>
+<p>Cluster Bus 是基于 Gossip 协议的</p>
+<h3 id="什么是-gossip-协议">什么是 Gossip 协议？</h3>
+<p>Gossip 协议是一种在分布式系统中用于节点间通信的协议，它通过 <em>流言蜚语</em>（即 Gossiping）的方式来交换信息，从而实现信息的传播和一致性。</p>
+<p>Gossip 协议与我们平常所说的流言传播相似，一个节点会 <strong>随机选择其他几个节点</strong> 分享信息，这些被选择的节点又会同样选择其他节点进行信息的传播，这样信息就 <strong>像病毒一样快速扩散开</strong> 来。</p>
+<p>Gossip 的特点就是 <strong>去中心化</strong>，具有可伸缩性和鲁棒性</p>
+<blockquote>
+<p>为什么 Redis Cluster bus 要使用 gossip 协议呢？</p>
+</blockquote>
+<p>来看看 Redis 官方怎么说的：</p>
+<blockquote>
+<p>While Redis Cluster nodes form a full mesh, nodes <strong>use a gossip protocol</strong> and a configuration update mechanism in order <strong>to avoid exchanging too many messages</strong> between nodes during normal conditions, so the number of messages exchanged is not exponential.</p>
+</blockquote>
+<p>在一个大型集群中，如果节点需要以直接的方式交换状态信息或配置更新，那么每个节点都需要与其他每个节点进行通信。这意味着在 N 个节点的集群中，每个节点都需要发送 N-1 个消息来通知每个其他节点，总共就有 <code>N*(N-1)</code> 次通信。对于大型集群，这个数字会非常大，随着节点数目线性增加，需要的通信次数会以平方级别(N 的平方)增长</p>
+<p>如果使用 gossip 协议，每个节点发送数据，仅仅会随机选择一些节点发送，然后慢慢传播开来，就像流言（病毒）传播一样，这样，整个集群内的消息数量处于一个可控范围，不会造成太大的压力</p>
+<p>当然，gossip 协议存在 <strong>消息不及时</strong> 的缺点：消息在节点间传播是需要时间的，经过多个节点的转发，时效性不如直接发送好（不过大型集群，直接发送的压力太大，可能造成网络拥塞，时效性可能还不如 gossip）</p>
+<h3 id="总结">总结</h3>
+<p>通过缓存 <code>节点与 host</code> 的映射关系，以及基于 Gossip 的 Cluster Bus 通信机制，Redis Cluster 实现了服务注册与服务发现</p>
+<h2 id="如何将请求路由到正确的节点">如何将请求路由到正确的节点</h2>
+<p>这里假设你知道了 <a href="#%e5%a6%82%e4%bd%95%e5%81%9a%e6%95%b0%e6%8d%ae%e5%88%86%e7%89%87">Redis Cluster 数据分片的方式</a>
+</p>
+<p>客户端 <strong>第一次</strong> 向集群发起请求时，<strong>只需要请求任意一个节点</strong> 就可以了，<strong>Redis Cluster 实现了路由的动态重定向</strong></p>
+<p>具体来说：</p>
+<ul>
+<li>客户端第一次向集群发起请求时，请求任意一个节点</li>
+<li>该节点会「判断」请求的数据是否存储在本节点，如果是，直接响应</li>
+<li>否则，给客户端发送 <strong>MOVED 重定向</strong> ，告诉客户端应该请求哪个节点</li>
+<li>无论请求的数据是否存储在本节点，都会发送一份 <code>hash slot 到 cluster node 的映射</code> 给客户端</li>
+<li>客户端会 <strong>缓存</strong> 这个映射关系，下一次请求就有很大概率直接请求到正确节点，避免重定向</li>
+</ul>
+<p>可以看出，与 MySQL 不同，Redis 原生支持了请求的动态路由</p>
+<h2 id="ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</h2>
+<p>这里讨论的是读写分离的情况</p>
+<p>默认情况下，即使一个节点有若干个从节点，读请求也不会在从节点进行，<strong>如果客户端尝试在从节点读取数据，会收到一个 MOVED 重定向</strong></p>
+<p>也就是说，Redis Cluster 默认情况下，选择的是 C，即一致性保障</p>
+<p>但是我们也可以更改配置：<strong>READONLY</strong></p>
+<blockquote>
+<p>however clients can use replicas in order to scale reads using the READONLY command.</p>
+<p>READONLY tells a Redis Cluster replica node that the client is willing to read possibly stale data and is not interested in running write queries.</p>
+</blockquote>
+<p>要实现这一点，客户端可以使用 <code>READONLY</code> 命令通知从节点接受读请求。一旦进入只读模式，客户端就可以向该从节点发送读请求，读取存储在该节点的数据。</p>
+<p>当客户端给从节点发送了 READONLY 命令后，从节点之后再收到读请求，只要这个 key 对应的 hash slot 由自己的 master 负责，那么就不会重定向客户端的请求，而是自己处理，降低 master 的压力</p>
+<p>启用 READONLY，说明选择的是 A，即可用性保障</p>
+<p><strong>注意</strong></p>
+<p>虽然 Redis 支持读写分离，但是请求的负载均衡是不被原生支持的，这意味着 <strong>读请求的负载均衡需要在应用层手动做</strong></p>
+<h2 id="如何做数据分片">如何做数据分片</h2>
+<p>实现数据的分片，依赖的就是 key 分发模型</p>
+<p>Redis 给整个集群分配了 16384 个哈希槽（hash slots），每个 cluster 节点都拥有一部分 hash slots</p>
+<p>确定 key 在哪个 hash slot，这个过程使用 CRC16 算法，具体来说：</p>
+<pre tabindex="0"><code>hash_slot = CRC16(key) % 16384
+</code></pre><p>在客户端读写数据时：</p>
+<ul>
+<li>先计算出 hash slot</li>
+<li>读取本地缓存，获取这个 hash slot 在哪个 cluster 节点上存储</li>
+<li>请求对应的 cluster 节点</li>
+</ul>
+<p>cluster 节点收到数据后：</p>
+<ul>
+<li>校验一下这个 key 是否在当前 cluster 节点</li>
+<li>如果在，那么处理客户端的请求即可</li>
+<li>如果不在，读取本地缓存，确定这个 hash slot 在哪个 cluster 节点上存储，并发送 MOVE 错误给客户端，以重定向到正确的 cluster 节点</li>
+</ul>
+<p>hash slots 和一致性哈希思想上是一样的，都是尽可能的将数据分散来存储，避免热点问题，虽然范围查询能力不太好，但是作为 K-V 存储的 Redis 来说，范围查询的需求不是特别高</p>
+<h2 id="数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</h2>
+<p>这里讨论的是 Redis 的主从复制</p>
+<h3 id="第一次同步全量复制">第一次同步（全量复制）</h3>
+<p>从节点第一次同步主节点的数据的过程如下：</p>
+<ul>
+<li>从节点向主节点发起同步请求(PSYNC)，并携带主服务器的 server_id（这里为？）、offset（这里为 -1）</li>
+<li>主节点收到请求后，发送自己的 server_id 和 offset 给从节点</li>
+<li>从节点记录下主节点的 server_id 和同步的 offset</li>
+<li>主节点 fork 一个子进程后台生成 RDB 文件，发送给从节点</li>
+<li>从节点收到 RDB 文件后，开始同步主节点数据</li>
+</ul>
+<p>这个过程存在一个问题：在生成 RDB 期间，如果有新的写命令，是不会包含在 RDB 中的，那么从节点如何获取这些增量数据呢？</p>
+<p>为了解决这个问题：</p>
+<ul>
+<li>主进程会在生成 RDB 期间，将 <code>增量写命令</code> 写到 replication buffer 中</li>
+<li>从节点同步完 RDB 以后，会给主节点发送同步完成的消息</li>
+<li>主节点收到同步完成的消息以后，会将 replication buffer 的命令发给从节点</li>
+<li>从节点重放 replication buffer 的命令，第一次同步完成</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-08-19-37-43-281.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p><a href="https://xiaolincoding.com/redis/cluster/master_slave_replication.html#%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%90%8C%E6%AD%A5" target="_blank" rel="noopener">图片来自小林 coding</a>
+</p>
+</blockquote>
+<h3 id="增量同步">增量同步</h3>
+<p>第一次同步结束后，从节点与主节点会建立 TCP 长连接，用于同步增量数据</p>
+<p>当主节点执行了一个写命令后：</p>
+<ul>
+<li>主节点将该命令添加到 <strong>repl_backlog_buffer</strong> 中；</li>
+<li>主节点通过已经建立的 TCP 长连接，将这个写命令发送给所有的从节点；</li>
+<li>从节点接收到这个命令后，会将其放入自己的本地队列中，然后按序执行这个命令来更新自己的数据集；</li>
+<li>主节点在发送命令后不会等待从节点的响应，它会继续处理自己的操作请求。</li>
+</ul>
+<blockquote>
+<p>如果同步进度差距太大，怎么办？</p>
+</blockquote>
+<p>由于网络问题，从节点的同步进度较慢，落后的数据可能较多</p>
+<p>由于 repl_backlog_buffer 是一个环形缓冲区，如果落后的数据被覆盖了，就只能重新做全量同步</p>
+<h2 id="如何实现故障转移">如何实现故障转移</h2>
+<p>Redis Cluster 的故障转移是基于心跳机制实现的</p>
+<p>为了检测整个集群的状态，节点间会定期地互相发送心跳包（Heartbeat Packet），包含了节点本身的元数据，以及 <strong>发送节点视角下的集群状态信息</strong></p>
+<blockquote>
+<p>这里详细说一下 <strong>发送节点视角下的集群状态信息</strong>，对于后面理解 Redis Cluster 的错误检测会有帮助：</p>
+<p>当一个节点发出心跳包时，它会在包里面包含它所观察到的集群状态的信息。这有助于其他节点获得关于集群健康状况的信息，比如：</p>
+<ul>
+<li>下线状态（down）：如果发送心跳包的节点观察到集群或者特定的节点出现了问题（比如无法达到或不再发送心跳信号），它会在心跳包中报告该节点或集群处于 down 状态。</li>
+<li>正常状态（ok）：相反，如果发送心跳包的节点认为集群状态良好，所有节点都是活跃的并且响应心跳信号，那么它会报告集群状态是 ok 的。</li>
+</ul>
+<p>这样的设计能让集群中的其他节点根据接收到的心跳信息来更新自己的状态视图，从而使整个集群能够对节点失效做出快速响应，并相应地进行故障转移或重组。</p>
+</blockquote>
+<h3 id="检测">检测</h3>
+<p><strong>当节点超过 NODE_TIMEOUT 时间无法访问时，其他节点会给该节点标记 PFAIL。</strong> 无论是主节点还是副本节点，都可以为其它类型的节点标记 PFAIL。Redis 集群中节点不可达的概念是指我们发送了 ping，但在 NODE_TIMEOUT 时间内还未收到回复。</p>
+<p>一个节点单独的 PFAIL 标志只是该节点关于其他节点的本地信息，不足以触发故障转移。要视为节点已经 down 掉，<strong>需要将 PFAIL 状态升级为 FAIL。</strong></p>
+<blockquote>
+<p>那么如何将 PFAIL 状态升级为 FAIL？</p>
+</blockquote>
+<p>升级需要满足三个条件：</p>
+<ul>
+<li>某节点（称为 A）将另一个节点（称为 B）标记为 PFAIL。</li>
+<li>通过心跳检测机制，A 获取到了其它主节点对于 B 是否为 down 的意见</li>
+<li>大多数的 <strong>有效</strong>（在 <code>NODE_TIMEOUT * FAIL_REPORT_VALIDITY_MULT</code> 内报告 PFAIL 或者 FAIL 状态） 意见都认为这个节点为 down</li>
+</ul>
+<p>那么：</p>
+<ul>
+<li>节点 A 将 B <strong>标记为 FAIL</strong></li>
+<li>给其它节点发送 FAIL message</li>
+</ul>
+<p>FAIL message 会强制其它节点将 B 标记为 FAIL</p>
+<h3 id="转移">转移</h3>
+<p>当一个主节点被标记为 FAIL，并且 <strong>有可用的从节点</strong>，那么故障转移可以进行</p>
+<p>故障转移的过程是这样的：</p>
+<p>首先，每个从节点都是新的主节点的候选者</p>
+<p>从节点会递增 currentEpoch（投票轮数）</p>
+<p>每个从节点会通过 cluster bus 发送 FAILOVER_AUTH_REQUEST 包，请求其它主节点给自己投票</p>
+<p>每个主节点在 <code>NODE_TIMEOUT * 2</code> 时间内，<strong>只有一次投票机会</strong>（防止多个从节点当选），当主节点收到 FAILOVER_AUTH_REQUEST 包后，如果有投票机会，就会给这个从节点投票（发送 FAILOVER_AUTH_ACK）</p>
+<p>从节点会 <strong>抛弃</strong> 不属于当前 currentEpoch 的投票</p>
+<p>当一个从节点收到大多数主节点的投票后，它就成为了新的主节点</p>
+<p>如果超过 <code>NODE_TIMEOUT * 2</code> 时间，还没投票完毕，本轮投票失败，等待 <code>NODE_TIMEOUT * 4</code> 开启新的一轮投票</p>
+<p>一旦选举出新的主节点，其他节点会被通知这一变更，确保整个集群中所有节点的配置信息保持一致。</p>
+<p>旧的主节点重新上线，不再担任主节点的角色，而是成为新的主节点的从节点</p>
+<p>此外，Redis 还引入了一个 <strong>副本迁移机制</strong></p>
+<p>当一个主节点没有从节点时，副本迁移机制就会起作用：</p>
+<ul>
+<li>选择某个拥有最多从节点的主节点</li>
+<li>将该主节点的部分从节点迁移到孤儿主节点，成为孤儿主节点的从节点</li>
+</ul>
+<p>副本迁移可以进一步减少整个集群不可用的情况</p>
+<h2 id="如何实现分布式事务">如何实现分布式事务</h2>
+<p>Redis 原生不支持事务，就更不用说分布式事务了</p>
+<p>如果要实现分布式事务，就只能使用第三方的中间件了</p>
+<h2 id="总结-1">总结</h2>
+<p>作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster）</p>
+<p>要想进一步了解 Redis Cluster，可以看看这篇文章：<a href="https://blogs.skylee.top/posts/redis/%e9%ab%98%e5%8f%af%e7%94%a8/%e9%9b%86%e7%be%a4/note/" target="_blank" rel="noopener">Redis 集群</a>
+，也可以直接看 Redis 官方文档：<a href="https://redis.io/docs/reference/cluster-spec/" target="_blank" rel="noopener">Redis cluster specification</a>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

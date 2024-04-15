@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>分布式系统——Kafka - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="作为 MQ 的代表，Kafka 天生就是分布式的，支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转移、分布式事务 结构 每个 Topic 的 Partition 在多个"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="分布式系统——Kafka" />
+<meta property="og:description" content="Kafka 在分布式上是怎么做的" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-15T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="分布式系统——Kafka"/>
+<meta name="twitter:description" content="Kafka 在分布式上是怎么做的"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/">分布式系统——Kafka</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Kafka 在分布式上是怎么做的
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/kafka/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Kafka
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/kafka/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Kafka</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-15T00:00:00&#43;00:00">
+      2024-04-15
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      10 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#结构">结构</a></li>
+    <li><a href="#如何实现服务注册服务发现">如何实现服务注册、服务发现</a>
+      <ul>
+        <li><a href="#broker-如何发现彼此">Broker 如何发现彼此</a></li>
+        <li><a href="#producer-怎么发现-broker">Producer 怎么发现 Broker</a></li>
+        <li><a href="#consumer-怎么发现-broker">Consumer 怎么发现 Broker</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何将请求路由到正确的节点">如何将请求路由到正确的节点</a>
+      <ul>
+        <li><a href="#producer">Producer</a></li>
+        <li><a href="#consumer">Consumer</a></li>
+      </ul>
+    </li>
+    <li><a href="#ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</a>
+      <ul>
+        <li><a href="#一致性保障">一致性保障</a></li>
+        <li><a href="#可用性保障">可用性保障</a></li>
+        <li><a href="#ack-机制">ACK 机制</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何做数据分片">如何做数据分片</a></li>
+    <li><a href="#数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</a>
+      <ul>
+        <li><a href="#follower-同步数据时采取的是拉还是推">Follower 同步数据时，采取的是「拉」还是「推」</a></li>
+      </ul>
+    </li>
+    <li><a href="#故障转移">故障转移</a>
+      <ul>
+        <li><a href="#zookeeper-failover">Zookeeper Failover</a></li>
+        <li><a href="#controller-failover">Controller Failover</a></li>
+        <li><a href="#broker-failover">Broker Failover</a></li>
+      </ul>
+    </li>
+    <li><a href="#如何实现分布式事务">如何实现分布式事务</a>
+      <ul>
+        <li><a href="#kafka-的事务是面向一个-producer-的">kafka 的事务是面向一个 producer 的</a></li>
+        <li><a href="#多条消息发送事务">多条消息发送事务</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>作为 MQ 的代表，Kafka 天生就是分布式的，支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转移、分布式事务</p>
+<h2 id="结构">结构</h2>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-14-16-06-52-906.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>每个 Topic 的 Partition 在多个节点冗余存储，避免单点故障，保证可用性</li>
+<li>对于某一个 Partition 来说，其读写操作都在同一个 Broker 上进行</li>
+<li>Broker 之间相互关联，分享集群状态，支持故障转移</li>
+</ul>
+<h2 id="如何实现服务注册服务发现">如何实现服务注册、服务发现</h2>
+<h3 id="broker-如何发现彼此">Broker 如何发现彼此</h3>
+<p>与 Redis 类似，向现有集群添加一个新的 Broker，只需要指定 ZooKeeper 的地址即可</p>
+<p>这是怎么做到的？</p>
+<p>来看看具体步骤：</p>
+<ul>
+<li>初始化 ZooKeeper Client</li>
+<li>Broker 加入集群，尝试在 ZooKeeper 将自己注册为 Controller</li>
+<li>如果注册失败，说明集群中已经有 Controller 了，向 Controller 请求集群的元数据（Metadata）</li>
+<li>有了元数据，这个 Broker 就知道其它 Broker 的网络位置、以及负责的 Partition 了</li>
+</ul>
+<blockquote>
+<p>Kafka Controller 在集群中唯一存在，负责处理 ZooKeeper 上的事件，以及管理集群的 Metadata，从而减轻 ZooKeeper 的负担，使整个集群尽可能的脱离 ZooKeeper</p>
+</blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-20-16-11-22-626.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h3 id="producer-怎么发现-broker">Producer 怎么发现 Broker</h3>
+<p>在配置 Producer 时，只需要指定集群中任意一个 Broker 的网络地址即可</p>
+<p>发现其它 Broker 的具体实现也是依托于前面提到的 Metadata</p>
+<p>Producer 第一次会尝试与 Broker 建立连接，由于每个 Broker 都保存了集群的 Metadata，因此可以直接返回 Metadata 给 Producer</p>
+<p>这样，Producer 就知道其它 Broker 的网络位置、以及负责的 Partition 了，下次生产数据时，就可以直接与对应的 Broker 建立连接</p>
+<p>当然，Producer 手中的 Metadata 可能过期，当某次发送数据失败时，Producer 会尝试更新 Metadata，进而将 Message 发送给正确的 Broker</p>
+<h3 id="consumer-怎么发现-broker">Consumer 怎么发现 Broker</h3>
+<p>Consumer 发现 Broker 的方式与 Producer 类似：</p>
+<ul>
+<li>与任意 Broker 建立连接，并带上所属 Group-IDs</li>
+<li>Broker 计算 Group-IDs 由哪些 Broker 管理，并返回 Group Coordinators 的网络位置</li>
+</ul>
+<p>拿到 Group Coordinators 的网络位置后，Consumer 就可以给 Group Coordinators 发送 join group 请求</p>
+<p>Group Coordinators 会与 Consumer Group 的 Leader 通信</p>
+<p>Consumer Group Leader 会重新分配每个 Consumer 消费的 Topic 以及 Partition，并将分配结果发送给 Group Coordinators</p>
+<p>Group Coordinators 负责将分配结果分发给各个 Consumer，包括新加入的 Consumer</p>
+<p>这样，每个 Consumer 就知道了自己要消费的 Topic、Partition，以及 Partition 所属 Leader 的网络位置</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-14-16-56-01-681.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="如何将请求路由到正确的节点">如何将请求路由到正确的节点</h2>
+<h3 id="producer">Producer</h3>
+<p>对于 Producer 来说，第一次请求后保存了 Metadata，后续请求就可以根据 Metadata 来将请求路由到正确的 Broker</p>
+<p>当然，Metadata 可能过期，如果某一次生产数据失败了，Producer 会请求更新 Metadata，然后再重新发送</p>
+<h3 id="consumer">Consumer</h3>
+<p>对于 Consumer 来说，在 join group 以后，就拥有了 Consumer Metadata</p>
+<p>消费数据时，可以从 Metadata 中获取要消费的 Topic、Partition 以及对应的 Broker 的网络位置，从而将 Fetch 请求路由到正确的 Broker</p>
+<h2 id="ca-如何做权衡trade-off">C、A 如何做权衡（trade-off）</h2>
+<h3 id="一致性保障">一致性保障</h3>
+<p>对于同一个 Partition 而言，<strong>读写都是在 Leader 上进行的</strong>，不支持读写分离</p>
+<p>从这里看出，Kafka 还是 <strong>更倾向于一致性保障（C）</strong>，避免在多个 Broker 间读取产生的不一致问题</p>
+<p>但是这种方式，Leader 的读写压力可能较大</p>
+<blockquote>
+<p>事实真的如此吗？</p>
+<p>我们知道：一个 Topic 是有多个 Partition 的，这样就间接减少了单个 Broker 的读写压力</p>
+</blockquote>
+<h3 id="可用性保障">可用性保障</h3>
+<p>Kafka 的可用性保障，主要体现在一个 Partition 会冗余存储在多个 Broker 上，这样即使 Leader 挂了，也有 follower 来顶上</p>
+<h3 id="ack-机制">ACK 机制</h3>
+<p>我们能够通过配置 ACK 的值，来进一步做 C、A 的权衡：</p>
+<ol>
+<li><strong>acks=0（Fire and Forget）：</strong> 生产者发送消息后 <strong>不等待</strong> 服务器的响应，直接认为消息发送成功。（可用性保障）</li>
+<li><strong>acks=-1（Full Ack）：</strong> 生产者在消息被 <strong>写入主题的所有副本</strong>（leader 和所有 follower）并得到确认后才认为消息发送成功。（一致性保障）</li>
+<li><strong>acks=1（Leader Ack）：</strong> 生产者在消息被写入主题的分区 leader 后会收到服务器的确认。（比较均衡）</li>
+</ol>
+<h2 id="如何做数据分片">如何做数据分片</h2>
+<p>Kafka 数据分片体现在 Partition 上</p>
+<p>每个 Topic 被分成了多个 Partition</p>
+<p>每个 Partition 有一个 Leader，多个副本</p>
+<p>这样，对于单个 Topic 来说，读写请求就被分散到多个 Broker 上</p>
+<p>并且，对于单个 Partition 来说，读写请求在同一个 Broker 上，保障了一致性</p>
+<p>可以看出，<strong>相较于传统的读写分离方式，Kafka 这种分片方式，既可以分散读写请求，还能保证数据的一致性</strong></p>
+<h2 id="数据如何同步复制到各个节点">数据如何同步（复制）到各个节点</h2>
+<p>关键概念：</p>
+<ul>
+<li>ack</li>
+<li>推 vs. 拉</li>
+<li>ISR</li>
+<li>LW/HW/LEO</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-03-20-16-03-27-114.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>逻辑：</p>
+<ol>
+<li>leader 写完 local log 后，leader LEO++</li>
+<li>判断 producer 的 required ack 的值，如果为 0 或 1，立即调用 callResponse（返回结果给 producer），否则：</li>
+<li>调用 delayCallResponse，即等待所有的 replica 都同步完毕后，返回 resp</li>
+</ol>
+<p>delayCallResponse 做的事情：</p>
+<ol>
+<li>检查当前是否同步完毕，如果完毕，resp，否则：</li>
+<li>监听（watch）leader 该 partition 的 HW（HW 会随着所有 replica 的同步动态更新） 是否达到了 requiredOffset（即该消息在队列的 offset），如果达到了：</li>
+<li>判断当前 ISR 与 minISR 的关系，ISR &gt;= minISR（保证可用性，minISR 默认值为 1，生产环境建议修改），resp</li>
+</ol>
+<h3 id="follower-同步数据时采取的是拉还是推">Follower 同步数据时，采取的是「拉」还是「推」</h3>
+<p>Kafka 选择的是「拉」这个策略，具体来说，Follower 会有一个后台线程，定期在 Leader 拉取新的 Msg</p>
+<p>为什么不使用「推」，即让 Leader 主动推送 Msg 给 Follower 呢？</p>
+<p>让 Leader 推 Msg 给 Follower，如果推送数据太快，Follower 的写压力会很大</p>
+<p>而 Follower 也是一个 Broker，<strong>它可能也是若干个 Partition 的 Leader</strong>，如果 Follower 把大量资源分配给同步数据上，那么它所 Lead 的 Partition 可能读写性能就不太理想了</p>
+<p>因此，采取「拉取」这种策略，<strong>将同步速率决定权交给 Follower</strong>，优先保证 Follower 可以处理它所 Lead 的 Partition 的读写请求</p>
+<p><strong>这实际上是优先保证了可用性，而放弃一些一致性保障</strong>（如果 Leader 挂了，那么会丢失一些数据）</p>
+<h2 id="故障转移">故障转移</h2>
+<p>Kafka 的 failover 是一个可以聊很多的话题</p>
+<p>故障的产生，不一定是节点本身宕机，也有可能是网络原因</p>
+<h3 id="zookeeper-failover">Zookeeper Failover</h3>
+<p>Kafka 对 ZooKeeper 是强依赖的，如果 ZooKeeper 挂了，会导致：</p>
+<ul>
+<li>无法添加新的 Broker：连接不上 ZooKeeper，进而找不到 Controller，拿不到 metadata</li>
+<li>无法选举新的 Controller</li>
+</ul>
+<p>ZooKeeper 的故障转移过程这里就不再赘述</p>
+<p>麻烦的是 ZooKeeper <strong>hang</strong>，也就是 ZooKeeper 没有挂，但是整体响应速度很慢，会导致 ZK 和 Brokers 之间 <strong>Session Timeout</strong>（由 ZK 引起的）</p>
+<p>进而，ZooKeeper 会 <strong>错误</strong> 认为：</p>
+<ul>
+<li>Controller 挂了</li>
+<li>Broker 挂了</li>
+</ul>
+<p>这两种情况都会带来 Kafka 集群 <strong>不必要</strong> 的故障转移</p>
+<p>导致 ZooKeeper hang 住的原因主要是 ZK 机器的压力太大，负载过高</p>
+<p>因此，应该尽量减少对 ZK 的负担（Kafka 也意识到了这个问题，并在逐步减少对 ZK 的依赖，最新版本甚至不需要 ZK）</p>
+<h3 id="controller-failover">Controller Failover</h3>
+<p>Controller 发生故障，会导致集群：</p>
+<ul>
+<li>无法添加新的 Topic</li>
+<li>无法进行 Partition 重分配</li>
+<li>无法完成 Partition Leader 的选举</li>
+</ul>
+<p>由于 Kafka 集群只有一个 Controller，因此存在单点故障问题</p>
+<p>当 Controller 挂掉的时候，会触发 failover 机制，选举出新的 Controller 进行工作。</p>
+<h4 id="检测">检测</h4>
+<p>每个 broker 会 <strong>watch</strong> ZK 的 <code>/controller</code> 目录</p>
+<p>ZK 会与 Controller 建立心跳机制，如果超时，ZK 就认为 Controller 挂掉，会删除 <code>/controller</code> 目录</p>
+<p>其它 broker 会监听到这一事件，并开始 Controller 的选举过程</p>
+<h4 id="转移">转移</h4>
+<p>选举过程具体来说，与一个 broker 加入集群的步骤类似：</p>
+<ul>
+<li>试图去在 <code>/controller</code> 目录抢占创建 ephemeral node；</li>
+<li>如果已经有其他的 broker 先创建成功，那么说明新的 Controller 已经诞生，更新当前的元数据即可；</li>
+<li>如果自己创建成功，说明我已经成为新的 Controller，下面就要开始做初始化工作，</li>
+<li>初始化主要就是创建和初始化 partition 和 replicas 的状态机，并对 partitions 和 brokers 的目录的变化设置 watcher。</li>
+</ul>
+<p>新的 Controller 选举出来以后，如果原来的 Controller 重新上线，集群中就会出现多个 Controller，就是俗称的 <strong>脑裂</strong> 现象</p>
+<p>每当新的 Controller 产生的时候就会在 zk 中生成一个全新的、数值更大的 Controller epoch 的标识，并同步给其他的 broker 进行保存，这样当另一个 Controller 发送指令时，较小的 epoch number 请求就会被忽略。</p>
+<h3 id="broker-failover">Broker Failover</h3>
+<p>这里讨论的 Broker，指的是一个 Partition 的 Leader</p>
+<p>一个 Partition 会有一个 Leader 和多个 Follower，Leader 负责 Partition 的全部读写操作</p>
+<p>当一个 Leader 挂了，为了不让这个 Partition 离线（Offline），需要在 Follower 中选举一个来当新的 Leader</p>
+<h4 id="检测-1">检测</h4>
+<p>Broker Failover 的检测和转移全部都是由 Controller 完成的</p>
+<p>Controller 会 Watch ZooKeeper 的 <code>brokers</code> 目录</p>
+<p>当 ZK 认为一个 Broker 发生了 Session Timeout，会将失效的 Broker 标记为不可用，并将其状态设置为 DOWN。</p>
+<p>如果一段时间内，这个 DOWN 掉的 Broker 还没有没有恢复连接或重新注册，ZooKeeper 会删除对应的 <code>brokers</code> 目录（例如 <code>brokers/ids/1</code>）</p>
+<p>这一过程会被 Controller 监听到，于是 Controller 就知道哪个 Broker 出现了 Failure</p>
+<h4 id="转移-1">转移</h4>
+<p>Controller 会在 <strong>ISR 集合</strong> 中选择一个 Broker</p>
+<p>被选中的 Broker 就会成为这个 Partition 新的 Leader，故障转移就完成了</p>
+<p><strong>当然这里又可以在 C、A 之间做 trade-off：</strong></p>
+<p>Kafka 有一个配置项，允许 <strong>Unclean Election</strong></p>
+<p>启用这个配置项，如果 ISR 中没有 broker，那么就会在没有 catch up 的副本集合中选举一个 Broker 作为 Leader</p>
+<p>这意味着会 <strong>丢失部分未同步的数据</strong>，是可用性（A）优先的一种体现</p>
+<h4 id="为什么不采用少数服从多数的投票算法">为什么不采用「少数服从多数」的投票算法</h4>
+<p>在 Redis Cluster 的故障转移中，选举新的 master 节点采用的是「少数服从多数」的投票算法</p>
+<p>那 Kafka 为什么不使用呢？</p>
+<p>因为这种算法需要 <strong>较高的冗余度</strong></p>
+<p>如果只允许一台机器失败，需要有三个副本；而如果只容忍两台机器失败，则需要五个副本。</p>
+<p>而 Kafka 的 ISR 集合方法，分别只需要两个和三个副本，<strong>可用性更高</strong></p>
+<h2 id="如何实现分布式事务">如何实现分布式事务</h2>
+<p>Kafka 天生就是分布式的，它提供的事务支持，自然也是分布式事务</p>
+<h3 id="kafka-的事务是面向一个-producer-的">kafka 的事务是面向一个 producer 的</h3>
+<p>我们知道，kafka 的有序性建立在：<strong>单个 producer，partition 内部有序</strong>，多个 producer 的有序性无法保证</p>
+<p>讨论下面三个场景：</p>
+<ul>
+<li>N(N &gt; 1) producer =&gt; N(N &gt; 0) Partition：无序性</li>
+<li>1 producer =&gt; 1 Partition：有序性</li>
+<li>1 producer =&gt; N(N &gt; 1) Partition：原子性</li>
+</ul>
+<p>第一个场景肯定要用到 <strong>分布式事务</strong>，多个 producer 之间的协调属于分布式事务问题，不在本次讨论范畴</p>
+<p>对于第二个、第三个场景，需求就是多条消息写入的原子性</p>
+<blockquote>
+<p><strong>1 个 producer</strong> 向 N(N &gt;= 1) 个 partition 生产一批数据（这个是由业务决定的），生产者希望这些数据要么整体都投递到 kafka 中，要么整体失败，<strong>即保证多条消息写入的原子性</strong></p>
+</blockquote>
+<p>这个就是 kafka 事务的概念</p>
+<p>综上：<strong>Kafka 的事务是面向一个 producer 的</strong></p>
+<h3 id="多条消息发送事务">多条消息发送事务</h3>
+<p>多个 producer 向同一个 partition 写入数据的情况是很常见的</p>
+<p>下面讨论这种情况（注意：这些 producer 之间没有任何关联）</p>
+<p>如果仅仅依靠 pid + seq，显然不能区分同一个 partition 内，来自不同 producer 的事务</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-22-12-02-19.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h4 id="transaction-id">Transaction ID</h4>
+<p>为了解决上述问题，kafka 引入了 Transaction ID 的概念</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-22-12-08-17.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>每个 producer 都有自己的 Transaction ID，这是一个配置项</p>
+<p><strong>一个 producer 对应 一个 Transaction ID</strong></p>
+<h4 id="transaction-marker">Transaction Marker</h4>
+<p>有了 Transaction ID 还不够，为啥？</p>
+<p>对于同一个 producer 而言，生产的 msg 的 Transaction ID 都是一样的，无法区分哪条消息处于哪个事务</p>
+<p>因此，为了区分不同的事务，Kafka 引入了 Transaction Marker 的概念</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-22-14-39-53.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Transaction Marker 包含了：</p>
+<ol>
+<li>TxID：事务 ID</li>
+<li>PID：生产者 ID</li>
+<li>Epoch：生产者版本号（后面会讲）</li>
+<li><strong>Flag：标志，成功或者失败</strong></li>
+</ol>
+<p>为了保证性能，Kafka 在「回滚」事务时，<strong>不会真正的从磁盘中删除 Msg（随机 IO，慢）</strong> ，而是打上标记，代表该 msg 被「软删除」</p>
+<p>consumer 在消费数据时，消费到一批数据，且 Transaction Marker 的 flag 字段表明该事务处于「回滚」状态，就 <strong>不会</strong> 将该消息提交给我们的应用程序</p>
+<h4 id="producer-epoch">Producer Epoch</h4>
+<p>讨论以下场景：</p>
+<p>一个 producer 在正常的生产数据，但是突然挂了，为了保证可用性，我们通常会再启动一个 producer，此时就会发生问题：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-01-22-14-55-00.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>发生了重复写入问题</p>
+<p>分析原因，其本质是多个 producer 写入消息。之前讨论过，Kafka 事务是针对单 producer 的</p>
+<p>为了解决这个问题，Kafka 引入了 Producer Epoch（版本号）的概念</p>
+<blockquote>
+<p>Producer Epoch，它是由 Kafka Producer 在创建事务时生成的。当一个 Producer 出现故障或重新初始化的时候，它的 Epoch 值会递增，Producer ID 通常保持不变。这个机制可以帮助 Kafka 避免一种称为 &ldquo;zombie producers&rdquo; 的情况，也就是当一个旧的、失败的 Producer 再次尝试向 Kafka 写入数据时可能导致数据重复的问题。</p>
+</blockquote>
+<p>broker 对于相同的 Transaction ID，<strong>只会接受 Epoch 值更大的 producer 的写入请求</strong></p>
+<p>当 producer 出现故障或者重新初始化时，Epoch 值递增</p>
+<h2 id="总结">总结</h2>
+<p>Kafka 天生就是分布式的，本身对分布式提供了较为完善的支持</p>
+<ul>
+<li>通过 ZooKeeper 进行服务注册与发现，Kafka 能够动态地将新的 Broker 添加到集群中，并在 Producer 和 Consumer 发送请求时根据集群的元数据进行动态路由，从而实现了服务的自动发现和请求的动态分发。</li>
+<li>Topic 分片以及 Partition 副本确保了数据的可用性和容错性</li>
+<li>故障转移机制则能够在 Controller 和 Partition Leader 出现故障时自动进行故障转移，保证了整个系统的稳定运行。</li>
+<li>通过 Transaction ID 和 Transaction Marker 确保了事务的原子性和一致性</li>
+</ul>
+<p>在一致性和可用性方面的权衡上，Kafka 偏向于保障一致性，但也能够通过：</p>
+<ul>
+<li>配置 ACK 的值</li>
+<li>配置是否允许 Unclean Elect</li>
+</ul>
+<p>来调整一致性和可用性之间的平衡。</p>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://www.cnblogs.com/fxjwind/p/4972244.html" target="_blank" rel="noopener">Apche Kafka 的生与死 – failover 机制详解</a>
+</li>
+<li><a href="https://www.cnblogs.com/natee/p/14762969.html" target="_blank" rel="noopener">【Kafka】Leader选举（broker /分区）</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+
+
+
+</body>
+</html>

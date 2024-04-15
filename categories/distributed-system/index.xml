@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Distributed-System on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/categories/distributed-system/</link>
+    <description>Recent content in Distributed-System on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Mon, 15 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/categories/distributed-system/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>分布式系统——Kafka</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/</link>
+      <pubDate>Mon, 15 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/</guid>
+      <description>作为 MQ 的代表，Kafka 天生就是分布式的，支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转移、分布式事务 结构 每个 Topic 的 Partition 在多个</description>
+    </item>
+    <item>
+      <title>分布式系统——MySQL</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</link>
+      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</guid>
+      <description>作为传统关系型数据库，MySQL 的分布式倾向于存储方面：将数据分散存储到各个节点，减少单个节点的读写压力、存储压力 同时，MySQL 原生支持了</description>
+    </item>
+    <item>
+      <title>分布式系统——Redis</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/</link>
+      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/</guid>
+      <description>作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster），支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转</description>
+    </item>
+    <item>
+      <title>分布式系统</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/intro/note/</link>
+      <pubDate>Sat, 13 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/intro/note/</guid>
+      <description>分布式系统是由 多个 独立的计算机或者节点组成的系统，这些计算机通过网络进行通信和协作，共同完成特定的任务或提供服务。 分布式系统的设计目标是：提</description>
+    </item>
+  </channel>
+</rss>
