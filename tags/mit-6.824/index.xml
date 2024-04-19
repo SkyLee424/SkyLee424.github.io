@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>MIT-6.824 on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/tags/mit-6.824/</link>
+    <description>Recent content in MIT-6.824 on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Fri, 19 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/tags/mit-6.824/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MIT-6.824: Lab 2: Key/Value Server</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab2/note/</link>
+      <pubDate>Fri, 19 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab2/note/</guid>
+      <description>实验要求 直接看这个链接：https://pdos.csail.mit.edu/6.824/labs/lab-kvsrv.html 实现 本次实验</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 1: MapReduce</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab1/note/</link>
+      <pubDate>Wed, 17 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab1/note/</guid>
+      <description>MapReduce MapReduce 是一种分布式编程模型，用于大规模数据处理。它由 Google 开发，用于处理 Google 搜索引擎索引的网页数据。 MapReduce 利用了 分布式计算 的优势，将大规模数据分成小的块</description>
+    </item>
+  </channel>
+</rss>
