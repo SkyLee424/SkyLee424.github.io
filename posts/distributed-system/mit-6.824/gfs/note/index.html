@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>GFS --- The Google File System - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="分布式存储的难点 为什么要分布式存储？因为提升单台计算机的能力是有限的，要想存储大量的数据，不得不引入 多台 计算机，提高 性能 但是，计算机是不可靠"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="GFS --- The Google File System" />
+<meta property="og:description" content="GFS 的介绍" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-21T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-21T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="GFS --- The Google File System"/>
+<meta name="twitter:description" content="GFS 的介绍"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/gfs/note/">GFS &mdash; The Google File System</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      GFS 的介绍
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-21T00:00:00&#43;00:00">
+      2024-04-21
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#分布式存储的难点">分布式存储的难点</a></li>
+    <li><a href="#gfs-的设计目标">GFS 的设计目标</a></li>
+    <li><a href="#架构">架构</a></li>
+    <li><a href="#master-节点">Master 节点</a>
+      <ul>
+        <li><a href="#职责">职责</a></li>
+        <li><a href="#维护了什么数据">维护了什么数据</a></li>
+      </ul>
+    </li>
+    <li><a href="#gfs-读取数据的过程">GFS 读取数据的过程</a>
+      <ul>
+        <li><a href="#读取跨越多个-chunk-的情况">读取跨越多个 chunk 的情况</a></li>
+      </ul>
+    </li>
+    <li><a href="#gfs-写入数据的过程">GFS 写入数据的过程</a>
+      <ul>
+        <li><a href="#一些问题">一些问题</a></li>
+      </ul>
+    </li>
+    <li><a href="#gfs-的一致性">GFS 的一致性</a></li>
+    <li><a href="#gfs-的局限性">GFS 的局限性</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="分布式存储的难点">分布式存储的难点</h2>
+<p>为什么要分布式存储？因为提升单台计算机的能力是有限的，要想存储大量的数据，不得不引入 <strong>多台</strong> 计算机，提高 <strong>性能</strong></p>
+<p>但是，计算机是不可靠的，集群中总会有一些计算机会出现一些问题，这要求我们的系统具有 <strong>错误忍受（Fault Tolerance）</strong> 的能力</p>
+<p>实现容错，最常用的方式就是引入多个副本存储冗余数据，这样，即使某个副本出现问题，还可以切换到另一个副本。但是，副本之间的数据可能不完全同步，也就是 <strong>一致性保障</strong></p>
+<p>如果要保证副本间数据完全一致，这就是我们通常意义上的「强一致性」，那么需要引入很多额外的操作，系统的 <strong>性能又会降低</strong></p>
+<p>可以发现，整个形成了一个闭环，我们不得不 <strong>在性能与一致性之间做权衡</strong>，这也是分布式理论常常聊到的 C、A</p>
+<h2 id="gfs-的设计目标">GFS 的设计目标</h2>
+<p>GFS（Google File System），是 Google 内部使用的一种分布式文件系统</p>
+<p>GFS 追求的是：</p>
+<ul>
+<li>大文件的读写</li>
+<li>高吞吐</li>
+<li>顺序读写</li>
+<li>具有容错能力：分片（shard）、故障恢复</li>
+<li>较弱的一致性</li>
+</ul>
+<h2 id="架构">架构</h2>
+<p>下面是 GFS 论文的架构图：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-21-10-11-44-045.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="master-节点">Master 节点</h2>
+<h3 id="职责">职责</h3>
+<p>Master 节点在 GFS 中起到一个协调作用，整个 GFS 集群中 <strong>只有一个 Master</strong></p>
+<p>GFS 把单个文件分成了若干个 <strong>块（chunk）</strong>，ChunkServer 负责存储实际数据，而 Master 负责管理文件与 chunk 的信息</p>
+<h3 id="维护了什么数据">维护了什么数据</h3>
+<p>为了将客户端的读写请求正确路由到 ChunkServer，Master 需要维护：</p>
+<ul>
+<li>FileName 与 Chunk 数组的映射关系</li>
+<li>ChunkID 与 Chunk 数据的映射关系</li>
+</ul>
+<p>这里的 Chunk 数据包括：</p>
+<ul>
+<li>ChunkServer 数组：一个 Chunk 会存储在多个 Server 上</li>
+<li>Version：该 Chunk 的版本号</li>
+<li>Primary Chunk Server：对 Chunk 的写操作需要在 Primary Chunk Server 上顺序处理</li>
+<li>租期时间：Primary Chunk Server 在租期时间后，不再是 Primary Server</li>
+</ul>
+<p>关于租期时间，<a href="#%e4%b8%80%e4%ba%9b%e9%97%ae%e9%a2%98">后面</a>
+ 还会聊到</p>
+<p>这些维护的数据（元数据）都存储在内存中</p>
+<p>不过仅仅存储在内存中，是不够的，Master 应该将：</p>
+<ul>
+<li>FileName 与 Chunk 数组的映射关系</li>
+<li>Version</li>
+</ul>
+<p>持久化到磁盘，以保证重启时可以恢复数据</p>
+<blockquote>
+<p>为什么需要将这两个数据持久化？</p>
+</blockquote>
+<p>假设不持久化 FileName 与 Chunk 数组的映射关系，那么 Master 重启时，需要向所有 ChunkServer 请求，并汇总，得到映射关系，这个过程非常耗时</p>
+<p>而 Version 的作用主要是用于判断某个 ChunkServer 上的某个 Chunk 是不是 <strong>最新</strong> 的</p>
+<blockquote>
+<p>为啥不直接使用最大的 Version？</p>
+</blockquote>
+<p>假设 Master 重启后，向所有 ChunkServer 请求每个 Chunk 的 Version，这里存在问题：有可能 Version 最大的 ChunkServer 无法与 Master 通信（但是可以和客户端通信，即网络分区问题），那么 Master 拿到的 Version，就不是真实最大的 Version</p>
+<p>因此，Version 需要持久化</p>
+<blockquote>
+<p>怎么持久化？</p>
+</blockquote>
+<p>Master 会以「操作日志」的方式，间接的将这些数据持久化到磁盘</p>
+<blockquote>
+<p>当 Master 故障重启，并重建它的状态，你不会想要从 log 的最开始重建状态，因为 log 的最开始可能是几年之前，所以 Master 节点会在磁盘中创建一些 <strong>checkpoint</strong> 点，这可能要花费几秒甚至一分钟。这样 Master 节点重启时，会从最近的 checkpoint 恢复</p>
+</blockquote>
+<h2 id="gfs-读取数据的过程">GFS 读取数据的过程</h2>
+<p>Client 要想读取数据，需要给 Master 提供要读取的文件名、读取的起始偏移 Offset</p>
+<p>Master 收到了 Client 的读取请求，会先从 <code>FileName 到 Chunk 数组的映射</code> 中获取 Chunk 数组</p>
+<p>由于每个 Chunk 数组的大小为 64M，因此，可以很轻松的根据 Offset 获取待读取的 Chunk</p>
+<p>知道应该读取哪个 Chunk 后，Master 会读取 <code>ChunkID 到 ChunkServer 数组的映射</code>，并将 ChunkServer 数组返回给 Client</p>
+<p>Client 有了 ChunkServer 数组，会从里面选择一个网络位置距离自己最近的 ChunkServer 读取数据（根据 IP 地址判断，Google 机房的 IP 是连续的）</p>
+<p>Client 会缓存 ChunkServer 数组，这样后续读取数据，就可以不用经过 Master，减小 Master 的请求压力</p>
+<h3 id="读取跨越多个-chunk-的情况">读取跨越多个 chunk 的情况</h3>
+<p>Client 可能会读取不止一个 Chunk 的数据，例如，一个 Client 读取了大于 64M 的数据，或者 Client 仅仅读取两个字节，但是这两个字节恰好处于两个不同的 Chunk 中</p>
+<blockquote>
+<p>客户端本身依赖了一个 GFS 的库，这个库会注意到读请求跨越了 Chunk 的边界 ，并会将读请求拆分，之后再将它们合并起来。所以这个库会与 Master 节点交互，Master 节点会告诉这个库说 Chunk7 在这个服务器，Chunk8 在那个服务器。之后这个库会说，我需要 Chunk7 的最后两个字节，Chunk8 的头两个字节。GFS 库获取到这些数据之后，会将它们放在一个 buffer 中，再返回给调用库的应用程序。</p>
+<p>Master 节点会告诉库有关 Chunk 的信息，而 GFS 库可以根据这个信息找到应用程序想要的数据。应用程序只需要确定文件名和数据在整个文件中的偏移量，<strong>GFS 库和 Master 节点共同协商将这些信息转换成 Chunk</strong>。</p>
+</blockquote>
+<p>上面引用的内容来自 MIT-6.824 Lecture03-GFS 课程，Robert 教授的解释，翻译自 <a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-03-gfs/3.5" target="_blank" rel="noopener">3.5 GFS 读文件（Read File）</a>
+</p>
+<h2 id="gfs-写入数据的过程">GFS 写入数据的过程</h2>
+<p>我们这里仅讨论 <strong>Append</strong> 的情况</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-21-10-12-08-523.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Master 收到了 Client 的写入请求，会先从 <code>FileName 到 Chunk 数组的映射</code> 中获取 Chunk 数组</p>
+<p>由于 Chunk 的写入，必须在 Primary Server（主副本） 上进行，因此，Master 需要确定最后一个 Chunk 的 Primary Server 和 Secondary Server</p>
+<p>在某一个时间点，Master 不一定指定了 Chunk 的主副本。所以，写文件的时候，需要考虑 Chunk 的主副本不存在的情况。</p>
+<p>假设没有指定 Chunk 的主副本，Master 会在所有可用副本中，选择 Chunk Version 与 Master 上保存 Chunk Version <strong>一致</strong> 的副本集合（即数据是最新的）</p>
+<p>然后，这些副本集合中，会选择一个作为 Primary Server，其余的作为 Secondary Server</p>
+<p>然后，Master 通知 Primary 和 Secondary 服务器，你们可以修改这个 Chunk，并给 Primary Server 设定租期（60s），当租期到了以后，Primary Server 就不再是 Primary 的了（租期的作用后面会聊）</p>
+<p>现在，Master 需要更新本地存储的 Version，并持久化</p>
+<p>有了 Primary Server 和 Secondary Server，Master 就可以将这些副本集合发给 Client</p>
+<p>再来看看 Client 有了副本集合以后，数据的发送过程：</p>
+<ol>
+<li>Client 给所有副本集合发送待追加的数据</li>
+<li>副本集合收到数据后，会将数据存到一个临时文件中，并给 Client 发送 ACK</li>
+<li>Client 收到 ACK 以后，会告诉 Primary Server，说：“你可以将数据追加到 Chunk 中了”</li>
+<li>Primary Server 收到请求后，会检查是否可以写入，如果可以，那么写入，并通知所有的 Secondary Server，可以写入</li>
+<li>每个 Secondary Server 收到请求后，会检查是否可以写入，如果可以，那么写入，并给 Primary Server 发 &ldquo;yes&rdquo;，否则写入失败，发送 &ldquo;fail&rdquo;</li>
+<li>只有到 Primary Server 收到了所有 Secondary Server 的 &ldquo;yes&rdquo;，才会给 Client 发送写入成功，否则告诉 Client，写入失败了</li>
+</ol>
+<p>GFS 论文说，如果客户端从 Primary 得到写入失败，那么客户端应该重新发起整个追加过程。客户端首先会重新与 Master 交互，找到文件末尾的 Chunk；之后，客户端需要重新发起对于 Primary 和 Secondary 的数据追加操作。</p>
+<h3 id="一些问题">一些问题</h3>
+<p>下面的问题来自 <code>MIT-6.824 Lecture03-GFS 课程</code> 学生提问</p>
+<blockquote>
+<p>写文件失败之后 Primary 和 Secondary 服务器上的状态如何恢复</p>
+</blockquote>
+<p>GFS 没有做什么额外措施（例如回滚成功写入的数据），因此，如果写入失败，那么副本间的数据可能会 <strong>不一致</strong></p>
+<blockquote>
+<p>写文件失败之后，读 Chunk 数据会有什么不同</p>
+</blockquote>
+<p>取决于读的哪个副本</p>
+<p>如果读的是写入成功的副本，那么就可以读到之前追加的数据；否则读不到</p>
+<blockquote>
+<p>什么时候版本号会增加</p>
+</blockquote>
+<p>版本号只在 Master 节点认为 <strong>Chunk 没有 Primary</strong> 时才会增加。</p>
+<p>在一个正常的流程中，如果对于一个 Chunk 来说，已经存在了 Primary，那么 Master 节点会记住已经有一个 Primary 和一些 Secondary，Master 不会重新选择 Primary，也不会增加版本号。它只会告诉客户端说这是 Primary，并不会变更版本号。</p>
+<blockquote>
+<p>可不可以通过版本号来判断副本是否有之前追加的数据</p>
+</blockquote>
+<p>所有的 Secondary 都有相同的版本号。版本号只会在 Master 指定一个新 Primary 时才会改变。</p>
+<p>所以，副本（参与写操作的 Primary 和 Secondary）都有相同的版本号，你没法通过版本号来判断它们是否一样</p>
+<blockquote>
+<p>客户端将数据拷贝给多个副本会不会造成瓶颈</p>
+</blockquote>
+<p>在 GFS 论文中（包括前文提到的 <a href="#gfs-%e5%86%99%e5%85%a5%e6%95%b0%e6%8d%ae%e7%9a%84%e8%bf%87%e7%a8%8b">写入数据过程</a>
+），都说到「Client 给所有副本集合发送待追加的数据」</p>
+<p>那 Client 的性能与网络带宽不会成为瓶颈吗？</p>
+<p>实际上，之后，<strong>论文又改变了说法</strong>，说 <strong>客户端只会将数据发送给离它最近的副本</strong>，之后那个副本会将数据转发到另一个副本，以此类推形成一条链，直到所有的副本都有了数据。这样一条数据传输链可以在数据中心内减少跨交换机传输（否则，所有的数据吞吐都在客户端所在的交换机上）。</p>
+<blockquote>
+<p>如果 Master 节点发现 Primary 挂了会怎么办 =&gt; 租期的作用</p>
+</blockquote>
+<p>Master 指定了一个 Primary 后，会定期的 Ping 它，如果超时没有收到应答，那么 Master 认为这个 Primary 挂了</p>
+<p>如果此时立即指定一个新的 Primary，会出现 <strong>脑裂</strong> 的问题：Primary 可能并没有挂，只是网络分区问题</p>
+<p>立即指定一个新的 Primary，那么该 Chunk 就会有两个 Primary，这是我们不想看到的</p>
+<p>因此，GFS 在实现这一点时，并没有立即指定新的 Primary，而是等待当前 Primary 的 <strong>租期到期</strong> 以后，才指定新的 Primary，这样，就可以安全指定 Primary 而无需担心脑裂的问题</p>
+<blockquote>
+<p>如果是对一个新的文件进行追加，那这个新的文件没有副本，会怎样</p>
+</blockquote>
+<p>基本上与 <a href="#gfs-%e5%86%99%e5%85%a5%e6%95%b0%e6%8d%ae%e7%9a%84%e8%bf%87%e7%a8%8b">写入数据过程</a>
+ 一致</p>
+<p>Master 会从客户端收到一个请求说，我想向这个文件追加数据。</p>
+<p>Master 节点会发现，该文件没有关联的 Chunk。Master 节点会创造一个新的 Chunk ID。</p>
+<p>之后，Master 节点通过查看自己的 Chunk 表单发现，自己其实也没有 Chunk ID 对应的任何信息。</p>
+<p>之后，Master 节点会创建一条新的 Chunk 记录说，我要创建一个新的版本号为 1，再随机选择一个 Primary 和一组 Secondary 并告诉它们，你们将对这个空的 Chunk 负责，请开始工作。论文里说，每个 Chunk 默认会有三个副本，所以，通常来说是一个 Primary 和两个 Secondary。</p>
+<h2 id="gfs-的一致性">GFS 的一致性</h2>
+<p>前面提到，如果写入失败，副本间会出现数据不一致的问题</p>
+<p>因此，GFS 的一致性保障是比较弱的，这样设计与 GFS 的追求相同：高吞吐，高性能，允许一定的数据不一致</p>
+<p>如果要追求强一致性，会不可避免的提高整个系统的复杂度，性能也会降低</p>
+<p>如果要将 GFS 设计成强一致的，可以考虑以下几点：</p>
+<ul>
+<li>Primary 有重复检测的能力：实现 Exactly Once</li>
+<li>Secondary 必须成功执行写入请求，而不是返回一个错误</li>
+<li>Secondary 有可能同步比较慢，客户端可能需要强制请求 Primary 以获取最新的数据</li>
+</ul>
+<h2 id="gfs-的局限性">GFS 的局限性</h2>
+<p>GFS 最严重的问题在于：<strong>只有一个 Master 节点</strong></p>
+<ul>
+<li>Master 会维护 FileName、Chunk、ChunkServer、Version 等等元数据，而这些元数据运行时会在内存存储，因此内存，存在瓶颈</li>
+<li>只有一个 Master，应对大量的 Client 的请求，可能处理不过来</li>
+<li>Master 挂了，故障转移是手动的</li>
+<li>Client 很难发现自己读取的数据可能是「错误」的</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-03-gfs" target="_blank" rel="noopener">MIT-6.824 Lecture03-GFS</a>
+</li>
+<li><a href="https://pdos.csail.mit.edu/6.824/papers/gfs.pdf" target="_blank" rel="noopener">The Google File System</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+
+
+
+</body>
+</html>

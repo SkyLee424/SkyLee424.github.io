@@ -7,8 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Fri, 19 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 21 Apr 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/categories/distributed-system/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GFS --- The Google File System</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</link>
+      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</guid>
+      <description>分布式存储的难点 为什么要分布式存储？因为提升单台计算机的能力是有限的，要想存储大量的数据，不得不引入 多台 计算机，提高 性能 但是，计算机是不可靠</description>
+    </item>
     <item>
       <title>MIT-6.824: Lab 2: Key/Value Server</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab2/note/</link>
