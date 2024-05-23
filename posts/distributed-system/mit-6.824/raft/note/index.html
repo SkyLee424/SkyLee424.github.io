@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>Raft --- The famous distributed consensus protocol - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="角色 Raft 协议包含三种角色： Leader Follower Candidate 选举计时器超时（Leader 超时没有发送心跳） 选举成功（获得半数以上投票） 选举失败（投票数不够，或者有了新的 L"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="Raft --- The famous distributed consensus protocol" />
+<meta property="og:description" content="Raft 协议相关介绍" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-23T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-05-23T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Raft --- The famous distributed consensus protocol"/>
+<meta name="twitter:description" content="Raft 协议相关介绍"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/raft/note/">Raft &mdash; The famous distributed consensus protocol</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Raft 协议相关介绍
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/raft/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Raft
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/raft/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Raft</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-05-23T00:00:00&#43;00:00">
+      2024-05-23
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      13 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#角色">角色</a></li>
+    <li><a href="#leader-选举">Leader 选举</a></li>
+    <li><a href="#日志复制">日志复制</a>
+      <ul>
+        <li><a href="#日志复制的过程">日志复制的过程</a></li>
+        <li><a href="#fail">Fail</a></li>
+        <li><a href="#日志在-raft-中的作用">日志在 Raft 中的作用</a></li>
+      </ul>
+    </li>
+    <li><a href="#持久化">持久化</a></li>
+    <li><a href="#日志压缩">日志压缩</a></li>
+    <li><a href="#raft-怎么处理脑裂的-分布式系统应该如何应对脑裂">Raft 怎么处理脑裂的？=&gt; 分布式系统应该如何应对脑裂？</a>
+      <ul>
+        <li><a href="#分布式系统应该如何应对脑裂">分布式系统应该如何应对脑裂</a></li>
+      </ul>
+    </li>
+    <li><a href="#follower-和-candidate-崩溃follower-and-candidate-crashes">Follower 和 candidate 崩溃（Follower and candidate crashes）</a></li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="角色">角色</h2>
+<p>Raft 协议包含三种角色：</p>
+<ul>
+<li>Leader</li>
+<li>Follower</li>
+<li>Candidate</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-27-16-59-59-467.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ol>
+<li>选举计时器超时（Leader 超时没有发送心跳）</li>
+<li>选举成功（获得半数以上投票）</li>
+<li>选举失败（投票数不够，或者有了新的 Leader）</li>
+<li>有了比自己 term 更大的 Leader（通常发生在旧 Leader 网络分区问题恢复时）</li>
+</ol>
+<h2 id="leader-选举">Leader 选举</h2>
+<p>什么时候开始选举？</p>
+<p>每个 Follower 会维护一个 <strong>选举计时器</strong></p>
+<p>如果选举计时器超时，那么该 Follower 认为 Leader 挂了，准备开始选举</p>
+<p>Follower 此时会变成 Candidate：</p>
+<ul>
+<li>将自己的 Term 加一</li>
+<li>并给集群剩余的 Followers 发送 VoteRPC，要求 Followers 给自己投票</li>
+</ul>
+<p>投票采取 FIFO 机制：每个 Follower 只有一票，收到一个投票请求，如果：</p>
+<ul>
+<li>自己有票</li>
+<li>Candidate 的 Term 大于等于自己的 Term</li>
+<li>Candidate 的 Log <strong>比自己新或者一致</strong></li>
+</ul>
+<p>那么 Follower 会给该 Candidate 投票</p>
+<p>如果某一个 Candidate 拥有超过半数（整个集群中）的票，那么该 Candidate 就升级为 Leader</p>
+<blockquote>
+<p>某一轮选举可能失败（每个 candidate 都没有拿到半数以上的选票），怎么解决的？</p>
+</blockquote>
+<p>如果选举的 candidate <strong>同时</strong> 开启选票，可能出现选票被「瓜分」的情况</p>
+<p>每个 Candidate 会在选举开始时启动一个 <strong>选举超时计时器</strong></p>
+<p>如果计时器超时，那么当前 candidate 会 <strong>重新开启</strong> 一轮新的投票</p>
+<blockquote>
+<p>选举超时计时器的超时时间怎么确定的？</p>
+</blockquote>
+<p>超时时间实际上是一个 <strong>随机值</strong>，范围在 [min,max] 之间，这样可以避免多次选举都失败的极限情况</p>
+<p>范围怎么确定？</p>
+<blockquote>
+<p>广播时间（broadcastTime） &laquo; 选举超时时间（electionTimeout） &laquo; 平均故障间隔时间（MTBF）</p>
+</blockquote>
+<p>论文的解释是：</p>
+<blockquote>
+<p>广播时间必须比选举超时时间小一个量级，这样 Leader 才能够有效发送心跳信息来组织 Follower 进入选举状态。再加上随机化选举超时时间的方法，这个不等式也使得无果选票（split vote）变得几乎不可能。而选举超时时间需要比平均故障间隔时间小上几个数量级，这样整个系统才可以稳定地运行。</p>
+<p>翻译自 <a href="https://zhuanlan.zhihu.com/p/524885008" target="_blank" rel="noopener">知乎</a>
+</p>
+</blockquote>
+<h2 id="日志复制">日志复制</h2>
+<p>为了保证集群的可用性，Leader 需要将客户端发来的 Command 同步给 Follower</p>
+<p>在 Raft 协议中，将 Command 以及其它元数据封装成一个「日志」</p>
+<p>一个日志包含以下内容：</p>
+<ul>
+<li>Command</li>
+<li>Term：收到该 Command 时，Leader 的 CurTerm</li>
+</ul>
+<p>Term 的作用主要是用于检测 Follower 与 Leader 的 Log 是否一致，即 <a href="#fail">一致性检查</a>
+</p>
+<h3 id="日志复制的过程">日志复制的过程</h3>
+<p>这里以「一个客户端请求执行的过程」来展示日志是如何在节点间复制的：</p>
+<ol>
+<li>客户端向 Leader 发送一条 Command</li>
+<li>Leader 收到该 Command，将其封装成一个 Log</li>
+<li>Leader 向所有 Follower 发送 AE 请求，要求 Follower 将该 Log Append 到本地</li>
+<li>Follower 收到 AE 请求，执行 <a href="#fail">一致性检查</a>
+ ，并返回结果给 Leader</li>
+<li>当 Leader 收到半数以上的 Follower 的确认以后，可以认为这个 Command 在整个集群中被「Commit」，推进 <strong>CommitIdx</strong>，然后：</li>
+<li>Leader 本地执行 Command，推进 <strong>ApplyIdx</strong>，告诉客户端执行成功</li>
+</ol>
+<blockquote>
+<p>Follower 看起来仅仅只是将 Log 存储在本地，还没有执行 Command？</p>
+</blockquote>
+<p>下一次 Leader 向 Follower 发起 AE 请求时，会顺带上 AppendIdx 和 CommitIdx</p>
+<p>Follower 可以根据 CommitIdx，来判断哪些日志已经被提交，并执行这些已经提交的日志</p>
+<p>这个特性，决定了 Raft 协议中，Follower 应用的数据 <strong>不总是最新的</strong>，因此，客户端实际的 <strong>读写操作应该都在 Leader 进行</strong></p>
+<h3 id="fail">Fail</h3>
+<p>Raft 通过在 AE 执行时的 <strong>一致性检查</strong> 来确保即使出现错误，也能保证数据的一致性</p>
+<p>一致性检查，是在 Follower 执行的</p>
+<p>具体来说，Leader 在发送 AE 请求时，会带上 <code>前一个日志条目的索引位置和任期号</code></p>
+<p>Follower 会检查自己的日志是否包含 Leader 发来的 <code>前一个日志条目的索引位置和任期号</code>，如果不包含，那么一致性检查失败</p>
+<p>正常情况下，一致性检查不会失败，但是如果 Leader 挂了，就有可能出现检查失败的情况</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.bLogs.skylee.top/2024-04-27-17-54-28-774.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>当一个 Leader 成功当选时（最上面那条日志），Follower 可能是以下 (a-f)几种情况。每一个盒子表示一条日志条目，盒子里面的数字表示任期号。一个 Follower 有可能会缺失一些日志条目（a-b），一个 Follower 也有可能会有一些未被提交的日志条目（c-d），或者两种情况都有 (e-f)。例如，场景 f 有可能是这样发生的：f 对应的服务器在任期 2 的时候是 Leader，它追加了一些日志条目到自己的日志中，一条日志还没提交就宕机了，但是它很快就恢复重启了，然后再在任期 3 重新被选举为 Leader，又追加了一些日志条目到自己的日志中，在这些任期 2 和任期了的日志还没有被提交之前，该服务器又宕机了，并且在接下来的几个任期里一直处于宕机状态。</p>
+<p>翻译自 <a href="https://zhuanlan.zhihu.com/p/524885008" target="_blank" rel="noopener">知乎</a>
+</p>
+</blockquote>
+<p>在一致性检查失败时，Leader 会 <strong>强制</strong> Follower 复制 Leader 的日志来解决一致性问题</p>
+<p>具体来说，Follower 在一致性检查失败后，会给 Leader 一个 reply，告诉 Leader 一致性检查失败了</p>
+<p>为了使 Follower 的日志跟自己（Leader）一致，Leader 必须找到两者达成一致的最大的日志条目索引，删除 Follower 日志中从那个索引之后的所有日志条目，并且将自己那个索引之后的所有日志条目发送给 Follower。</p>
+<p>例如，对于上图中的 e，Leader 会告诉 Follower，删除 <code>idx = 6</code> 及后面所有的 Log，并发送自己 <code>idx = 6</code> 及后面所有的 Log 给 Follower 应用</p>
+<blockquote>
+<p>如果一个 Leader 在发送 AE 给 Follower 前挂了，那么 Follower 怎么知道哪些 Log 已经被 commit？</p>
+</blockquote>
+<p>对于这种情况，Follower <strong>无需</strong> 知道哪些 Log 被 commit</p>
+<p>怎么理解？</p>
+<p>如果一个 Log 没有被 commit，并且 Leader 挂了，客户端后面会知道这个 command 执行失败了，那么这个 Log 丢了也无所谓</p>
+<p>主要看 Log 被 commit 的情况</p>
+<p>如果一个 Log（假设为 A）被 commit，那么意味着有 <strong>半数以上</strong> 的节点本地的 Log 列表中，<strong>都有 A</strong></p>
+<p>假设 Leader 挂了，自然需要选举一个新的 Leader 出来</p>
+<p>根据前文提到的 Leader 选举过程中，Follower 投票规则：</p>
+<ul>
+<li>自己有票</li>
+<li>Candidate 的 Term 大于等于自己的 Term</li>
+<li><strong>Candidate 的 Log 比自己新或者一致</strong></li>
+</ul>
+<p>前面提到了：<strong>半数以上</strong> 的节点（假设为集合 S）本地的 Log 列表中，<strong>都有 A</strong></p>
+<p>那么，根据投票规则，只有集合 S 中的节点，才有机会当选 Leader（不处于 S 中的节点，由于日志比较旧，不会得到大多数投票）</p>
+<p>当选出一个新的 Leader 时，新的 Leader 可以 <strong>安全地</strong> 认为自己的 Log 都是已经 commit，立即发起一轮 heartbeat（AE）请求</p>
+<p>这样，其它的 Follower 就知道哪些日志已经被 commit 了</p>
+<blockquote>
+<p>是否存在数据丢失问题？</p>
+</blockquote>
+<p>不会存在</p>
+<p>原因和上面的问题类似：截断的 Log 是没有被旧 Leader 提交的 Log，这些 Log 即使丢了也无所谓，客户端是有感知的，后面重试即可</p>
+<h3 id="日志在-raft-中的作用">日志在 Raft 中的作用</h3>
+<p>参考 MIT-6.824，Lecture 6 中，Robert 教授的 <a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-06-raft1/6.5-ri-zhi-raft-log" target="_blank" rel="noopener">讲解</a>
+：</p>
+<h4 id="log-是-leader-用来对操作排序的一种手段">Log 是 Leader 用来对操作排序的一种手段</h4>
+<p>对于这些复制状态机来说，所有副本不仅要执行相同的操作，还需要 <strong>用相同的顺序</strong> 执行这些操作。而 Log 与其他很多事物，共同构成了 Leader 对接收到的客户端操作分配顺序的机制。</p>
+<h4 id="临时存放-command">临时存放 Command</h4>
+<p>这个可以从 Leader 和 Follower 两个方面来理解：</p>
+<p>对于 Leader 来说，如果同步 Command 给 Follower 时，网络出现问题，需要重传，那么缓存的 Log 就可以派上用场</p>
+<p>并且，即使对于 Commit 后的 Command，还是有可能有一些 Follower 没有拿到这个日志，Leader 本地缓存的 Log 还可以用于 Follower 后续的数据恢复</p>
+<p>对于 Follower 来说，即使同步到了 Command，也不知道这些 Command 有没有 Commit，只有 Leader 发来下一次 AE 请求，才知道哪些 Command 已经被提交</p>
+<h4 id="帮助重启的服务器恢复状态">帮助重启的服务器恢复状态</h4>
+<p>所有节点都需要保存 Log 还有一个原因，就是它可以帮助重启的服务器恢复状态。对于一个重启的服务器来说，会使用存储在磁盘中的 Log。每个 Raft 节点都需要将 Log 写入到它的磁盘中，这样它故障重启之后，Log 还能保留。而这个 Log 会被 Raft 节点用来从头执行其中的操作进而重建故障前的状态，并继续以这个状态运行。所以，Log 也会被用来持久化存储操作，服务器可以依赖这些操作来恢复状态。</p>
+<p>这样，服务器重启，就不需要在 Leader 拉取大量 Log，进一步减少网络压力</p>
+<h2 id="持久化">持久化</h2>
+<!-- 简单写写，后面完善 -->
+<ul>
+<li>Logs</li>
+<li>CurrentTerm</li>
+<li>VoteFor</li>
+</ul>
+<blockquote>
+<p>为啥要持久化这三个数据？</p>
+</blockquote>
+<p>首先是 Logs，持久化 Logs，主要是帮助服务器重启时快速恢复状态，而不是让 Leader 给自己发送 AE RPC 全量同步，减少网络压力</p>
+<p>其次是 CurrentTerm，如果重启的 Raft Server 不知道自己之前的 Term，可能会让 Raft 共识产生混乱</p>
+<p>最后是 VoteFor，重启的 Raft Server 除了要知道自己的 Term 以外，还要知道自己在这个 Term 是否给其它 Server 投过票，避免重复投票，造成选举错误</p>
+<blockquote>
+<p>为啥不持久化其它数据：commitIndex、lastApplied、nextIndex、matchIndex？</p>
+</blockquote>
+<p>这几个 Index 都可以随着 Raft 共识协议的进行而自更新，无需持久化</p>
+<blockquote>
+<p>谁来持久化？持久化的过程？怎么写磁盘更高效？</p>
+</blockquote>
+<p>无论是 Leader 还是 Follower，都要持久化自己的数据到本地磁盘</p>
+<p><strong>如果 Leader 收到了一个客户端请求，在发送 AppendEntries RPC 给 Followers 之前，必须要先持久化存储在本地。因为 Leader 必须要 commit 那个请求，并且不能忘记这个请求。实际上，在回复 AppendEntries 消息之前，Followers 也需要持久化存储这些 Log 条目到本地，因为它们最终也要 commit 这个请求，它们不能因为重启而忘记这个请求。</strong></p>
+<p>一个简单的实现方式是：只要内存中，Logs、CurrentTerm、VoteFor 三者任何一个发生改变，就持久化，Lab3C 也是这样实现的</p>
+<blockquote>
+<p>这种持久化方式合适吗？</p>
+</blockquote>
+<p>很容易发现前面提到的持久化方式是不合理的，在实际生产环境显然不可用</p>
+<p>因为无论哪个数据变化，都要做一次 <strong>整个数据</strong> 的持久化</p>
+<p>数据持久化，是对 <strong>磁盘</strong> 进行 IO 操作的过程，而磁盘的速率很低，采取这种持久化方式，会产生性能问题</p>
+<p>那应该怎么持久化？</p>
+<p>我们可以 <strong>参考 Redis 的持久化方式：</strong></p>
+<p>将持久化分为两个文件：</p>
+<ul>
+<li>metadata</li>
+<li>logs.aof</li>
+</ul>
+<p>其中，metadata 用于持久化 CurrentTerm 和 VoteFor，因为这两个数据很小，每次更改持久化，也没什么问题</p>
+<p>而 logs.aof 用于持久化 Logs，每次客户端追加 Logs 时，我们只需要向 Logs 追加一条数据即可，这个是顺序 IO，性能较高</p>
+<p>并且，可以引入 <strong>批量写入</strong> 的机制，具体来说，每次追加 Logs 时，不需要立即写磁盘，而是写到内存(rf.Logs)，然后后台启动一个 goroutine，做定时持久化操作，持久化的频率根据数据的可靠性来确定：</p>
+<ul>
+<li>如果要求比较高的可靠性，那频率应该更高，甚至，放弃批量写入机制，而是直接写入磁盘（write+fsync）</li>
+</ul>
+<p>此外，写入磁盘，通常使用的是 write 系统调用，<strong>不会立即将文件写入磁盘</strong>，而是在 OS 层面做了一个 buffer，还是有数据丢失的风险</p>
+<p>我们还可以再启动一个 goroutine，定期调用 fsync，控制文件真正写入磁盘的频率</p>
+<h2 id="日志压缩">日志压缩</h2>
+<blockquote>
+<p>为什么要创建快照？</p>
+</blockquote>
+<p>随着上层服务不断的请求，Raft Server 存储的 Log 肯定会越来越多，此时，整个 Raft 的性能会受到影响</p>
+<p>因此，需要在合适的时机对 Raft 做一次日志压缩</p>
+<p>实现日志压缩最简单的方式之一就是创建「快照」，将当前 Raft 实例的状态完整记录下来：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-23-21-14-31-457.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>可以发现，前五条日志条目经过「压缩」后，仅剩下 2 条，这个有点 <strong>类似 Redis 的 AOF 重写</strong></p>
+<blockquote>
+<p>快照包含了哪些内容？</p>
+</blockquote>
+<p>从上图可以发现，快照包含了：</p>
+<ul>
+<li>压缩后的 Logs 列表</li>
+<li>LastIncludedIndex</li>
+<li>LastIncludedTerm</li>
+</ul>
+<p>包含 LastIncludedIndex、LastIncludedTerm 的原因是为了 AE RPC 中做的 <a href="#fail">一致性检查</a>
+</p>
+<blockquote>
+<p>怎么创建快照？是否依赖客户端？</p>
+</blockquote>
+<p>通常情况下，节点独立生成快照，并且快照的生成依赖于客户端（上层服务），因为 Raft 并不知道自己存储的 Logs 的定义是什么，只有客户端才知道如何做压缩</p>
+<p>但是 Leader 不可避免偶尔需要发送快照给一些落后的 Follower。这通常发生在 Leader 已经丢弃了需要发给 Follower 的下一条日志条目的时候。幸运的是，这种情况在正常操作中是不会出现的：一个与 Leader 保持同步的 Follower 通常都会拥有该日志条目。</p>
+<p>不过如果一个 Followe 运行比较缓慢，或者是它刚加入集群，那么它就可能会没有该日志条目。这个时候 Leader 会通过网络将该快照发送给该 Follower，以使得该 Follower 可以更新到最新的状态。</p>
+<p>leader 使用 InstallSnapshotRPC 来发送快照给那些太落后的 follower</p>
+<p>如果 Leader 发送 rf.Logs 的所有内容，Follower 还是拒绝了 Leader 的 AE 请求，说明 Follower 同步进度太慢，以至于 Leader 的 rf.Logs 中，没有 Follower 所需的日志（这部分日志由于快照的创建而被截断）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-20-17-08-38-070.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>上面的图片展示了这种情况：</p>
+<ul>
+<li>Follower 的同步速度很慢，即使 Leader 的 nextIndex=7，也无法被 Follower 接受</li>
+</ul>
+<p>此时，Leader 需要发送自己的「快照」给 Follower，让 Follower 使用快照来覆盖自己本地的 Logs：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-20-17-10-00-834.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>当然还有一种特殊的情况，即 Follower 收到了描述自己日志前缀的快照：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-20-17-14-53-386.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>这通常是由于重传和错误产生的，对于这种「错误」的情况，Follower 需要：</p>
+<ul>
+<li><strong>截断</strong> 被快照覆盖部分的日志</li>
+<li>使用该 Snapshot 作为自己的 Snapshot</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-20-17-18-10-486.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="raft-怎么处理脑裂的-分布式系统应该如何应对脑裂">Raft 怎么处理脑裂的？=&gt; 分布式系统应该如何应对脑裂？</h2>
+<p>脑裂主要是 <strong>网络分区问题</strong> 产生的</p>
+<p>当旧 Leader 所在网络分区出现问题，无法与部分 Follower 建立心跳，那么这一部分 Follower 会开始选举</p>
+<p>讨论两种情况：</p>
+<ol>
+<li>Leader 所在网络分区具有节点数大于 n / 2</li>
+<li>Leader 所在网络分区具有节点数小于 n / 2</li>
+</ol>
+<p>对于第一种情况，Follower 的选举过程会失败，因为没有足够的票数，不存在脑裂</p>
+<p>对于第二种情况，Follower 的选举过程也许会成功，假设成功，会出现脑裂吗？</p>
+<p>如果选举成功，即旧 Leader 所在网络分区具有节点数小于 n / 2，那么客户端在 <strong>旧 Leader 的写入操作全部都会失败</strong>，只有在新的 Leader 上执行写操作，才有可能成功</p>
+<p>当旧 Leader 所在的网络分区问题修复后，旧 Leader 以及 Follower 会收到新 Leader 的 AE 请求</p>
+<p>由于新 Leader 的 Term 更大，因此，旧 Leader 会降级为 Follower，并从新的 Leader 同步丢失的 Log</p>
+<p>Raft 就是通过 <strong>过半票决 + Term</strong> 这一规则来规避「脑裂」这一问题的</p>
+<h3 id="分布式系统应该如何应对脑裂">分布式系统应该如何应对脑裂</h3>
+<p>在以前，建立分布式系统时，应对脑裂主要有两种方式：</p>
+<ul>
+<li>建立 <strong>绝对可靠</strong> 网络：当网络不出现故障时，那就意味着，如果客户端不能与一个服务器交互，那么这个服务器肯定是关机了。可以安全选举出一个 Leader</li>
+<li>人工解决问题，不要引入任何自动化</li>
+</ul>
+<p>类似 Raft 的 Term 机制，可以为集群的 Leader 引入 <strong>Epoch</strong> 的概念</p>
+<p>集群中的每个角色都要维护自己 Leader 的 Epoch</p>
+<p>一旦收到了比自己维护的 Epoch 大的，就更新；遇到比自己维护 Epoch 小的，就忽略</p>
+<p>这样，基本可以规避「脑裂」带来的影响</p>
+<p>例如，<strong>Redis Cluster</strong> 模式下，每个节点会维护一个 <strong>currentEpoch</strong>，选举 Leader 时，也需要得到绝大多数选票才可以晋升为 Leader</p>
+<p>与 Raft 不同的是，向 Leader 写入数据，不需要同步给 n/2+1 个 Follower 以后，才执行写入，因此，如果客户端向旧的 Leader 写入数据，<strong>有可能出现数据丢失的问题</strong></p>
+<p>当旧的 Leader 网络分区恢复以后，会收到新的 Leader 的心跳，发现自己的 currentEpoch 还小，于是降级为 Follower，并主动从新的 Leader 拉取同步数据</p>
+<p><strong>Kafka</strong> 应对脑裂的措施：</p>
+<p>Zookeeper quorum 需要多数派，所以如果 ZK 集群发生分区，最多只有一边会有多数派。</p>
+<p><strong>Controller 脑裂</strong></p>
+<p>要成为 Controller 需要与 ZK 保持一个活跃的会话（临时 znode 注册）。如果当前 Controller 被分隔到 ZK quorum 之外，它应该 <strong>自愿停止认为自己是 Controller</strong>。这应该最多需要 zookeeper.session.timeout.ms = 6000。仍然连接到 ZK quorum 的 Nodes 应该在他们之间选举一个新的 Controller。（基于这个：https://stackoverflow.com/a/52426734）</p>
+<p><strong>Partition Leader 脑裂</strong></p>
+<p>Partition 的 Leader 也需要与 ZK 保持一个活跃的会话。失去与 ZK quorum 连接的 Leader 应该 <strong>自愿放弃 Leader 身份</strong>。被选举的 Controller 将检测到旧 Leader 断开，然后由 Controller 执行新的 Partition Leader 的选举过程</p>
+<p>那么，在 ZK 超时窗口期间，被分割的前 Leader 收到的 Producer 请求会发生什么？有几种可能性。</p>
+<p>如果 Producer 的 acks = all 并且 Topic 的 min.insync.replicas = replication.factor，那么所有 ISR 应该 <strong>有完全相同的数据</strong>。前 Leader 最终会拒绝正在进行的写入，Producer 会重新尝试它们。新选出的 Leader 将不会丢失任何数据。另一方面，在网络分区修复之前它将无法处理任何写请求。是否拒绝客户请求或在后台尝试一段时间，将取决于 Producer。</p>
+<p>否则，新的 Leader 很可能会缺失 zookeeper.session.timeout.ms + replica.lag.time.max.ms = 16000 毫秒的记录，这些记录在网络分区修复后将从前 Leader 那里被截断。</p>
+<h2 id="follower-和-candidate-崩溃follower-and-candidate-crashes">Follower 和 candidate 崩溃（Follower and candidate crashes）</h2>
+<p>Follower 和 candidate 崩溃，无需特别处理</p>
+<p>当 Follower 或者 candidate 崩溃，发送给它们的 RPC 请求会失败，Raft 采取尝试重新发送来解决这个问题，因为 AE RPC 和 RV RPC 是 <strong>幂等</strong> 的</p>
+<blockquote>
+<ul>
+<li>多次发送相同的 AE 是无害的，Follower 收到重复的 AE 会直接忽略</li>
+<li>多次发送相同的 RV 是无害的，Follower 会记录当前 Term 投票的对象，不会存在对于相同 Term，某一个 Candidate 的投票，第一次成功，第二次失败的问题</li>
+</ul>
+</blockquote>
+<h2 id="总结">总结</h2>
+<ul>
+<li>Raft 是一种 <strong>强一致性</strong> 的分布式共识协议，它以牺牲可用性和部分性能为代价，保证了数据的可靠性</li>
+<li>Raft 的强一致性体现在 Leader 写入日志时，需要过半节点都写入以后，才写入</li>
+<li>Raft 使用 <strong>过半票决 + Term</strong> 处理脑裂问题，过半票决思想在 Leader 选举、Append Entries 都有体现</li>
+<li>为了 Raft 的正确进行，以及宕机重启快速恢复状态，Raft 需要持久化一些元数据到磁盘</li>
+<li>随着日志条目的增加，日志维护成为额外的性能开销，Raft 通过日志压缩来解决这个问题</li>
+</ul>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-06-raft1" target="_blank" rel="noopener">Lecture 06 - Raft1</a>
+</li>
+<li><a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-07-raft2" target="_blank" rel="noopener">Lecture 07 - Raft2</a>
+</li>
+<li><a href="https://pdos.csail.mit.edu/6.824/labs/lab-raft.html" target="_blank" rel="noopener">6.5840 Lab 3: Raft</a>
+</li>
+<li><a href="https://pdos.csail.mit.edu/6.824/papers/raft-extended.pdf" target="_blank" rel="noopener">In Search of an Understandable Consensus Algorithm(Extended Version)</a>
+</li>
+<li><a href="https://zhuanlan.zhihu.com/p/524885008" target="_blank" rel="noopener">【译文】Raft 协议：In Search of an Understandable Consensus Algorithm (Extended Version) 大名鼎鼎的分布式共识算法</a>
+</li>
+<li><a href="https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/#cluster-current-epoch" target="_blank" rel="noopener">Redis cluster specification</a>
+</li>
+<li><a href="https://stackoverflow.com/questions/48825755/how-does-kafka-handle-network-partitions" target="_blank" rel="noopener">How does kafka handle network partitions?</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+
+
+
+</body>
+</html>

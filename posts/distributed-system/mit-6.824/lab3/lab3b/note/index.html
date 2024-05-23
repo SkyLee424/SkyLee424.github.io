@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MIT-6.824: Lab 3B: log - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="Server State 要实现日志复制，Server 需要维护以下状态： type Raft struct { // ... commitIndex int // index of highest log entry known to be committed applyIndex int // index of highest log entry to be applied nextIndex []int // for each server, index of the next log entry to send to that"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MIT-6.824: Lab 3B: log" />
+<meta property="og:description" content="Raft 日志复制（同步）实现细节" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-12T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-05-12T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MIT-6.824: Lab 3B: log"/>
+<meta name="twitter:description" content="Raft 日志复制（同步）实现细节"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/lab3/lab3b/note/">MIT-6.824: Lab 3B: log</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Raft 日志复制（同步）实现细节
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/raft/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Raft
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/raft/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Raft</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-05-12T00:00:00&#43;00:00">
+      2024-05-12
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      7 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#server-state">Server State</a></li>
+    <li><a href="#start-方法">Start 方法</a></li>
+    <li><a href="#appendentries-rpc">AppendEntries RPC</a></li>
+    <li><a href="#background-task">Background Task</a>
+      <ul>
+        <li><a href="#startapply">startApply</a></li>
+        <li><a href="#startreplica">startReplica</a></li>
+      </ul>
+    </li>
+    <li><a href="#正确性验证">正确性验证</a></li>
+    <li><a href="#踩的坑">踩的坑</a>
+      <ul>
+        <li><a href="#log-的-index-从-1-开始而不是-0">Log 的 Index 从 1 开始，而不是 0</a></li>
+        <li><a href="#日志不一致问题">日志不一致问题</a></li>
+        <li><a href="#复制时间太长">复制时间太长</a></li>
+        <li><a href="#总测试时间太长">总测试时间太长</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="server-state">Server State</h2>
+<p>要实现日志复制，Server 需要维护以下状态：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">Raft</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="nx">commitIndex</span> <span class="kt">int</span> <span class="c1">// index of highest log entry known to be committed
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">applyIndex</span>  <span class="kt">int</span> <span class="c1">// index of highest log entry to be applied
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">nextIndex</span>  <span class="p">[]</span><span class="kt">int</span> <span class="c1">// for each server, index of the next log entry to send to that server (initialized to leader last log index + 1)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">matchIndex</span> <span class="p">[]</span><span class="kt">int</span> <span class="c1">// for each server, index of highest log entry known to be replicated on server (initialized to 0, increases monotonically)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">applyCh</span> <span class="kd">chan</span> <span class="nx">ApplyMsg</span> <span class="c1">// a channel on which the tester or service expects Raft to send ApplyMsg messages.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><ul>
+<li>commitIndex：可以提交的日志的最大 Index</li>
+<li>applyIndex：已经提交的日志的最大 Index</li>
+<li>nextIndex[i]：要发送给 peers[i] 的起始日志 Index</li>
+<li>matchIndex[i]：peers[i] 已经同步的日志 Index</li>
+<li>applyCh：当一个日志被提交，Leader 将这个日志发送到 applyCh，相当于在本地执行命令</li>
+</ul>
+<h2 id="start-方法">Start 方法</h2>
+<p>Leader 需要实现 Start 方法：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">Start</span><span class="p">(</span><span class="nx">command</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span>
+</span></span></code></pre></div><p>Start 方法会被上层客户端调用，请求在 Raft 集群执行 Command</p>
+<p>返回值：</p>
+<ul>
+<li>index：该 command 如果被提交，在整个 Logs 中的 Index</li>
+<li>Term：Leader 当前的 Term</li>
+<li>isLeader：自己是不是 Leader</li>
+</ul>
+<p>具体步骤：</p>
+<ul>
+<li>检查自己是不是 Leader，如果不是，直接返回</li>
+<li>将 Command 封装成 Log，追加到 rf.logs 中</li>
+<li>返回</li>
+</ul>
+<p>为了提高性能，不要每次调用 Start 方法，都尝试发送一次 AE RPC，而是「批量」发送，真正的发送操作，在后台任务 <a href="#startreplica">startReplica</a>
+ 这里</p>
+<h2 id="appendentries-rpc">AppendEntries RPC</h2>
+<p>参数与返回值：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestAppendEntriesArgs</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Term</span>     <span class="kt">int</span> <span class="c1">// leader&#39;s term
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">LeaderId</span> <span class="kt">int</span> <span class="c1">// leader&#39;s id
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">PrevLogIndex</span>      <span class="kt">int</span> <span class="c1">// index of log entry immediately preceding new ones
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">PrevLogTerm</span>       <span class="kt">int</span> <span class="c1">// term of prevLogIndex entry
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">LeaderCommitIndex</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">LeaderCommitTerm</span>  <span class="kt">int</span> <span class="c1">// term of lastCommitLog
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Entries</span> <span class="p">[]</span><span class="o">*</span><span class="nx">Entry</span> <span class="c1">// Logs
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestAppendEntriesReply</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">Term</span> <span class="kt">int</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">Success</span> <span class="kt">bool</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>AppendEntries RPC 逻辑：</p>
+<ul>
+<li>如果 term 小于自己的 term，直接 return false</li>
+<li>如果 <strong>rf.logs[args.LeaderCommitIndex].Term == LeaderCommitTerm</strong>，更新 rf.commitIndex（建议只要 Term 合法，就更新 commitIndex，以便快速应用 Command 到本地）</li>
+<li>如果自己的 Logs 中，在 prevLogIndex 处，Log 对应的 term 与 prevLogTerm 不一致，return false</li>
+<li>基于 args.PrevLogIndex 截断本地日志</li>
+<li>追加 entries 到本地日志</li>
+<li>return true</li>
+</ul>
+<p>如果 Follower 返回 false，Leader 怎么处理？</p>
+<p>Follower 返回 false，说明还需要发送 entries 以外的数据给 Follower，Leader 需要给 nextIndex[i] 减一，然后再次尝试发送 AE，直到成功</p>
+<blockquote>
+<p>「减一」，这样会不会发送很多次 RPC 以后，才能成功？能不能优化？</p>
+</blockquote>
+<p>论文给出的解释是这样的：</p>
+<blockquote>
+<p>如果需要的话，下面的协议可以用来优化被拒绝的 AppendEntries RPCs 的个数。</p>
+<p>比如说，当拒绝一个 AppendEntries RPC 的时候，follower 可以包含冲突条目的任期号和自己存储的那个任期的第一个 index。借助这些信息，leader 可以跳过那个任期内所有的日志条目来减少 index。这样就变成了每个有冲突日志条目的任期只需要一个 AppendEntries RPC，而不是每一个日志条目都需要一次 AppendEntires RPC。</p>
+<p>在实践中，我们认为这种优化是没有必要的，因为失败不经常发生并且也不可能有很多不一致的日志条目。</p>
+</blockquote>
+<p>当然，我在实现时，还是做了一个相对简单的优化：</p>
+<p>类似 TCP 的慢开始阶段，每次发送失败，<code>rf.nextIndex[serverID] = max(rf.nextIndex[serverID] - offset, 0)</code>，其中，offset 会随着 AE 失败而 <strong>指数</strong> 递增，当 offset 超过门限值 <code>threshold = 64</code> 时，线性递增</p>
+<p>当然这个方式存在一个小问题：无法准确找到第一个 Log 一致的位置，会存在多发送 Log 的情况，可以控制 threshold 的大小来减缓这个情况</p>
+<p>不过，这个开销像较于多次发送 AE RPC 来说，还是比较小的</p>
+<blockquote>
+<p>2024.5.19 更新：</p>
+<p>实现 Lab3C 时遇到了 one(xxx) failed to reach agreement 的问题，于是将发送 AE 这个操作改成「异步」发送</p>
+<p>修改过后，使用这个方式，不太好控制 offset（多个 goroutine 乱序，offset 很难修改正确）</p>
+<p>于是，放弃了这个优化，最终采用论文提到的优化方式</p>
+</blockquote>
+<h2 id="background-task">Background Task</h2>
+<p>主要有两个后台任务：</p>
+<ul>
+<li>startApply</li>
+<li>startReplica</li>
+</ul>
+<h3 id="startapply">startApply</h3>
+<p>startApply 会定时将已经提交的日志应用到本地（无论是 Leader 还是 Follower）</p>
+<p>步骤如下：</p>
+<ul>
+<li>更新 commitIndex（如果是 Leader）</li>
+<li>向 applyCh「提交」日志</li>
+</ul>
+<p>怎么更新？</p>
+<p>使用「二分」思想快速确定：</p>
+<ul>
+<li>L = commitIndex（旧的），R = len(rf.logs) - 1</li>
+<li>检查 (L + R) / 2 这个 Index 是否可以提交</li>
+<li>剩余二分逻辑&hellip;</li>
+</ul>
+<p>而「检查」一个 Index 是否可以提交，需要看看 rf.matchIndex，如果超过半数的 rf.matchIndex 都大于等于该 Index，那么是可以被提交的</p>
+<h3 id="startreplica">startReplica</h3>
+<p>Leader 在初始化时，会新建 len(rf.peers) - 1 个 startReplica 后台任务，分别处理与 Follower 的日志同步</p>
+<p>步骤如下：</p>
+<ul>
+<li>检查自己是不是 Leader，如果不是，休眠等待</li>
+<li>封装 RequestAppendEntriesArgs</li>
+<li>向自己负责的 peer 发送 AE 请求，<strong>异步</strong> 等待响应</li>
+<li>如果发送失败，休眠等待下一次重试</li>
+<li>检查 peer 的响应结果：
+<ul>
+<li>如果成功，更新 nextIndex[i] 为 len(logs)，matchIndex[i] 为 len(logs)，offset = 1</li>
+<li>如果失败，更新 nextIndex[i] = nextIndex[i] - offset，offset = min(offset * 2, threshold)</li>
+</ul>
+</li>
+<li>重置休眠计时器</li>
+</ul>
+<h2 id="正确性验证">正确性验证</h2>
+<p>单次测试结果：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-10-20-08-833.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>循环测试 100 次结果：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-11-58-06-110.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="踩的坑">踩的坑</h2>
+<h3 id="log-的-index-从-1-开始而不是-0">Log 的 Index 从 1 开始，而不是 0</h3>
+<p>lab 提供的 test_test.go 文件认为 Log 的 Index 从 1 开始，实现时需要注意封装 ApplyMsg 时，将 index 设置为 1 开始，而不是 0</p>
+<h3 id="日志不一致问题">日志不一致问题</h3>
+<p>测试用例是 TestRejoin3B 函数</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">TestRejoin3B</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">servers</span> <span class="o">:=</span> <span class="mi">3</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span> <span class="o">:=</span> <span class="nf">make_config</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span> <span class="nx">servers</span><span class="p">,</span> <span class="kc">false</span><span class="p">,</span> <span class="kc">false</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">cleanup</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">begin</span><span class="p">(</span><span class="s">&#34;Test (3B): rejoin of partitioned leader&#34;</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">one</span><span class="p">(</span><span class="mi">101</span><span class="p">,</span> <span class="nx">servers</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// leader network failure
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">leader1</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">checkOneLeader</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">disconnect</span><span class="p">(</span><span class="nx">leader1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// make old leader try to agree on some entries
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">cfg</span><span class="p">.</span><span class="nx">rafts</span><span class="p">[</span><span class="nx">leader1</span><span class="p">].</span><span class="nf">Start</span><span class="p">(</span><span class="mi">102</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nx">rafts</span><span class="p">[</span><span class="nx">leader1</span><span class="p">].</span><span class="nf">Start</span><span class="p">(</span><span class="mi">103</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nx">rafts</span><span class="p">[</span><span class="nx">leader1</span><span class="p">].</span><span class="nf">Start</span><span class="p">(</span><span class="mi">104</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// new leader commits, also for index=2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">cfg</span><span class="p">.</span><span class="nf">one</span><span class="p">(</span><span class="mi">103</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// new leader network failure
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">leader2</span> <span class="o">:=</span> <span class="nx">cfg</span><span class="p">.</span><span class="nf">checkOneLeader</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">disconnect</span><span class="p">(</span><span class="nx">leader2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// old leader connected again
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">cfg</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="nx">leader1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">one</span><span class="p">(</span><span class="mi">104</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// all together now
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">cfg</span><span class="p">.</span><span class="nf">connect</span><span class="p">(</span><span class="nx">leader2</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">one</span><span class="p">(</span><span class="mi">105</span><span class="p">,</span> <span class="nx">servers</span><span class="p">,</span> <span class="kc">true</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">cfg</span><span class="p">.</span><span class="nf">end</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>该函数的执行逻辑：</p>
+<ul>
+<li>先在 Raft 集群中确认 Command = 101</li>
+<li>让 Leader1 离线</li>
+<li>调用 Leader1 的 Start 方法，在 Leader1 本地追加 102、103、104 三条 Command（因为已经离线，无法得到 Follower 的 ACK，只能调用 Start 而不是 one）</li>
+<li>剩余的两个 Follower 选举成功，在 Raft 集群中确认 Command = 103</li>
+<li>让 Leader2 离线</li>
+<li>让 Leader1 上线</li>
+<li>在 Raft 集群中确认 Command = 104</li>
+<li>让 Leader2 上线</li>
+<li>在 Raft 集群中确认 Command = 105</li>
+</ul>
+<p>主要问题在 index=2 处，出现了数据不一致的问题</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-11-59-38-054.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>逐步分析一下问题在哪：</p>
+<p>起初，三个 Server 都在线，状态如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-10-59-30-176.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>然后，Leader1 离线，客户端在 Leader1 执行三次 Start：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-11-01-28-001.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>然后，集群选举出新的 Leader（Leader2），客户端在集群确认 Command = 103（确认成功，然后 apply，<strong>此时，就已经确定了 index=2 处，Command = 103 了</strong>）:</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-11-03-42-925.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>然后，让 Leader2 离线，Leader1 上线，Leader1 在给 Server3 发送心跳时，会发现 Server3 的 Term 比自己大，于是 Leader1 切换状态为 Follower</p>
+<p>现在，整个集群就一个 Leader2，并且离线，自然选出新的 Leader</p>
+<p>假设 Server3 选举成新的 Leader（Leader3）</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-12-11-09-57-531.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>Leader3 会给 Server1 发送心跳，于是，Server1 <strong>无条件</strong> 更新 <code>rf.commitIndex = min(args.LeaderCommitIndex, len(rf.logs) - 1)</code>，即更新为 2</p>
+<p>更新以后，后台任务 startApply 自然会提交 Index=2 处的日志（Command = 102）</p>
+<p>但是 Index=2 的日志已经被 Server2 提交过了，这里就出现了 <strong>数据不一致</strong></p>
+<p>如何解决？</p>
+<p>问题出现在 Server1 在没有依靠新的 Leader（即 Leader3）覆盖本地日志前，提交了 <strong>过期</strong> 的 Log</p>
+<p>我们只需要 <strong>添加更新 CommitIndex 的条件</strong> 即可：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">if</span> <span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitIndex</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitIndex</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">logs</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">logs</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitIndex</span><span class="p">].</span><span class="nx">Term</span> <span class="o">==</span> <span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitTerm</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// Update commitIndex
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// Need to pay attention to the situation when LeaderCommitIndex is greater than len(rf.logs) - 1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span> <span class="p">=</span> <span class="nb">min</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitIndex</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">logs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// commitIndex should be greater than or equal to applyIndex
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span> <span class="p">=</span> <span class="nb">max</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">applyIndex</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><blockquote>
+<p>2024.5.23 更新：</p>
+<p>遇到了一个新的问题：更新后的 commitIndex 比 applyIndex 小</p>
+<p>这种情况不被允许，因为对于同一个 server，我们不能重复提交相同 index 的日志（exactly once）</p>
+<p>那为什么会出现 leaderCommitIndex &lt; rf.applyIndex 的情况？</p>
+<p>假设 leader1 成功将 index = 3 以及之前的日志同步到 follower</p>
+<p>于是，leader1 更新自己的 commitIndex 为 3，并 apply，此时 leader1 的 applyIndex 也更新为 3</p>
+<p>然而，在 leader1 给其它 follower 发送心跳前，宕机了，这意味着其它 follower 的 commitIndex 可能小于 3，因为它们并不知道 leader1 的 commitIndex 已经更新</p>
+<p>然后，集群选出第二个 leader2</p>
+<p>然后，leader1 重新上线，收到了 leader2 的心跳，其中，commitIndex = 2</p>
+<p>如果此时更新 commitIndex 为 2，并且如果你的实现：applyIndex 的更新依赖于 commitIndex，那就会出现问题</p>
+<p>解决方案有两种：</p>
+<ol>
+<li>不允许更新后的 commitIndex 比 applyIndex 小</li>
+<li>不允许 applyIndex 减小，applyIndex 应该严格递增</li>
+</ol>
+</blockquote>
+<h3 id="复制时间太长">复制时间太长</h3>
+<p>在最后一个测试 TestBackup3B 中，复制日志的时间太长导致超时无法通过</p>
+<p>后面使用 <a href="#appendentries-rpc">前文</a>
+ 提到的 RPC Call 优化方法，就 ok 了</p>
+<h3 id="总测试时间太长">总测试时间太长</h3>
+<p>6.824 Lab3B 的提示说到了：</p>
+<blockquote>
+<p>The &ldquo;ok 6.5840/raft 35.557s&rdquo; means that Go measured the time taken for the 3B tests to be 35.557 seconds of real (wall-clock) time. The &ldquo;user 0m2.556s&rdquo; means that the code consumed 2.556 seconds of CPU time, or time spent actually executing instructions (rather than waiting or sleeping).</p>
+<p>If your solution <strong>uses much more than a minute of real time</strong> for the 3B tests, or <strong>much more than 5 seconds of CPU time</strong>, you may <strong>run into trouble later on</strong>. Look for time spent sleeping or waiting for RPC timeouts, loops that run without sleeping or waiting for conditions or channel messages, or large numbers of RPCs sent.</p>
+</blockquote>
+<p>一开始通过全部测试用例，总用时为 80s 左右，比较慢</p>
+<p>后面发现 startReplica 和 startApply 每一轮的睡眠时间较长，均为 200ms</p>
+<p>修改为：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">getApplyTimeout</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">25</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">getReplicaTimeout</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">50</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>即可将总用时平均控制在 50s 以内</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

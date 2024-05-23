@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MIT-6.824: Lab 3A: leader election - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="Server State type Raft struct { mu sync.Mutex // Lock to protect shared access to this peer&amp;#39;s state peers []*labrpc.ClientEnd // RPC end points of all peers persister *Persister // Object to hold this peer&amp;#39;s persisted state me int // this peer&amp;#39;s index into peers[] dead int32 // set by Kill() // Your data here (3A, 3B, 3C). // Look at the paper&amp;#39;s Figure 2 for a description of what"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MIT-6.824: Lab 3A: leader election" />
+<meta property="og:description" content="Raft Leader 选举实现细节" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-04-27T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-04-27T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MIT-6.824: Lab 3A: leader election"/>
+<meta name="twitter:description" content="Raft Leader 选举实现细节"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/lab3/lab3a/note/">MIT-6.824: Lab 3A: leader election</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Raft Leader 选举实现细节
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/raft/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Raft
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/raft/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Raft</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-04-27T00:00:00&#43;00:00">
+      2024-04-27
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      4 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#server-state">Server State</a>
+      <ul>
+        <li><a href="#state-transition-relationship">State transition relationship</a></li>
+      </ul>
+    </li>
+    <li><a href="#rpc">RPC</a>
+      <ul>
+        <li><a href="#appendentries-rpc">AppendEntries RPC</a></li>
+        <li><a href="#requestvote-rpc">RequestVote RPC</a></li>
+      </ul>
+    </li>
+    <li><a href="#background-task">Background Task</a>
+      <ul>
+        <li><a href="#startelection">startElection</a></li>
+        <li><a href="#startheartbeat">startHeartbeat</a></li>
+      </ul>
+    </li>
+    <li><a href="#正确性验证">正确性验证</a></li>
+    <li><a href="#踩的坑">踩的坑</a>
+      <ul>
+        <li><a href="#大量使用原子操作锁粒度太小">大量使用原子操作（锁粒度太小）</a></li>
+        <li><a href="#同步发送-ae-和-rv">同步发送 AE 和 RV</a></li>
+        <li><a href="#选举超时时间与心跳频率">选举超时时间与心跳频率</a></li>
+        <li><a href="#收到-rv-请求没有重置自己的选举超时计时器">收到 RV 请求，没有重置自己的选举超时计时器</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="server-state">Server State</h2>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">Raft</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">mu</span>        <span class="nx">sync</span><span class="p">.</span><span class="nx">Mutex</span>          <span class="c1">// Lock to protect shared access to this peer&#39;s state
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">peers</span>     <span class="p">[]</span><span class="o">*</span><span class="nx">labrpc</span><span class="p">.</span><span class="nx">ClientEnd</span> <span class="c1">// RPC end points of all peers
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">persister</span> <span class="o">*</span><span class="nx">Persister</span>          <span class="c1">// Object to hold this peer&#39;s persisted state
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">me</span>        <span class="kt">int</span>                 <span class="c1">// this peer&#39;s index into peers[]
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">dead</span>      <span class="kt">int32</span>               <span class="c1">// set by Kill()
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Your data here (3A, 3B, 3C).
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// Look at the paper&#39;s Figure 2 for a description of what
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="c1">// state a Raft server must maintain.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">State</span> <span class="nx">RaftState</span> <span class="c1">// state of current Raft Node
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">currentTerm</span> <span class="kt">int</span>      <span class="c1">// latest term server has seen (initialized to 0 on first boot, increases monotonically)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">votedFor</span>    <span class="kt">int</span>      <span class="c1">// candidateId that received vote in current term (or null if none)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">logs</span>        <span class="p">[]</span><span class="o">*</span><span class="nx">Entry</span> <span class="c1">// log entries; each entry contains command for state machine, and term when entry was received by leader (first index is 1)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="nx">electionTimer</span>  <span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Timer</span> <span class="c1">// election timer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">heartbeatTimer</span> <span class="o">*</span><span class="nx">time</span><span class="p">.</span><span class="nx">Timer</span> <span class="c1">// heartbeat timer
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span></code></pre></div><p>Server 需要维护：</p>
+<ul>
+<li>当前的身份</li>
+<li>当前的 term</li>
+<li>当前 term 投票给谁</li>
+<li>日志列表</li>
+<li>选举计时器与心跳计时器</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Make</span><span class="p">(</span><span class="nx">peers</span> <span class="p">[]</span><span class="o">*</span><span class="nx">labrpc</span><span class="p">.</span><span class="nx">ClientEnd</span><span class="p">,</span> <span class="nx">me</span> <span class="kt">int</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">persister</span> <span class="o">*</span><span class="nx">Persister</span><span class="p">,</span> <span class="nx">applyCh</span> <span class="kd">chan</span> <span class="nx">ApplyMsg</span><span class="p">)</span> <span class="o">*</span><span class="nx">Raft</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">Raft</span><span class="p">{}</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">peers</span> <span class="p">=</span> <span class="nx">peers</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">persister</span> <span class="p">=</span> <span class="nx">persister</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">me</span> <span class="p">=</span> <span class="nx">me</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// Your initialization code here (3A, 3B, 3C).
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rf</span><span class="p">.</span><span class="nx">State</span> <span class="p">=</span> <span class="nx">StateFollower</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">currentTerm</span> <span class="p">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">votedFor</span> <span class="p">=</span> <span class="o">-</span><span class="mi">1</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">logs</span> <span class="p">=</span> <span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">Entry</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">electionTimer</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTimer</span><span class="p">(</span><span class="nf">getElectionTimeout</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">heartbeatTimer</span> <span class="p">=</span> <span class="nx">time</span><span class="p">.</span><span class="nf">NewTimer</span><span class="p">(</span><span class="nf">getHeartbeatTimeout</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// initialize from state persisted before a crash
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rf</span><span class="p">.</span><span class="nf">readPersist</span><span class="p">(</span><span class="nx">persister</span><span class="p">.</span><span class="nf">ReadRaftState</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// start ticker goroutine to start elections
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">go</span> <span class="nx">rf</span><span class="p">.</span><span class="nf">ticker</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">rf</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="state-transition-relationship">State transition relationship</h3>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-27-16-59-59-467.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ol>
+<li>选举计时器超时（Leader 超时没有发送心跳）</li>
+<li>选举成功（获得半数以上投票）</li>
+<li>选举失败（投票数不够，或者有了新的 Leader）</li>
+<li>有了比自己 term 更大的 Leader（通常发生在旧 Leader 网络分区问题恢复时）</li>
+</ol>
+<h2 id="rpc">RPC</h2>
+<h3 id="appendentries-rpc">AppendEntries RPC</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestAppendEntriesArgs</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Term</span>     <span class="kt">int</span> <span class="c1">// leader&#39;s term
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">LeaderId</span> <span class="kt">int</span> <span class="c1">// leader&#39;s id
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestAppendEntriesReply</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// RequestAppendEntries RPC handler.
+</span></span></span><span class="line"><span class="cl"><span class="c1">// expired leader, follower and candidate use this
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">RequestAppendEntries</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">RequestAppendEntriesArgs</span><span class="p">,</span> <span class="nx">reply</span> <span class="o">*</span><span class="nx">RequestAppendEntriesReply</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>在 3A 部分，AE Request 主要用于心跳请求，Follower 会在一段时间没有收到心跳请求后，开始选举过程</p>
+<p>Server（Follower、<strong>Candidate</strong>、或者是 <strong>过期的 Leader</strong>），收到 AE 后，应该立即：</p>
+<ul>
+<li>更新自己的状态为 Follower</li>
+<li>重置选举计时器</li>
+</ul>
+<h3 id="requestvote-rpc">RequestVote RPC</h3>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestVoteArgs</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Term</span>         <span class="kt">int</span> <span class="c1">// candidate’s term
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">CandidateId</span>  <span class="kt">int</span> <span class="c1">// candidate requesting vote
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">LastLogIndex</span> <span class="kt">int</span> <span class="c1">// index of candidate’s last log entry (§5.4)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">LastLogTerm</span>  <span class="kt">int</span> <span class="c1">// term of candidate’s last log entry (§5.4)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">type</span> <span class="nx">RequestVoteReply</span> <span class="kd">struct</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">Term</span>        <span class="kt">int</span>  <span class="c1">// currentTerm, for candidate to update itself
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">VoteGranted</span> <span class="kt">bool</span> <span class="c1">// true means candidate received vote
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// example RequestVote RPC handler.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">RequestVote</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">RequestVoteArgs</span><span class="p">,</span> <span class="nx">reply</span> <span class="o">*</span><span class="nx">RequestVoteReply</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>参数需要包括：</p>
+<ul>
+<li>Candidate 的 term，用于 Receiver 判断此次投票请求是否过期</li>
+<li>Candidate 的 ID，用于 Receiver 记录投票对象，以及判断是否可以投票</li>
+<li>LastLogIndex、LastLogTerm：用于 Receiver 判断 candidate 的 Log 是否比自己新（如果 candidate 的日志比自己旧，不能让其成为 leader，否则会丢失较多数据，因为 Follower 会根据 Leader 来截断自己的 Log）</li>
+</ul>
+<p>返回值包括：</p>
+<ul>
+<li>Receiver 的 Term：如果 Receiver 的 Term 比自己（Candidate）大，说明已经有了新的 Leader，本次选举失败，更新自己的 Term</li>
+<li>VoteGranted：Receiver 是否给自己投票</li>
+</ul>
+<p>一个 Server 在收到 RV 请求后，需要判断自己是否可以给这个 Candidate 投票，主要考虑：</p>
+<ul>
+<li>Candidate 的 Term 是否比自己大（或者相等）</li>
+<li>Candidate 的 Log 是否比自己新</li>
+</ul>
+<blockquote>
+<p>receiver 怎么判断 log 是否 up-to-date？</p>
+<ol>
+<li>curTerm &lt; lastLogTerm(candidate&rsquo;s term)</li>
+<li>curTerm == lastLogTerm &amp;&amp; len(rf.log) &lt; lastLogIndex(candidate&rsquo;s last log idx)</li>
+</ol>
+</blockquote>
+<p><strong>无论哪个 RPC，只要 args 中的 Term 比自己大，就要修改自己的身份为 Follower</strong></p>
+<h2 id="background-task">Background Task</h2>
+<p>主要有两个后台任务：</p>
+<ul>
+<li>选举任务</li>
+<li>发送心跳任务</li>
+</ul>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">ticker</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">for</span> <span class="nx">rf</span><span class="p">.</span><span class="nf">killed</span><span class="p">()</span> <span class="o">==</span> <span class="kc">false</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">		<span class="c1">// Your code here (3A)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="c1">// Check if a leader election should be started.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>		<span class="k">select</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">rf</span><span class="p">.</span><span class="nx">electionTimer</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">State</span> <span class="o">!=</span> <span class="nx">StateLeader</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">rf</span><span class="p">.</span><span class="nx">currentTerm</span> <span class="o">+=</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">rf</span><span class="p">.</span><span class="nf">startElection</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">electionTimer</span><span class="p">.</span><span class="nf">Reset</span><span class="p">(</span><span class="nf">getElectionTimeout</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">case</span> <span class="o">&lt;-</span><span class="nx">rf</span><span class="p">.</span><span class="nx">heartbeatTimer</span><span class="p">.</span><span class="nx">C</span><span class="p">:</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">			<span class="k">if</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">State</span> <span class="o">==</span> <span class="nx">StateLeader</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">				<span class="nx">rf</span><span class="p">.</span><span class="nf">startHeartbeat</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">			<span class="p">}</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">heartbeatTimer</span><span class="p">.</span><span class="nf">Reset</span><span class="p">(</span><span class="nf">getHeartbeatTimeout</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="startelection">startElection</h3>
+<ul>
+<li>修改自己的状态为 Candidate</li>
+<li>给自己投一票</li>
+<li><strong>异步</strong> 向所有 peer（除了自己）发送 RV 请求</li>
+</ul>
+<p>发送 RV 请求的 goroutine 执行逻辑如下：</p>
+<ul>
+<li>发送 RV 请求</li>
+<li>判断是否发送成功：如果失败返回，否则：</li>
+<li>判断返回的 Term 与自己的 Term 的关系：
+<ul>
+<li>如果比自己大，说明有新的 Leader，更新自己的 Term，修改状态为 Follower，放弃本次选举，否则：</li>
+<li>如果 Receiver 给自己投票了，那么：
+<ul>
+<li>票数 ++</li>
+<li>如果票数超过一半的 peer，说明选举成功</li>
+<li>选举成功，立即向所有 peer 发送心跳，告诉 peer 自己是新的 leader</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="startheartbeat">startHeartbeat</h3>
+<p>向所有 peer（除了自己）异步发送 AE 请求，忽略发送失败的情况即可</p>
+<h2 id="正确性验证">正确性验证</h2>
+<p>执行下面的 bash 脚本</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 定义执行次数</span>
+</span></span><span class="line"><span class="cl"><span class="nv">runs</span><span class="o">=</span><span class="m">100</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 循环执行命令</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>1<span class="p">;</span> i&lt;<span class="o">=</span><span class="nv">$runs</span><span class="p">;</span> i++ <span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">echo</span> <span class="s2">&#34;Running test </span><span class="nv">$i</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">    go <span class="nb">test</span> -timeout 30s -run <span class="s2">&#34;^TestInitialElection3A</span>$<span class="s2">&#34;</span> -count<span class="o">=</span><span class="m">1</span> 6.5840/raft
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Error: Test failed. Exiting...&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">exit</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">    <span class="k">fi</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    go <span class="nb">test</span> -timeout 30s -run <span class="s2">&#34;^TestReElection3A</span>$<span class="s2">&#34;</span> -count<span class="o">=</span><span class="m">1</span> 6.5840/raft
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Error: Test failed. Exiting...&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">exit</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">    <span class="k">fi</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    go <span class="nb">test</span> -timeout 30s -run <span class="s2">&#34;^TestManyElections3A</span>$<span class="s2">&#34;</span> -count<span class="o">=</span><span class="m">1</span> 6.5840/raft
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Error: Test failed. Exiting...&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">exit</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">    <span class="k">fi</span>
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;All tests passed successfully.&#34;</span>
+</span></span></code></pre></div><p>结果如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-04-27-16-08-34-660.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="踩的坑">踩的坑</h2>
+<h3 id="大量使用原子操作锁粒度太小">大量使用原子操作（锁粒度太小）</h3>
+<p>例如使用原子操作读取和写入 Term、VoteFor</p>
+<p>实际上就是将锁的粒度控制得 <strong>非常小</strong>，看起来可以提升并发，但是有可能会写入不符合预期的结果</p>
+<p>可以将锁的粒度控制得比较大，实现时：</p>
+<ul>
+<li>将整个 RPC 内的操作锁住，使 Handler 趋近于线性执行</li>
+<li>将 startElection 和 startHeartbeat 锁住</li>
+</ul>
+<p>即：<strong>全局使用同一个 mutex</strong></p>
+<h3 id="同步发送-ae-和-rv">同步发送 AE 和 RV</h3>
+<p>如果网络不稳定，单个发送操作比较耗时，可能导致选举时间太长，导致超时</p>
+<p>同样的，如果同步发送 AE，某一个心跳发送的时间太长，会影响到下一次心跳</p>
+<p>因此，发送过程应该是异步的</p>
+<h3 id="选举超时时间与心跳频率">选举超时时间与心跳频率</h3>
+<p>实验要求 1s 内，最多发送 10 次心跳（100ms 一次）</p>
+<p>这就相当于要求我们的选举超时时间 <strong>必须大于 100ms</strong></p>
+<p>考虑到 RTT，可以略大一些：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">getElectionTimeout</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">ms</span> <span class="o">:=</span> <span class="mi">200</span> <span class="o">+</span> <span class="p">(</span><span class="nx">rand</span><span class="p">.</span><span class="nf">Int63</span><span class="p">()</span> <span class="o">%</span> <span class="mi">200</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nf">Duration</span><span class="p">(</span><span class="nx">ms</span><span class="p">)</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">getHeartbeatTimeout</span><span class="p">()</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Duration</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">100</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h3 id="收到-rv-请求没有重置自己的选举超时计时器">收到 RV 请求，没有重置自己的选举超时计时器</h3>
+<p>这可能会带来不必要的选举</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

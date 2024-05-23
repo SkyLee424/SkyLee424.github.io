@@ -7,8 +7,43 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Sun, 21 Apr 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 23 May 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MIT-6.824: Lab 3C: log compaction</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</link>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</guid>
+      <description>Server State type Raft struct { snapshot []byte } Snapshot 依赖 Raft 的 Service 层会定期调用 Snapshot 方法，以要求 Raft 实例创建快照： func (rf *Raft) Snapshot(index int, snapshot []byte) { } 具体实现： 检查 index 是否合法，index 必须大于等于 rf.logs[0].Index</description>
+    </item>
+    <item>
+      <title>Raft --- The famous distributed consensus protocol</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</link>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</guid>
+      <description>角色 Raft 协议包含三种角色： Leader Follower Candidate 选举计时器超时（Leader 超时没有发送心跳） 选举成功（获得半数以上投票） 选举失败（投票数不够，或者有了新的 L</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 3C: persistence</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</link>
+      <pubDate>Sun, 19 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</guid>
+      <description>Lab3C 整体实现非常简单，实现 Raft 的持久化功能，帮助宕机重启的 Raft 实例快速恢复 持久化哪些内容 Logs CurrentTerm VoteFor 怎么持久化 Raft 的测试程序无法真正让一个 Raft 实例宕机，而是</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 3B: log</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</link>
+      <pubDate>Sun, 12 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</guid>
+      <description>Server State 要实现日志复制，Server 需要维护以下状态： type Raft struct { // ... commitIndex int // index of highest log entry known to be committed applyIndex int // index of highest log entry to be applied nextIndex []int // for each server, index of the next log entry to send to that</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 3A: leader election</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</link>
+      <pubDate>Sat, 27 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</guid>
+      <description>Server State type Raft struct { mu sync.Mutex // Lock to protect shared access to this peer&amp;#39;s state peers []*labrpc.ClientEnd // RPC end points of all peers persister *Persister // Object to hold this peer&amp;#39;s persisted state me int // this peer&amp;#39;s index into peers[] dead int32 // set by Kill() // Your data here (3A, 3B, 3C). // Look at the paper&amp;#39;s Figure 2 for a description of what</description>
+    </item>
     <item>
       <title>GFS --- The Google File System</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</link>
@@ -400,6 +435,13 @@
       <pubDate>Mon, 12 Jun 2023 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/note/</guid>
       <description>fork 在 C 语言中，fork 函数是一个创建新进程的系统调用。它通过复制当前进程创建一个新的子进程，使得父进程和子进程在不同的执行路径上同时运行。 fork</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</guid>
+      <description>VMWare-FT 容错方案：复制 设计分布式系统，必须要考虑的一个点就是容错（Fault Tolerance） 常见的容错方案就是 复制，提供多个副本，如果其中一个</description>
     </item>
   </channel>
 </rss>

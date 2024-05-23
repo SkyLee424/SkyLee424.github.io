@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>MIT-6.824: Lab 3C: persistence - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="Lab3C 整体实现非常简单，实现 Raft 的持久化功能，帮助宕机重启的 Raft 实例快速恢复 持久化哪些内容 Logs CurrentTerm VoteFor 怎么持久化 Raft 的测试程序无法真正让一个 Raft 实例宕机，而是"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="MIT-6.824: Lab 3C: persistence" />
+<meta property="og:description" content="Raft 持久化实现细节" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-19T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-05-19T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MIT-6.824: Lab 3C: persistence"/>
+<meta name="twitter:description" content="Raft 持久化实现细节"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/lab3/lab3c/note/">MIT-6.824: Lab 3C: persistence</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      Raft 持久化实现细节
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+      <li>
+        <a href="/categories/raft/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Raft
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/raft/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">Raft</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-05-19T00:00:00&#43;00:00">
+      2024-05-19
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      8 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#持久化哪些内容">持久化哪些内容</a></li>
+    <li><a href="#怎么持久化">怎么持久化</a></li>
+    <li><a href="#这种持久化方式合适吗">这种持久化方式合适吗？</a>
+      <ul>
+        <li><a href="#截断">截断</a></li>
+        <li><a href="#快照">快照</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#正确性验证">正确性验证</a></li>
+    <li><a href="#踩的坑">踩的坑</a>
+      <ul>
+        <li><a href="#问题-1-忘记调用-killed">问题 1: 忘记调用 killed</a></li>
+        <li><a href="#问题-2-rfmatchindex-应该从--1-开始而不是-0">问题 2: rf.matchIndex 应该从 -1 开始，而不是 0</a></li>
+        <li><a href="#问题-3-leader-只能提交自己-term-内的日志">问题 3: Leader 只能提交自己 Term 内的日志</a></li>
+        <li><a href="#问题-4-ae-请求同步还是异步发送">问题 4: AE 请求，同步还是异步发送？</a></li>
+        <li><a href="#问题-5-乱序-rpc">问题 5: 乱序 RPC</a></li>
+      </ul>
+    </li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>Lab3C 整体实现非常简单，实现 Raft 的持久化功能，帮助宕机重启的 Raft 实例快速恢复</p>
+<h2 id="持久化哪些内容">持久化哪些内容</h2>
+<ul>
+<li>Logs</li>
+<li>CurrentTerm</li>
+<li>VoteFor</li>
+</ul>
+<h2 id="怎么持久化">怎么持久化</h2>
+<p>Raft 的测试程序无法真正让一个 Raft 实例宕机，而是一种模拟的方式</p>
+<p>实现持久化时，只要 Logs、CurrentTerm、VoteFor 任意一个发生了变化，就做一次持久化</p>
+<p>实现时需要注意持久化操作在 rf.mu 解锁之前进行，保证原子性</p>
+<h2 id="这种持久化方式合适吗">这种持久化方式合适吗？</h2>
+<p>很容易发现前面提到的持久化方式是不合理的，在实际生产环境显然不可用</p>
+<p>因为无论哪个数据变化，都要做一次 <strong>整个数据</strong> 的持久化</p>
+<p>为什么能通过测试？是因为 Lab 的持久化操作是在 <strong>内存</strong> 进行的，并不是磁盘</p>
+<p>内存的 IO 很高，即使采用这种方式也不会产生太大的瓶颈</p>
+<p>但实际应用，应该是将数据持久化到 <strong>磁盘</strong> 才对，而磁盘的速率很低，采取这种持久化方式，就会产生性能问题</p>
+<p>那应该怎么持久化？</p>
+<p>我们可以 <strong>参考 Redis 的持久化方式：</strong></p>
+<p>将持久化分为两个文件：</p>
+<ul>
+<li>metadata</li>
+<li>logs.aof</li>
+</ul>
+<p>其中，metadata 用于持久化 CurrentTerm 和 VoteFor，因为这两个数据很小，每次更改持久化，也没什么问题</p>
+<p>而 logs.aof 用于持久化 Logs，每次客户端追加 Logs 时，我们只需要向 Logs 追加一条数据即可，这个是顺序 IO，性能较高</p>
+<p>并且，可以引入 <strong>批量写入</strong> 的机制，具体来说，每次追加 Logs 时，不需要立即写磁盘，而是写到内存(rf.Logs)，然后后台启动一个 goroutine，做定时持久化操作，持久化的频率根据数据的可靠性来确定：</p>
+<ul>
+<li>如果要求比较高的可靠性，那频率应该更高，甚至，放弃批量写入机制，而是直接写入磁盘（write+fsync）</li>
+</ul>
+<p>此外，写入磁盘，通常使用的是 write 系统调用，<strong>不会立即将文件写入磁盘</strong>，而是在 OS 层面做了一个 buffer，还是有数据丢失的风险</p>
+<p>我们还可以再启动一个 goroutine，定期调用 fsync，控制文件真正写入磁盘的频率</p>
+<h3 id="截断">截断</h3>
+<p>上面提到的都是追加日志的情况，但是 Leader 可能会要求 Follower 截断本地日志</p>
+<p>如果全局使用一个 aof 文件，可能不太好实现，我们可以拆分成多个 aof 文件，当一个 aof 文件大小达到设置的上限时，新建一个新的 aof 文件</p>
+<p>如果要截断本地日志，除了截断内存的 Log 以外，只需要删除部分 aof 文件即可</p>
+<h3 id="快照">快照</h3>
+<p>此外，Redis 有一个 AOF 重写机制</p>
+<p>实际上 Lab3D 部分要求实现的快照机制，就和 AOF 重写非常类似，这里不再过多描述</p>
+<h2 id="总结">总结</h2>
+<p>Lab 3C 实现的持久化非常简单，生产上不可用，如果要实现一个生产可用的 Raft，可以参考 Redis AOF 的实现</p>
+<h2 id="正确性验证">正确性验证</h2>
+<p>使用如下脚本进行测试：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
+</span></span></span><span class="line"><span class="cl"><span class="cp"></span>
+</span></span><span class="line"><span class="cl"><span class="c1"># 定义执行次数</span>
+</span></span><span class="line"><span class="cl"><span class="nv">runs</span><span class="o">=</span><span class="m">100</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1"># 循环执行命令</span>
+</span></span><span class="line"><span class="cl"><span class="k">for</span> <span class="o">((</span> <span class="nv">i</span><span class="o">=</span>1<span class="p">;</span> i&lt;<span class="o">=</span><span class="nv">$runs</span><span class="p">;</span> i++ <span class="o">))</span><span class="p">;</span> <span class="k">do</span>
+</span></span><span class="line"><span class="cl">    <span class="nb">echo</span> <span class="s2">&#34;Running test </span><span class="nv">$i</span><span class="s2">&#34;</span>
+</span></span><span class="line"><span class="cl">    go <span class="nb">test</span> -run 3C -v -count<span class="o">=</span><span class="m">1</span> &gt; log.log <span class="c1"># 将日志输出重定向到 log.log</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="o">[</span> <span class="nv">$?</span> -ne <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">echo</span> <span class="s2">&#34;Error: Test failed. Exiting...&#34;</span>
+</span></span><span class="line"><span class="cl">        <span class="nb">exit</span> <span class="m">1</span>
+</span></span><span class="line"><span class="cl">    <span class="k">fi</span>
+</span></span><span class="line"><span class="cl"><span class="k">done</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nb">echo</span> <span class="s2">&#34;All tests passed successfully.&#34;</span>
+</span></span></code></pre></div><p>结果如下：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-19-16-16-04-889.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="踩的坑">踩的坑</h2>
+<p>Lab3C 无法通过测试，基本上都是 3A、3B 的代码有 bug 导致的，而不是持久化本身</p>
+<p>在真正编写 Lab3C 的代码之后，我发现自己之前的代码有很多小 bug，导致 3C 的测试一直过不去，可以看看在提交 3C 部分代码前，修改了多少 bug。。。</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Sky_Lee@SkyLeeMacBook-Pro 6.5840 % git log --oneline
+</span></span><span class="line"><span class="cl">27a3090 fix: Fixed a bug that caused nextIndex and matchIndex to be updated incorrectly due to out-of-order RPC responses.
+</span></span><span class="line"><span class="cl">8dae858 fix: Fixed an issue where network instability caused a single AE request to take too long
+</span></span><span class="line"><span class="cl">5543b60 fix: Fixed an election bug: candidate<span class="s1">&#39;s LastLogTerm parameter was wrong
+</span></span></span><span class="line"><span class="cl"><span class="s1">ba8ad08 fix: leader can only submit logs for its own term(Figure8)
+</span></span></span><span class="line"><span class="cl"><span class="s1">1a1b879 fix: rf.matchIndex should start from -1, not 0
+</span></span></span><span class="line"><span class="cl"><span class="s1">73d7edc fix: any goroutine with a long-running loop should call killed() to check whether it should stop.
+</span></span></span><span class="line"><span class="cl"><span class="s1">97aa9fb fix: Fixed an election bug: candidate&#39;</span>s LastLogIndex parameter was wrong
+</span></span><span class="line"><span class="cl">c9b2239 refactor: change struct field to be exported
+</span></span></code></pre></div><h3 id="问题-1-忘记调用-killed">问题 1: 忘记调用 killed</h3>
+<p>测试文件无法「真正」杀掉一个 Raft 实例，而是通过调用 Kill 方法</p>
+<p>在实现时，对于任何一个无限循环的 goroutine，都应该在循环入口检查当前实例是否被杀掉，如果被杀掉，退出循环</p>
+<p>这个问题在 Lab3C 的 Figure8 测试中会被暴露出来：Figure8 会通过杀掉一个 Raft 实例模拟宕机的情况</p>
+<blockquote>
+<p>发现这个问题，主要是在看 Log 时，发现了一些「不正常」的日志，遂想起自己是不是忘记调用 Killed 来检查当前 Raft 的状态</p>
+</blockquote>
+<h3 id="问题-2-rfmatchindex-应该从--1-开始而不是-0">问题 2: rf.matchIndex 应该从 -1 开始，而不是 0</h3>
+<p>因为我在实现 Raft 时，Index 是从 0 开始的，因此，如果 rf.matchIndex 从 0 开始，意味着 Index=0 这个日志已经被提交，这是错误的</p>
+<p>当然，也可以在初始化 Logs 切片时，Append 一个 <strong>「哨兵」</strong> 日志，这样实际的第一条 Log 的 Index 就是 1 开始，与 Raft 论文表述一致，方便测试，也不用编写 if 语句判断 Logs 切片为空的情况，代码更加简洁</p>
+<h3 id="问题-3-leader-只能提交自己-term-内的日志">问题 3: Leader 只能提交自己 Term 内的日志</h3>
+<p>在 Lab3B 中，提到了数据不一致的问题</p>
+<p>当时的解决方案是通过限制 Follower 更新 CommitIndex 的条件</p>
+<p>但是在 Figure8 的测试中，仅仅限制「更新 CommitIndex 的条件」已经无法满足了，而是需要限制 Leader 更新 CommitIndex 的条件：</p>
+<p><strong>Leader 不能提交之前任期的日志，只能通过提交自己任期的日志，从而间接提交之前任期的日志。</strong></p>
+<p>具体来说，Leader 在更新 CommitIndex 时，目标 CommitIndex 对应的 Log.Term <strong>必须</strong> 与当期 Term 一致，如果不一致，那么就不能使用这个 CommitIndex；如果一致，那么更新 CommitIndex，相当于「间接」提交了之前的所有 Log</p>
+<p>为什么要这样限制？主要还是为了避免新的 Leader 提交的 Log(index=i) 与旧 Leader 提交的 Log(index=j) 的 Command 不一致的问题</p>
+<p>来看看 Figure8 描述的问题：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-19-11-47-00-414.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>a：初始状态</li>
+<li>b：S1 在将 <code>Term=2</code> 的日志复制到大半节点前，宕机了，S5 选举成为新的 Leader，并接受了客户端的请求</li>
+<li>c：S5 宕机，S1 重新选举为新的 Leader，并成功将 <code>Term=2</code> 的日志复制到大半节点</li>
+</ul>
+<p>接下来，由于 <code>Term=2</code> 的日志已经复制到大半节点，如果我们 <strong>不遵循前文提到的限制</strong>，那么这里 S1 就可以提交 <code>Term=2</code> 的日志</p>
+<p>假设，S1 提交了 <code>Term=2</code> 的日志，考虑后续两种情况：</p>
+<p><strong>情况 d</strong></p>
+<p>这里指 S1 又宕机，并且没有来得及将 <code>Index=3, Term=4</code> 的日志复制到大半节点，于是 S5 可能选举成新的 Leader（S2、S3、S4 都可以投票给 S5），S5 将自己的 <code>Index=2, Term=3</code> 的日志成功复制到 S2、S3、S4</p>
+<p>由于 <code>Index=2, Term=3</code> 日志已经复制到大半节点，S5 自然可以放心提交该日志，然而，<code>Index=2</code> 这个位置的日志已经被 S1 提交过了，这里发生了 <strong>数据不一致</strong> 的问题</p>
+<p><strong>情况 e</strong></p>
+<p>这里指 S1 在宕机前，成功将 <code>Index=3, Term=4</code> 的日志复制到大半节点，这样即使 S1 宕机，S5 也拿不到大多数节点的投票，自然不会出现情况 d 的数据不一致问题</p>
+<p>为了避免情况 d 的发生，Leader 不能提交之前任期的日志，只能通过提交自己任期的日志，从而间接提交之前任期的日志。</p>
+<p>加上限制条件后，在 c 阶段，S1 就无法提交 <code>Index=2</code> 的日志</p>
+<h4 id="no-op-日志">no-op 日志</h4>
+<p>加上限制条件后，在情况 4，S5 的 Term &gt;= 5，无法提交 <code>Index=2, Term=3</code></p>
+<p>如果没有客户端继续发起新的请求，那么这个日志永远无法得到提交</p>
+<p>因此，新的 Leader 当选后，可以发送一条 cmd 为空的日志给全体 Follower，这个日志就叫做 <strong>no-op 日志</strong></p>
+<p>只要 no-op 日志 被复制到绝大多数节点，新的 Leader 就可以更新 CommitIndex 到 no-op 日志的位置，间接提交 no-op 日志之前的所有日志，避免客户端请求被阻塞</p>
+<h3 id="问题-4-ae-请求同步还是异步发送">问题 4: AE 请求，同步还是异步发送？</h3>
+<p>在 3B 部分，startReplica 函数中，发送 AE 请求是同步发送的，因为涉及到 offset 的处理，多个 goroutine 操作 offset，边界情况太多</p>
+<p>当时还能通过测试，只不过平均耗时较长，大概 50s，勉强符合「提示」中的小于 1min</p>
+<p>但是在 3C 的 Figure8:Unreliable 中，这个问题就暴露出来了：经常出现 <strong>&ldquo;One(xxx) failed to reach agreement.&rdquo;</strong> 错误</p>
+<p>通过阅读 Figure8:Unreliable 的源码，发现该部分模拟的是网络不稳定的情况，让集群认为某个节点宕机了（实际上并没有，这也是常说的分布式的网络分区问题），这里网络不稳定包括两个场景：</p>
+<ul>
+<li><strong>延迟响应单个 RPC 请求</strong></li>
+<li>断开某个 Server 与集群的连接</li>
+</ul>
+<p>第一种情况，如果同步发送 AE RPC，假设该 RPC 等待了 5s 才响应，或者干脆不响应，那么 RPC 库会等「很久」才会将执行结果返回给我们的 startReplica 函数，这样，<strong>整个 Replica 的频率就异常的低</strong>，之前设置的频率根本就没起作用</p>
+<p>解决方式有两种：</p>
+<ol>
+<li>缩小 RPC 超时时间</li>
+<li>异步发送 RPC</li>
+</ol>
+<p>实际采用的是第二种，伪代码如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="k">for</span> <span class="p">!</span><span class="nx">rf</span><span class="p">.</span><span class="nf">Killed</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">time</span><span class="p">.</span><span class="nf">Sleep</span><span class="p">(</span><span class="nf">getReplicaTimeout</span><span class="p">())</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// init...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// send AE(async)
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">    <span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">ok</span> <span class="o">:=</span> <span class="nf">sendAERequest</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span> <span class="nx">reply</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">        <span class="c1">// other op...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>采取异步发送，可以控制整个 Replica 的频率，而不会受到单次 RPC 的影响</p>
+<p>但是需要采取「新的方式」来应对 Follower 拒绝 AE 请求的情况</p>
+<p>采取 Raft 论文提到的方法，下面的描述来自 Lab3C 的提示部分：</p>
+<p>你可能需要一种优化，允许 nextIndex 一次后退多个条目。查看 Raft 论文扩展版，从第 7 页底部到第 8 页顶部（灰线标记处）。论文对细节描述模糊；你需要填补这些空白。一个可能的方案是让拒绝消息包括：</p>
+<pre tabindex="0"><code>    XTerm:  冲突条目的任期（如果有的话）
+    XIndex: 第一个具有该任期的条目的索引（如果有的话）
+    XLen:   日志长度
+</code></pre><p>然后领导者的逻辑可以是这样的：</p>
+<p>情况 1：跟随者的日志太短：nextIndex = XLen</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-19-14-43-24-185.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>情况 2：领导者没有 XTerm：nextIndex = XIndex</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-19-14-43-56-061.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>情况 3：领导者有 XTerm：nextIndex = 领导者最后一个 XTerm 条目的索引</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-19-14-44-26-615.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>具体实现时：</p>
+<ul>
+<li>每个日志条目需要维护 XIndex</li>
+<li>Leader 使用 <strong>二分查找</strong> 的方式确定自己是否具有 XTerm 的条目</li>
+</ul>
+<h3 id="问题-5-乱序-rpc">问题 5: 乱序 RPC</h3>
+<p>解决前面的 4 个问题后，出现了数据不一致问题</p>
+<p>前面提到了单个 RPC 的响应可能延迟，如果在此期间，Leader 接受了几个新的客户端请求，就会出现问题</p>
+<p>这是之前的部分代码：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// Send AE request asynchronously
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">    <span class="nf">DPrintf</span><span class="p">(</span><span class="s">&#34;{%v}%v: sending AE to follower{%v}\n&#34;</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">CurrentTerm</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">me</span><span class="p">,</span> <span class="nx">serverID</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">    <span class="nx">reply</span> <span class="o">:=</span> <span class="nx">RequestAppendEntriesReply</span><span class="p">{}</span>
+</span></span><span class="line"><span class="cl">    <span class="k">if</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">rf</span><span class="p">.</span><span class="nf">sendRequestAppendEntries</span><span class="p">(</span><span class="nx">serverID</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">args</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">reply</span><span class="p">);</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">    <span class="k">defer</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">    <span class="c1">// 危险！rf.CurrentTerm 有没有改变？
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="nx">reply</span><span class="p">.</span><span class="nx">Term</span> <span class="p">&gt;</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">CurrentTerm</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">State</span> <span class="p">=</span> <span class="nx">StateFollower</span>
+</span></span><span class="line"><span class="cl">        <span class="k">return</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="cl">    <span class="c1">// 危险！rf.logs 有没有改变？
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// rf.nextIndex[serverID]、rf.matchIndex[serverID] 有没有被其它 goroutine 更新？
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="k">if</span> <span class="nx">reply</span><span class="p">.</span><span class="nx">Success</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">nextIndex</span><span class="p">[</span><span class="nx">serverID</span><span class="p">]</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">Logs</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">matchIndex</span><span class="p">[</span><span class="nx">serverID</span><span class="p">]</span> <span class="p">=</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">Logs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="cl">    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nf">DPrintf</span><span class="p">(</span><span class="s">&#34;{%v}%v: follower{%v} reject append Logs\n&#34;</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">CurrentTerm</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">me</span><span class="p">,</span> <span class="nx">serverID</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">matchIndex</span><span class="p">[</span><span class="nx">serverID</span><span class="p">]</span> <span class="p">=</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="cl">        <span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}</span>
+</span></span><span class="line"><span class="cl"><span class="p">}()</span>
+</span></span></code></pre></div><p>因此，当 RPC 响应时，需要判断 rf.CurrentTerm、rf.nextIndex[serverID]、rf.matchIndex[serverID] 是否改变，如果已经改变了，<strong>本次响应就当作过期响应，不做处理</strong></p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAACXBIWXMAAAsTAAALEwEAmpwYAAAJoklEQVR4nO2deWwU1x3HX8Cec7237d219731gS8MJlzGnAEKJSm0kAgwVyGFoKSHqKI24QjhVJukSlQgjYRSJXhnFlSnsDu7JtBI1GrVkihAW7WhpYmQELJn7BwQpWmDz6nGYBVZUHbmzTLH7lf6/bvze5/vO2feewuATfXdR9xo2Qzn76vCdI+DJeWgjxqYNc5xZcMC13Kjc7O9Fjc5lgZ8ZB9JEvLIYGhCXjbdccToHG2ruQ3OFe4CcvBO8IeDpgi5eY7rh0bnajvNTgP+cFSH6X8Zna+tNGecY7m7gBxIB/5wLG301hqdty00azz9mFr4SjTPda4wOndbwHdpgK/E6rn+SUbnb2nNqKeXaYUfCVA3jM7f0po9nl7icWqDr8TDUx0HjC6DZTW9jv6mlj5/OOrL6IsAgFFGl8OSahrLLMap+RUlzBUAgMPoclhSTfXMN3DgV5YwV3PwDYJfVcp0AgAK9K0SWaIHK5hFbifZrx0+Lebga1RDJbMQE76Ug28Q/Jow3e3xAJfW52e1GjDhjymlPw0VAJ/R5chO+CX0Zzn4BsGvCtPXx5eDIn2rRJaoARM+ClDyhYOlhyUOPSS3gzyjy2M5+B4M+AEfJbe/UCJLPLoZHPpE4tHezljQb3TZTK9xZezXcOAXeSn5nf2h/8G/LUQefakY8eGBStLocppStZCdjwO/0HN3+CPiohQrm2p0eU2lqhJyHi7836QH/1a3BHtEDq41utymUB3Eh396nwr4w10ShwalGHwWZLPKg9QMr4vqu9/wRxixA2Sj9IB/am8QC/5tsQ1kk0wGXx6KbOmOYIiajg1/n87wh8eEKPw+sLNQiGryuqherfD97tvhw69EHokihy5LHLqmlwkij54EdlS4kJrpcd55oyyZJvzjOwKXxBjcLLagWlkGD9z++1K0mO2KhheIPDp4a9Gl2YQuDm4CdhIqoqf5MGp+RYgeeGVT4Q/SfZ7y2kHk4DHNJvBoQOLRBmAHBT3UDI+T1Ax/LGJ6Xtnsm6zl2RIPnxnq27W1hH7LL9aKvXQjTp8/rozpObTZPxEnh6Eu62aN1mRCZwyuARaG34MBv/e1p/TZsynxcCOOCVIMNQMrqdhLT8Wq+eVM7y+/p63buZtEHq4bgqlpTIC9yrcFYB34pPaaX870Ht5S3JiJ3CQ+slLkUJ/GlnBZPjwpH5hZASc9BQd+QwXT98bThdMzmaPIo0eVt6EaZ0hzgX3hs30tTxfOvB+5SjxcLHHwhupWEENPATPK58ybjAN/QiXbxz1bfF/72M5Y5OsSh/6j0oQNpoTvcWqHP7ma7f/1tmJDmrYUhfPUrJo7uEg1MJOCPqLG7ya/wqj5/W9tDS40sgydXHiWyMMv7mkAB08DM4ll2eIiD/mlVvgTx7ADx3cEFgETqCuGmkQOfv5/Xk2IHccqwsBEGlUD6Q8xav5Ack/xEmAiiRysk3h07g41/22zwQdTqtlf4MA/uatoKTChZBk8IMbgJJGLrO/i0eruY+EKYDZVI1dE64nEhgp2sG1PIHdJBo4mjWHPaVxkDZ7eW7Qa6+HZrupQQbVyy4ha+HWIkdt2BTcbnb/lNa2WPa0Wfn0ZM9i2O7jR6NztIMLvVvd6WdmlnNodMufy3WqqK6OXq4HvdJDyq0/6Dxqdt200qYpOqTHgOwvd/xz54TwnDJUHqS41e3f4HxXOADqptbV1dCqReCIpxN9LConPkon4NZOHlBTiJ1InTui2CzufZdKf+z82y9Wh14Pb29vzkkJcSAkJ2YLRLwhx/DeoJElWqul+dq72vaELfQBASojvMQFIzZEUEr2CIIzHgkBRebPVGJDYWbRMD/jt7e1USoh/YTREbBMScQ4LBEEQS9KFryzULr9eguf4LaXi8VlGw9Mn4sr9FNpFEMSj6RrgdZFyd7S0EuggQRC+ZTw8XVoA3q1cBEE8rKYLentPaL4eBiSTySn2MCBxGQsETec1qjHg5U2+H+s1/Uwm4pINWsAhLBAMwwTUGPD4Ave7QCelEoknjAaIGdfj8Tj+Bx23ig/vE8ewPXpuYkoJ8ZesCj8Vj+uz26M6TP9DTSt4Zrn3JaCjkskTM1OJxJupROJsUkicN3fEf5sS4vvb2toCugGYUMm8qsaA8eVMz7s/LyrWLYFsl89B1KgxQIk185xXTL+f0koqL6E/VmvC82u853I3luikplrmObUGKCvj3Wv97+dM0EdUyE/dUGsCyxDyvm/7/iC3gtE65ZG9emgCu0+tAcMm7F/vP5szAV+j6hDTrcUEpTvaucr7O3lX7r5mLM2sLWh0OtL7i5A7tYS96/xnzGhCF186TuTQAZFHZ5TNuMoFT6bbljishRMdu7QYMNwSnlvlPWOmb8aScqT1Tgf5lDMEUfQ4MKMmVNBtWk1wMKS8d53vlBlMEHn403ucDxvsjCJT7mcdVYvoP+KYsGet76RRJijPlXj4cloHNDh41ayLytF1EeYsTne0baX3pCE7oXl0yC6H9LBMcDCkvGuNP3G/klUmABKHDtvmkN4t5ddA6jyOCc+v8R3PdJLKOkTk4Jsaj6ma75DeCOVXh+kLWCas9rVmKjnldYjIwZgW+MpA3NFSVgUsoPwaSP8Jx4Qdzd5jeielDKASj97SWPOVQTjjrVNP5ddC+s+aTWBJeXuzN6ZXMh+01hEiBxOa4fPwUkdLyHJX4OO1BHbIBB43CeWqYpFHglb4Io8+unqktARYVEQ1pP+CY8LOZl+L1od3Hg4yIo/eweh2rkjHUARYXEQdov+GY8LWld642reonxwNh0QOnsWBL/IRBGwisg7RH2g1oYAl5fYXQu91R+H0dPp75dI9kYcSBvyrUhSWAZuJrIX037WasH2lbxjQBYlDP+vi0KouDs6XopFGMYYeUaBLPDyinGrXPtgORYdeWyttZcLKOS4cqGnO9WGXcmIe2FzE2Ah9Ua0B6xe4Mwufh93S0fBYkCVSWoLajV5yxgzg4MdStLQeZJmoWkhfSgc+RRHymZ/gXVN/94DXlfshQJaKqo8wH93LgC1LPZmD3xLW9XZGK4qYWe94/27wNy3yyJ1cJgZc1NkdjTQYXXjTaPsq/4vzH3T0F3upoRP2S6Y55V9tDWSoz0fn7bTI0k3S0fDYoXl+5mY6vSKHXlQWa0aX1bSSla9VPNw4tBrVDTwaUF7IdcZQjdHls4zkdpAnceEVEg9PYVy02qHs88mBx9S11nKXFAsvkXi4X+RQUuTQXyUefSrx6N83B1T4+c1/04BnJQ7xXVx4izK7MePmr7vpv0zsN1appP/hAAAAAElFTkSuQmCC" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>
