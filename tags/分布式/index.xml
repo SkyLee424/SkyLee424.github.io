@@ -7,8 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Wed, 29 May 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 30 May 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ZooKeeper: Wait-free coordination for Internet-scale systems</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/note/</link>
+      <pubDate>Thu, 30 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/note/</guid>
+      <description>线性一致 首先要了解一个概念：线性一致 一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 执行历史 整体可以按照 一个顺</description>
+    </item>
     <item>
       <title>MIT-6.824: Lab 4B: Key/value service with snapshots</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</link>
@@ -64,6 +71,13 @@
       <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</guid>
       <description>分布式存储的难点 为什么要分布式存储？因为提升单台计算机的能力是有限的，要想存储大量的数据，不得不引入 多台 计算机，提高 性能 但是，计算机是不可靠</description>
+    </item>
+    <item>
+      <title>VMWare-FT</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</link>
+      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</guid>
+      <description>容错方案：复制 设计分布式系统，必须要考虑的一个点就是容错（Fault Tolerance） 常见的容错方案就是 复制，提供多个副本，如果其中一个副</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 2: Key/Value Server</title>
