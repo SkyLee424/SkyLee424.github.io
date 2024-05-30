@@ -368,7 +368,7 @@
 </p>
 <h2 id="踩的坑">踩的坑</h2>
 <p>Lab3C 无法通过测试，基本上都是 3A、3B 的代码有 bug 导致的，而不是持久化本身</p>
-<p>在真正编写 Lab3C 的代码之后，我发现自己之前的代码有很多小 bug，导致 3C 的测试一直过不去，可以看看在提交 3C 部分代码前，修改了多少 bug。。。</p>
+<p>在真正编写 Lab3C 的代码之后，我发现自己之前的代码有很多小 bug，导致 3C 的测试一直过不去，可以看看在我提交 3C 部分代码前，修改了多少 bug。。。</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">Sky_Lee@SkyLeeMacBook-Pro 6.5840 % git log --oneline
 </span></span><span class="line"><span class="cl">27a3090 fix: Fixed a bug that caused nextIndex and matchIndex to be updated incorrectly due to out-of-order RPC responses.
 </span></span><span class="line"><span class="cl">8dae858 fix: Fixed an issue where network instability caused a single AE request to take too long
@@ -420,7 +420,7 @@
 <p>加上限制条件后，在 c 阶段，S1 就无法提交 <code>Index=2</code> 的日志</p>
 <h4 id="no-op-日志">no-op 日志</h4>
 <p>加上限制条件后，在情况 4，S5 的 Term &gt;= 5，无法提交 <code>Index=2, Term=3</code></p>
-<p>如果没有客户端继续发起新的请求，那么这个日志永远无法得到提交</p>
+<p>如果没有客户端继续发起新的请求，那么这个日志永远无法得到提交，给上层 Service 的感觉就是 Raft「卡住了」</p>
 <p>因此，新的 Leader 当选后，可以发送一条 cmd 为空的日志给全体 Follower，这个日志就叫做 <strong>no-op 日志</strong></p>
 <p>只要 no-op 日志 被复制到绝大多数节点，新的 Leader 就可以更新 CommitIndex 到 no-op 日志的位置，间接提交 no-op 日志之前的所有日志，避免客户端请求被阻塞</p>
 <h3 id="问题-4-ae-请求同步还是异步发送">问题 4: AE 请求，同步还是异步发送？</h3>

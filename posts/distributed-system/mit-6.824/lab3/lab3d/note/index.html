@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-cn" dir="ltr">
 <head>
-  <title>MIT-6.824: Lab 3C: log compaction - Sky_Lee 的个人博客</title>
+  <title>MIT-6.824: Lab 3D: log compaction - Sky_Lee 的个人博客</title>
   
   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,14 +14,14 @@
   content="Sky_Lee, 博客, blogs"
 />
 <meta name="robots" content="noodp" />
-<meta property="og:title" content="MIT-6.824: Lab 3C: log compaction" />
+<meta property="og:title" content="MIT-6.824: Lab 3D: log compaction" />
 <meta property="og:description" content="Raft 日志压缩实现细节" />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/" /><meta property="article:section" content="posts" />
 <meta property="article:published_time" content="2024-05-23T00:00:00+00:00" />
 <meta property="article:modified_time" content="2024-05-23T00:00:00+00:00" />
 
-<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MIT-6.824: Lab 3C: log compaction"/>
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="MIT-6.824: Lab 3D: log compaction"/>
 <meta name="twitter:description" content="Raft 日志压缩实现细节"/>
 
 
@@ -143,7 +143,7 @@
 <div class="w-full max-w-4xl lg:max-w-5xl">
   <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
     <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
-      <a href="/posts/distributed-system/mit-6.824/lab3/lab3d/note/">MIT-6.824: Lab 3C: log compaction</a>
+      <a href="/posts/distributed-system/mit-6.824/lab3/lab3d/note/">MIT-6.824: Lab 3D: log compaction</a>
     </h1>
 
     
@@ -260,7 +260,7 @@
 
     </i>
     <span>
-      5 minutes to read
+      7 minutes to read
     </span>
   </div>
 </div>
@@ -282,10 +282,11 @@
     <li><a href="#正确性验证">正确性验证</a></li>
     <li><a href="#踩的坑">踩的坑</a>
       <ul>
-        <li><a href="#向-service-提交-command-时不应该持锁">向 service 提交 command 时，不应该持锁</a></li>
+        <li><a href="#lab3c向-service-提交-command-时不应该持锁">(Lab3C)向 service 提交 command 时，不应该持锁</a></li>
         <li><a href="#异步发送-installsnapshotrpc">异步发送 InstallSnapshotRPC</a></li>
         <li><a href="#并发问题">并发问题</a></li>
         <li><a href="#applyindex-只能严格递增">applyIndex 只能严格递增</a></li>
+        <li><a href="#极低概率出现-apply-out-of-order">极低概率出现 apply out of order</a></li>
       </ul>
     </li>
     <li><a href="#写在最后">写在最后</a></li>
@@ -378,6 +379,7 @@
 </span></span></code></pre></div><p>Follower 收到 Leader 发来的 InstallSnapshot RPC，应该：</p>
 <ol>
 <li>如果 Leader 的 Term 比自己小，忽略</li>
+<li><strong>如果收到的快照的 LastIncludedIndex 比本地快照的 LastIncludedIndex 小，说明这个快照是一个过期的快照，忽略</strong></li>
 <li>保存快照文件（使用 Leader 发来的快照文件覆盖本地快照文件）</li>
 <li>讨论两种情况：
 <ol>
@@ -385,9 +387,14 @@
 <li>否则，丢弃整个 rf.Logs</li>
 </ol>
 </li>
-<li>使用快照内容重置状态机（这里指将快照内容 <strong>异步</strong> 发送到 applyCh）</li>
+<li>使用快照内容重置状态机（这里指将快照内容 <strong>同步</strong> 发送到 applyCh）</li>
 <li>更新 applyIndex 和 commitIndex</li>
 </ol>
+<blockquote>
+<p>2024.5.29 更新：</p>
+<p>注意：这里一定是同步发送，而不是异步，原因 <a href="#%e6%9e%81%e4%bd%8e%e6%a6%82%e7%8e%87%e5%87%ba%e7%8e%b0-apply-out-of-order">下文</a>
+ 会讲</p>
+</blockquote>
 <h2 id="正确性验证">正确性验证</h2>
 <p>这里提供一个测试代码的脚本文件，可以指定测试的用例、并发量、总测试次数，并将日志输出重定向到相应文件中：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="cp">#!/bin/bash
@@ -501,7 +508,7 @@
   </figure></div>
 </p>
 <h2 id="踩的坑">踩的坑</h2>
-<h3 id="向-service-提交-command-时不应该持锁">向 service 提交 command 时，不应该持锁</h3>
+<h3 id="lab3c向-service-提交-command-时不应该持锁">(Lab3C)向 service 提交 command 时，不应该持锁</h3>
 <p>当 Raft 实例向应用提交 command 时，不应该持锁，否则有可能因为客户端没有及时取走数据，导致 Raft 整体阻塞（因为目前的实现，整体使用一把大锁）</p>
 <p>提交 command，要么不持锁，要么异步提交</p>
 <p>但是异步提交存在问题：如何保证提交的顺序性？</p>
@@ -548,6 +555,10 @@
 <p>同样的，更新 applyIndex 前，也要判断 applyIndex 有没有发生改变，如果改变了，就不要更新</p>
 <p>startReplica、AE RPC 实现时，在获取一个日志条目前，<strong>一定要先检查这个日志条目是否还在 Logs 中</strong>，避免 panic</p>
 <p>对于 Make 函数来说，由于有了 snapshot，当 Raft 实例宕机重启后，读取的 Logs 可能并不是完整的，有一部分包含在快照中，这个时候，一定 <strong>要初始化 applyIndex 和 commitIndex 为哨兵日志的 Index</strong></p>
+<blockquote>
+<p>2024.5.29 更新：</p>
+<p>重写了 applier 核心逻辑，修复了可能存在的 apply out-of-order 问题，下文有提到</p>
+</blockquote>
 <h3 id="applyindex-只能严格递增">applyIndex 只能严格递增</h3>
 <p>在 AE RPC 中，有一种边界情况：更新后的 commitIndex 比 applyIndex 小</p>
 <p>这种情况不被允许，因为对于同一个 server，我们不能重复提交相同 index 的日志（exactly once）</p>
@@ -558,17 +569,94 @@
 <p>然后，集群选出第二个 leader2</p>
 <p>然后，leader1 重新上线，收到了 leader2 的心跳，其中，commitIndex = 2</p>
 <p>如果此时更新 commitIndex 为 2，并且如果你的实现：<strong>applyIndex 的更新依赖于 commitIndex</strong>，那就会出现问题</p>
-<p>解决方案有两种：</p>
-<ol>
-<li>不允许更新后的 commitIndex 比 applyIndex 小</li>
-<li>不允许 applyIndex 减小，applyIndex 应该严格递增</li>
-</ol>
-<p>两种方案都可以：</p>
-<ol>
-<li>commitIndex = max(newCommitIndex, applyIndex)</li>
-<li>applyIndex = max(newApplyIndex, applyIndex)</li>
-</ol>
-<h2 id="写在最后">写在最后</h2>
+<p>解决方案：</p>
+<ul>
+<li>不允许 applyIndex 减小（除了 InstallSnapshot RPC），applyIndex 应该严格递增</li>
+</ul>
+<h3 id="极低概率出现-apply-out-of-order">极低概率出现 apply out of order</h3>
+<p>来看一段日志：</p>
+<pre tabindex="0"><code class="language-log" data-lang="log"># 省略部分内容 #
+2024/05/28 09:20:31 {5}0: Load Raft State Successfully, CurrentTerm: 5
+VotedFor: -1
+Logs: [{4 119 83 &lt;nil&gt;} {4 120 83 3739460424151144431} {4 121 83 3168617896739618178} {4 122 83 9162378228834488708} {4 123 83 6831704875973104458} {5 124 124 549014041314024410} {5 125 125 2306247720335571870} {5 126 126 3489300829279971277}]
+# 省略部分内容 #
+2024/05/28 09:20:31 {5}0: Received snapshot from leader, lastIncludedIndex: 139, lastIncludedTerm: 5
+2024/05/28 09:20:31 {5}0: Received AE from 2
+2024/05/28 09:20:31 {5}0: Appended Entries to local log(current len:142)
+2024/05/28 09:20:31 {5}0: Received AE from 2
+2024/05/28 09:20:31 {5}0: Received unexpected AE from 2: args.PrevLogIndex not int local log
+2024/05/28 09:20:31 {5}0: applied command which index is 140(term:5)
+2024/05/28 09:20:31 apply error: server 0 apply out of order, expected index 120, got 140
+exit status 1
+FAIL	6.5840/raft	121.630s
+</code></pre><p>日志第一行表明 server-0 宕机重启完毕了，并且有快照，<strong>快照的 lastIncludedIndex 为 119</strong></p>
+<p>然后，server-0 收到了来自 leader 的 InstallSnapshotRPC，要求应用一个新的快照，新的快照的 <strong>lastIncludedIndex 为 139</strong></p>
+<p>server-0 会做以下几件事：</p>
+<ul>
+<li>使用新的快照替换旧的快照</li>
+<li><strong>将 applyIndex 由 119 修改为 139</strong></li>
+<li><strong>将新的快照发给上层 Service</strong></li>
+</ul>
+<p>然后，后台的 applier 开始 apply command，第一条 command 的 index 肯定是 140（因为 applyIndex 已经修改为 139）</p>
+<p>一切看起来如此合理，为啥测试程序期望的 command index 为 120，而不是 140 呢？</p>
+<p>只有一个原因：applier 在 apply command 时，「将新的快照发给上层 Service」这个操作 <strong>还没有开始执行</strong></p>
+<p>为什么会出现这个情况？因为 InstallSnapshot RPC 中，<strong>将新的快照发给上层 Service</strong> 这个操作是 <strong>异步的</strong></p>
+<p>正确的实现应该是：更新 applyIndex 和 <code>将新的快照发给上层 Service</code> 这两个操作应该是一个 <strong>原子操作</strong></p>
+<p>怎么实现原子操作？最简单的方式就是 <strong>同步</strong> 发送新的快照到上层 Service：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// RequestInstallSnapshot RPC handler.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">RequestInstallSnapshot</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">RequestInstallSnapshotArgs</span><span class="p">,</span> <span class="nx">reply</span> <span class="o">*</span><span class="nx">RequestInstallSnapshotReply</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="k">defer</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// apply snapshot synchronously
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rf</span><span class="p">.</span><span class="nx">applyCh</span> <span class="o">&lt;-</span> <span class="nx">applyMsg</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nf">persist</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>当然这可能导致客户端响应的延迟，我们也可以这样写：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="c1">// RequestInstallSnapshot RPC handler.
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">rf</span> <span class="o">*</span><span class="nx">Raft</span><span class="p">)</span> <span class="nf">RequestInstallSnapshot</span><span class="p">(</span><span class="nx">args</span> <span class="o">*</span><span class="nx">RequestInstallSnapshotArgs</span><span class="p">,</span> <span class="nx">reply</span> <span class="o">*</span><span class="nx">RequestInstallSnapshotReply</span><span class="p">)</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// defer rf.mu.Unlock() 不要释放锁
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">applyCh</span> <span class="o">&lt;-</span> <span class="nx">applyMsg</span>
+</span></span><span class="line"><span class="cl">        <span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span> <span class="c1">// 在这里释放
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="p">}()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="nx">rf</span><span class="p">.</span><span class="nf">persist</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><p>同样的，Make 函数也有问题，修改如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">Make</span><span class="p">(</span><span class="nx">peers</span> <span class="p">[]</span><span class="o">*</span><span class="nx">labrpc</span><span class="p">.</span><span class="nx">ClientEnd</span><span class="p">,</span> <span class="nx">me</span> <span class="kt">int</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">	<span class="nx">persister</span> <span class="o">*</span><span class="nx">Persister</span><span class="p">,</span> <span class="nx">applyCh</span> <span class="kd">chan</span> <span class="nx">ApplyMsg</span><span class="p">)</span> <span class="o">*</span><span class="nx">Raft</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="c1">// Reset state machine using snapshot
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">SnapshotData</span><span class="p">)</span> <span class="p">&gt;</span> <span class="mi">0</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">applyMsg</span> <span class="o">:=</span> <span class="nx">ApplyMsg</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">SnapshotValid</span><span class="p">:</span> <span class="kc">true</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">Snapshot</span><span class="p">:</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">SnapshotData</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">SnapshotIndex</span><span class="p">:</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">Logs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Index</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">SnapshotTerm</span><span class="p">:</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">Logs</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="nx">Term</span><span class="p">,</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}</span>
+</span></span><span class="line"><span class="cl">		<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Lock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="k">go</span> <span class="kd">func</span><span class="p">()</span> <span class="p">{</span>
+</span></span><span class="line"><span class="cl">			<span class="nx">rf</span><span class="p">.</span><span class="nx">applyCh</span> <span class="o">&lt;-</span> <span class="nx">applyMsg</span>
+</span></span><span class="line"><span class="cl">			<span class="c1">// To avoid possible apply out-of-order problems,
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="c1">// lock until the snapshot is successfully applied to applych
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>			<span class="nx">rf</span><span class="p">.</span><span class="nx">mu</span><span class="p">.</span><span class="nf">Unlock</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">		<span class="p">}()</span>
+</span></span><span class="line"><span class="cl">	<span class="p">}</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">	<span class="c1">// ...
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">rf</span>
+</span></span><span class="line"><span class="cl"><span class="p">}</span>
+</span></span></code></pre></div><h2 id="写在最后">写在最后</h2>
 <p>Lab3D 是整个 Lab3 的最后一个小节了，通过实现这四部分 Lab，顺利掌握了 Raft 共识算法的实现细节，也学到了 debug 的技巧，提升了解决问题的能力</p>
 <p>说实话，Lab3 的实现还是有一定难度，即使是完全按照论文描述实现，还是会遇到一些 corner case</p>
 <p>只有自己 <strong>独立完成</strong> Lab3，才能真正搞清楚 Raft 的细节</p>

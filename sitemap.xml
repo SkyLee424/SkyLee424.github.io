@@ -3,36 +3,42 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://blogs.skylee.top/categories/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blogs.skylee.top/categories/distributed-system/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blogs.skylee.top/tags/mit-6.824/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/posts/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/tags/raft/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/categories/raft/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/tags/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</loc>
+    <lastmod>2024-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</loc>
+    <lastmod>2024-05-27T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</loc>
     <lastmod>2024-05-23T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blogs.skylee.top/posts/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blogs.skylee.top/tags/raft/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blogs.skylee.top/categories/raft/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
     <loc>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blogs.skylee.top/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blogs.skylee.top/tags/</loc>
-    <lastmod>2024-05-23T00:00:00+00:00</lastmod>
-  </url><url>
-    <loc>https://blogs.skylee.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/</loc>
     <lastmod>2024-05-23T00:00:00+00:00</lastmod>
   </url><url>
     <loc>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</loc>

@@ -7,10 +7,24 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Thu, 23 May 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 29 May 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/categories/raft/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>MIT-6.824: Lab 3C: log compaction</title>
+      <title>MIT-6.824: Lab 4B: Key/value service with snapshots</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</link>
+      <pubDate>Wed, 29 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</guid>
+      <description>Lab4B 整体比较简单，要求实现 KVServer 重启宕机后，仍能 快速恢复 之前的状态，因此，Service 需要创建快照，并发送给 Raft Server 快照内容 快照应该包含以下内容： 状</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 4A: Key/value service without snapshots</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</link>
+      <pubDate>Mon, 27 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</guid>
+      <description>Lab4A 核心是要实现「线性化」语义 Client Client 必须在 RPC 超时，或者 Server 返回自己不是 Leader 的情况下，自动切换到下一个 Server： 向「Leader」发送 RPC 检查响应结</description>
+    </item>
+    <item>
+      <title>MIT-6.824: Lab 3D: log compaction</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</link>
       <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</guid>

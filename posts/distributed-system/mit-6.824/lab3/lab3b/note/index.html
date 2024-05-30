@@ -358,10 +358,21 @@
 <li>如果 term 小于自己的 term，直接 return false</li>
 <li>如果 <strong>rf.logs[args.LeaderCommitIndex].Term == LeaderCommitTerm</strong>，更新 rf.commitIndex（建议只要 Term 合法，就更新 commitIndex，以便快速应用 Command 到本地）</li>
 <li>如果自己的 Logs 中，在 prevLogIndex 处，Log 对应的 term 与 prevLogTerm 不一致，return false</li>
-<li>基于 args.PrevLogIndex 截断本地日志</li>
-<li>追加 entries 到本地日志</li>
+<li><del>基于 args.PrevLogIndex 截断本地日志</del></li>
+<li>判断 AE RPC 是否乱序，根据判断结果决定是否 append entries 到本地日志</li>
 <li>return true</li>
 </ul>
+<blockquote>
+<p>2024.5.28 更新：AE RPC 也需要检查是否乱序的问题</p>
+<p>这个问题之前测试一直没有发现，直到 Lab4A 才显现出来</p>
+<p>实现时，需要检查每个 entry，如果 entry 不在 rf.Logs 中，或者 entry 在 rf.Logs 对应位置处的 Term 不相等，才从这条 entry 开始 append</p>
+<p>否则，Follower 可能出现日志部分丢失的情况</p>
+</blockquote>
+<blockquote>
+<p>2024.5.30 更新：如果是一个过期的 AE RPC，不应该更新 commitIndex！</p>
+<p>假设原来的 commitIndex=106，如果收到过期的 AE，可能包含的 LeaderCommitIndex 比 commitIndex 小（例如 104）</p>
+<p>如果 Follower 已经 apply 了 [0~106] 的日志，再将 commitIndex 更新为 104，显然不合理</p>
+</blockquote>
 <p>如果 Follower 返回 false，Leader 怎么处理？</p>
 <p>Follower 返回 false，说明还需要发送 entries 以外的数据给 Follower，Leader 需要给 nextIndex[i] 减一，然后再次尝试发送 AE，直到成功</p>
 <blockquote>
@@ -414,8 +425,15 @@
 <li>如果发送失败，休眠等待下一次重试</li>
 <li>检查 peer 的响应结果：
 <ul>
-<li>如果成功，更新 nextIndex[i] 为 len(logs)，matchIndex[i] 为 len(logs)，offset = 1</li>
-<li>如果失败，更新 nextIndex[i] = nextIndex[i] - offset，offset = min(offset * 2, threshold)</li>
+<li>如果成功，更新 nextIndex[i] 为 len(logs)，matchIndex[i] 为 len(logs)，<del>offset = 1</del></li>
+<li>如果失败：
+<ul>
+<li>如果 Follower 的日志太短，更新 nextIndex[i] 为 Follower 的 len(logs)</li>
+<li>否则，更新 nextIndex[i] 为本地最后一条 Term 为 XTerm 日志的 index（核心思想是跳过一整个 Term，而不是 nextIndex[i]&ndash;，具体可以看我在 Lab3C 部分提到的：<a href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note#%E9%97%AE%E9%A2%98-4-ae-%E8%AF%B7%E6%B1%82%E5%90%8C%E6%AD%A5%E8%BF%98%E6%98%AF%E5%BC%82%E6%AD%A5%E5%8F%91%E9%80%81" target="_blank" rel="noopener">如何应对 Follower 拒绝 AE 请求</a>
+， <a href="#appendentries-rpc">上面</a>
+ 也有提到）</li>
+</ul>
+</li>
 </ul>
 </li>
 <li>重置休眠计时器</li>
@@ -442,6 +460,11 @@
 <h2 id="踩的坑">踩的坑</h2>
 <h3 id="log-的-index-从-1-开始而不是-0">Log 的 Index 从 1 开始，而不是 0</h3>
 <p>lab 提供的 test_test.go 文件认为 Log 的 Index 从 1 开始，实现时需要注意封装 ApplyMsg 时，将 index 设置为 1 开始，而不是 0</p>
+<blockquote>
+<p>2024.5.20 更新</p>
+<p>可以引入一个「哨兵日志」来解决这个问题</p>
+<p>同时减少冗余代码</p>
+</blockquote>
 <h3 id="日志不一致问题">日志不一致问题</h3>
 <p>测试用例是 TestRejoin3B 函数</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-go" data-lang="go"><span class="line"><span class="cl"><span class="kd">func</span> <span class="nf">TestRejoin3B</span><span class="p">(</span><span class="nx">t</span> <span class="o">*</span><span class="nx">testing</span><span class="p">.</span><span class="nx">T</span><span class="p">)</span> <span class="p">{</span>
@@ -551,28 +574,8 @@
 </span></span><span class="line"><span class="cl">    <span class="c1">// Update commitIndex
 </span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="c1">// Need to pay attention to the situation when LeaderCommitIndex is greater than len(rf.logs) - 1
 </span></span></span><span class="line"><span class="cl"><span class="c1"></span>    <span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span> <span class="p">=</span> <span class="nb">min</span><span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">LeaderCommitIndex</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">logs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-</span></span><span class="line"><span class="cl">
-</span></span><span class="line"><span class="cl">	<span class="c1">// commitIndex should be greater than or equal to applyIndex
-</span></span></span><span class="line"><span class="cl"><span class="c1"></span>	<span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span> <span class="p">=</span> <span class="nb">max</span><span class="p">(</span><span class="nx">rf</span><span class="p">.</span><span class="nx">commitIndex</span><span class="p">,</span> <span class="nx">rf</span><span class="p">.</span><span class="nx">applyIndex</span><span class="p">)</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
-</span></span></code></pre></div><blockquote>
-<p>2024.5.23 更新：</p>
-<p>遇到了一个新的问题：更新后的 commitIndex 比 applyIndex 小</p>
-<p>这种情况不被允许，因为对于同一个 server，我们不能重复提交相同 index 的日志（exactly once）</p>
-<p>那为什么会出现 leaderCommitIndex &lt; rf.applyIndex 的情况？</p>
-<p>假设 leader1 成功将 index = 3 以及之前的日志同步到 follower</p>
-<p>于是，leader1 更新自己的 commitIndex 为 3，并 apply，此时 leader1 的 applyIndex 也更新为 3</p>
-<p>然而，在 leader1 给其它 follower 发送心跳前，宕机了，这意味着其它 follower 的 commitIndex 可能小于 3，因为它们并不知道 leader1 的 commitIndex 已经更新</p>
-<p>然后，集群选出第二个 leader2</p>
-<p>然后，leader1 重新上线，收到了 leader2 的心跳，其中，commitIndex = 2</p>
-<p>如果此时更新 commitIndex 为 2，并且如果你的实现：applyIndex 的更新依赖于 commitIndex，那就会出现问题</p>
-<p>解决方案有两种：</p>
-<ol>
-<li>不允许更新后的 commitIndex 比 applyIndex 小</li>
-<li>不允许 applyIndex 减小，applyIndex 应该严格递增</li>
-</ol>
-</blockquote>
-<h3 id="复制时间太长">复制时间太长</h3>
+</span></span></code></pre></div><h3 id="复制时间太长">复制时间太长</h3>
 <p>在最后一个测试 TestBackup3B 中，复制日志的时间太长导致超时无法通过</p>
 <p>后面使用 <a href="#appendentries-rpc">前文</a>
  提到的 RPC Call 优化方法，就 ok 了</p>
@@ -593,6 +596,10 @@
 </span></span><span class="line"><span class="cl">	<span class="k">return</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span> <span class="o">*</span> <span class="mi">50</span>
 </span></span><span class="line"><span class="cl"><span class="p">}</span>
 </span></span></code></pre></div><p>即可将总用时平均控制在 50s 以内</p>
+<blockquote>
+<p>2024.5.25 更新</p>
+<p>Lab4A 要求 Service Operation 的速度比较快，50ms 执行一次 replica 还是太慢了，后面均改成了 10ms</p>
+</blockquote>
 
     </article>
 
