@@ -7,13 +7,27 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Thu, 30 May 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 01 Jun 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>CRAQ: High-throughput chain replication for read-mostly workloads</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/craq/note/</link>
+      <pubDate>Sat, 01 Jun 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/craq/note/</guid>
+      <description>CR(Chain Replication) CR 是一种分布式存储协议，具有与 Raft 不一样的特性 基本原理 从名字可以看出，CR 的网络拓扑就像一条「链」一样： 每个节点以「链」的方式排列，类似双</description>
+    </item>
+    <item>
+      <title>ZooKeeper APIs</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</link>
+      <pubDate>Fri, 31 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</guid>
+      <description>APIs ZK 的使用场景 ZK 主要用于 单个数据中心 内： 管理集群的配置信息 选举 Leader Test-And-Set 服务的实现 &amp;hellip; Znode Zookeeper 的 API 某种程度上来说像是一个文件系统。它有一个层级化的目录结</description>
+    </item>
+    <item>
       <title>ZooKeeper: Wait-free coordination for Internet-scale systems</title>
-      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/note/</link>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</link>
       <pubDate>Thu, 30 May 2024 00:00:00 +0000</pubDate>
-      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/note/</guid>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</guid>
       <description>线性一致 首先要了解一个概念：线性一致 一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 执行历史 整体可以按照 一个顺</description>
     </item>
     <item>

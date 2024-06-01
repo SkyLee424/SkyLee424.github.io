@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>ZooKeeper: Wait-free coordination for Internet-scale systems - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="线性一致 首先要了解一个概念：线性一致 一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 执行历史 整体可以按照 一个顺"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="ZooKeeper: Wait-free coordination for Internet-scale systems" />
+<meta property="og:description" content="从分布式角度，简单总结一下 ZK 的要点" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-05-30T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-05-30T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="ZooKeeper: Wait-free coordination for Internet-scale systems"/>
+<meta name="twitter:description" content="从分布式角度，简单总结一下 ZK 的要点"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/zookeeper/basic/note/">ZooKeeper: Wait-free coordination for Internet-scale systems</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      从分布式角度，简单总结一下 ZK 的要点
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/zookeeper/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">ZooKeeper</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-05-30T00:00:00&#43;00:00">
+      2024-05-30
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      6 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#线性一致">线性一致</a></li>
+    <li><a href="#zookeeper">ZooKeeper</a></li>
+    <li><a href="#zk-的一致性保证">ZK 的一致性保证</a>
+      <ul>
+        <li><a href="#如何保证写请求的线性一致">如何保证写请求的线性一致</a></li>
+        <li><a href="#如何保证单个客户端所有请求的线性一致">如何保证单个客户端所有请求的线性一致</a></li>
+      </ul>
+    </li>
+    <li><a href="#同步操作sync">同步操作（sync）</a></li>
+    <li><a href="#就绪文件ready-file">就绪文件（Ready File）</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <h2 id="线性一致">线性一致</h2>
+<p>首先要了解一个概念：线性一致</p>
+<p>一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 <strong>执行历史</strong> 整体可以按照 <strong>一个顺序</strong> 排列，且排列顺序 <strong>与客户端请求的实际时间相符合</strong>，那么它是线性一致的。</p>
+<p>有关「线性一致」的几个例子，可以看看 <a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-08-zookeeper/8.1" target="_blank" rel="noopener">Robert 教授的讲座</a>
+</p>
+<p>总的来说：</p>
+<ul>
+<li><strong>线性一致</strong> 是对于存储系统中 <strong>强一致</strong> 的一种标准定义</li>
+<li>线性一致的定义是 <strong>有关历史记录</strong> 的定义，而 <strong>不是系统的定义</strong>。所以我们不能说一个系统设计是线性一致的，我们只能说请求的历史记录是线性一致的。</li>
+<li>强一致系统表现的也与系统中只有一份数据的拷贝一样，这与线性一致的定义非常接近。所以，<strong>可以合理的认为强一致与线性一致是一样的</strong>。</li>
+</ul>
+<h2 id="zookeeper">ZooKeeper</h2>
+<blockquote>
+<p>相比 Raft 来说，Raft 实际上就是一个库。你可以在一些更大的多副本系统中使用 Raft 库。但是 Raft 不是一个你可以直接交互的独立的服务，你必须要设计你自己的应用程序来与 Raft 库交互。</p>
+<p>所以这里有一个有趣的问题：是否有一些有用的，独立的，通用的系统可以帮助人们构建分布式系统？是否有这样的服务可以包装成一个任何人都可以使用的独立服务，并且极大的减轻构建分布式应用的痛苦？</p>
+<p>所以，第一个问题是，对于一个通用的服务，API 应该是怎样？我不太确定类似于 Zookeeper 这类软件的名字是什么，它们可以被认为是一个通用的 <strong>协调服务（General-Purpose Coordination Service）</strong>。</p>
+</blockquote>
+<p>通过上面 Robert 教授说的这段话，可以知道：ZooKeeper 是一个分布式协调服务，用于帮助建立分布式系统</p>
+<p>作为一个多副本系统，Zookeeper 本身是一个 <strong>容错的</strong> ，通用的协调服务，它与其他系统一样，通过 <strong>多副本</strong> 来完成容错。</p>
+<p>即然涉及到多副本，我们自然能想到：<strong>n 个副本能不能带来（近似） n 倍的性能提升？</strong></p>
+<p>对于 Raft 来说，n 个副本不仅不会带来 n 倍的性能提升，反而会导致性能下降</p>
+<p>因为副本数越多，Leader 的压力就会越大，而 Raft 的 <strong>读写操作均在 Leader 进行</strong>，因此整体的吞吐肯定是下降的</p>
+<p>那 ZooKeeper 呢？</p>
+<p>这里直接给出结论：ZK 的 <strong>读</strong> 性能会随着副本数的增加而增加</p>
+<p>这是一个好消息，因为 <strong>绝大多数的操作都是读操作</strong>，仅有少部分操作是写操作</p>
+<p>或许你已经大概猜到为什么 ZK 的读性能会随着副本数的增加而增加，而写性能不会</p>
+<p>如果我们将 <strong>读请求分发</strong> 到不同的节点（即 Leader 节点和 Follower 节点），就可以获得 n 倍的读性能提升</p>
+<blockquote>
+<p>读请求分发到不同节点，是否存在不一致的问题？也就是说，还遵循「线性一致」吗？</p>
+</blockquote>
+<h2 id="zk-的一致性保证">ZK 的一致性保证</h2>
+<p>ZK 的论文在 2.3 小节提到：</p>
+<blockquote>
+<p>ZooKeeper 有两个基本的顺序保证：</p>
+<ul>
+<li>线性写：所有更新 ZooKeeper 状态的操作是串行的，先来先服务</li>
+<li>FIFO 客户端顺序：来自单个客户端的所有请求按客户端发送的顺序依次执行。</li>
+</ul>
+</blockquote>
+<p>也就是说，ZK 的一致性保障可以总结为：</p>
+<ul>
+<li>保证 <strong>所有客户端</strong> 写请求满足「线性一致」</li>
+<li>保证 <strong>单个客户端</strong> 所有请求满足「线性一致」</li>
+</ul>
+<p>从这里我们可以回答上面的问题：ZooKeeper 不保证所有客户端的读请求的「线性一致」，也就是说：客户端可能读取到 <strong>过期</strong> 的数据，这也是我们常说的「弱一致性」保障，即「最终一致性」</p>
+<blockquote>
+<p>事实上，对于任何分布式系统来说，写请求的「线性一致」是基本要求，如果写请求无法保证「线性一致」，那这个系统本身就没有什么意义，我们完全无法预料最终的结果是什么</p>
+<p>相反，读请求可以根据「使用需求」来做 trade-off：</p>
+<ul>
+<li>如果要强一致性保障，那么需要舍弃性能</li>
+<li>如果需要读性能，那么需要舍弃一致性保障（只能最终一致）</li>
+</ul>
+</blockquote>
+<h3 id="如何保证写请求的线性一致">如何保证写请求的线性一致</h3>
+<p>ZooKeeper 写请求线性一致保障实现原理，与 Raft 是类似的：</p>
+<ul>
+<li>所有的写请求都由 <strong>Leader</strong> 处理并提交，这样可以确保写请求的全序。</li>
+<li><strong>ZAB 协议</strong> 确保写请求只有在被过半追随者确认后才会被提交，从而保证了写请求的持久性和一致性。</li>
+<li>事务日志和同步机制确保了在服务器崩溃或网络分区后，系统可以恢复并保持一致的状态。</li>
+</ul>
+<blockquote>
+<p>ZAB 协议，与 Raft 协议类似，用于节点间数据同步，核心思想都是「过半票决」</p>
+</blockquote>
+<h3 id="如何保证单个客户端所有请求的线性一致">如何保证单个客户端所有请求的线性一致</h3>
+<p>Zookeeper 通过 ZXID 来保障单个客户端请求的线性一致</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-30-20-48-01-907.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>上面的图描述了当前 ZK 集群的 Logs 状态</p>
+<p>假设 Client 在 Leader 执行了一次读请求：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-30-20-49-47-896.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<ul>
+<li>Leader 返回执行当前请求时，对应的 ZXID = 4</li>
+<li>Client 记录下 ZXID，并取最大值保存到本地</li>
+</ul>
+<p>为了保证请求的线性一致，客户端后续的请求，对应的 ZK 节点必须满足： <code>LastZXID &gt;= ClientZXID</code></p>
+<p>当 ZK 节点接收到一个请求后，首先需要判断客户端携带的 ZXID</p>
+<p>如果客户端携带的 ZXID 比本地日志的最大 ZXID 还要大，那么就无法为这个客户端提供服务，例如上图中的 Follower-2</p>
+<p>对于这种情况，客户端有两种选择：等待；或者选择其它 ZK 节点</p>
+<h2 id="同步操作sync">同步操作（sync）</h2>
+<p>通过前面的介绍，我们知道客户端可能读取到「过期」的数据（Follower 没有同步到最新位置，就为 Client 提供读服务）</p>
+<p>如果客户端想要读取 <strong>最新的</strong> 数据怎么办？</p>
+<p>ZooKeeper 提供了一个 Sync API 实现这一点</p>
+<p>Sync API 实际上就是一个 <strong>写请求</strong>，只不过这个写请求并不实际写入任何数据</p>
+<p>我们知道 ZK 保证所有客户端写请求的线性一致性，因此调用 Sync API 后，必须要 <strong>半数以上</strong> 的节点确认了这条 Sync 后，Sync API 才会返回</p>
+<p>那也仅仅是半数节点啊，如果客户端请求的是处于「另一个分区」的 ZK Node 呢？</p>
+<p>别急，Sync 返回的同时不是还会带上 ZXID 吗，客户端下次执行读请求时，带上这个 ZXID，只有请求的 ZK Node 同步到这个位置以后才能提供服务</p>
+<p>通过上面的分析，得出结论：调用 Sync 后，可以保证客户端看到 Sync 对应的状态，可以合理地认为是最新的</p>
+<h2 id="就绪文件ready-file">就绪文件（Ready File）</h2>
+<p>ZooKeeper 最广泛的应用场景，就是 <strong>管理集群的元数据</strong> 了</p>
+<p>ZK 将这些数据以「文件」的形式存储，也被叫做「ZNode」</p>
+<p>然而，这些数据不会一成不变，肯定会随着集群的运行，动态发生变化</p>
+<p>那么如何更新这些元数据呢？</p>
+<p>我们当然不希望客户端获取到部分更新的元数据（通常来说这些数据没有任何意义），因此必须满足 <strong>原子更新</strong></p>
+<p>ZooKeeper 使用就绪文件（Ready File）来标记一个文件（ZNode）是否可用（存在）</p>
+<p>所谓 Ready File，就是以 Ready 为名字的 file。如果 Ready file 存在，那么允许读这个配置。如果 Ready file 不存在，那么说明配置正在更新过程中，我们不应该读取配置。</p>
+<p>如果一个客户端要更新元数据，它的执行流是这样的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">delete</span><span class="p">(</span><span class="s">&#34;Ready-File-0&#34;</span><span class="p">)</span> <span class="c1">// 删除 Ready File
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nf">write</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span> <span class="c1">// 写元数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">write</span><span class="p">(</span><span class="n">f2</span><span class="p">)</span> <span class="c1">// 写元数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nf">create</span><span class="p">(</span><span class="s">&#34;Ready-File-0&#34;</span><span class="p">)</span> <span class="c1">// 创建 Ready File
+</span></span></span></code></pre></div><p>如果一个客户端要读取元数据，它的执行流是这样的：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="nf">exists</span><span class="p">(</span><span class="s">&#34;Ready-File-0&#34;</span><span class="p">,</span> <span class="n">watch</span> <span class="o">=</span> <span class="nb">true</span><span class="p">)</span> <span class="c1">// 检查 Ready File 是否存在
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nf">read</span><span class="p">(</span><span class="n">f1</span><span class="p">)</span> <span class="c1">// 如果存在，读取元数据
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">read</span><span class="p">(</span><span class="n">f2</span><span class="p">)</span>
+</span></span></code></pre></div><p>我们考虑下面这种情况：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-30-21-37-32-142.jpg"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>容易发现，Client2 此时读取的元数据是「错误」的：<code>旧的 f1 + 新的 f2</code>，没有任何意义</p>
+<p>那么 ZK 是如何解决这种情况，即实现「原子」修改呢？</p>
+<p><strong>watch 机制</strong></p>
+<p>调用 exists API，不仅仅会判断 Ready File 是否存在，还会注册一个 watch 事件，即监听 Ready File 的状态</p>
+<p>当一个客户端想要修改 Ready File 时，ZK 会 <strong>先通知</strong> 之前 watch 这个 Ready File 的客户端，告诉它们这个 Ready File 发生了变化，然后再真正执行 Ready File 的修改</p>
+<p>当客户端收到 ZK 的通知（Ready File 发生变化），客户端会立刻终止此次读取行为，然后再重试读：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-05-30-21-43-48-755.jpg"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>

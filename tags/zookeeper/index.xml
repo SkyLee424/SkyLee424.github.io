@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>ZooKeeper on Sky_Lee 的个人博客</title>
+    <link>https://blogs.skylee.top/tags/zookeeper/</link>
+    <description>Recent content in ZooKeeper on Sky_Lee 的个人博客</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-cn</language>
+    <copyright>Sky_Lee</copyright>
+    <lastBuildDate>Fri, 31 May 2024 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://blogs.skylee.top/tags/zookeeper/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ZooKeeper APIs</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</link>
+      <pubDate>Fri, 31 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</guid>
+      <description>APIs ZK 的使用场景 ZK 主要用于 单个数据中心 内： 管理集群的配置信息 选举 Leader Test-And-Set 服务的实现 &amp;hellip; Znode Zookeeper 的 API 某种程度上来说像是一个文件系统。它有一个层级化的目录结</description>
+    </item>
+    <item>
+      <title>ZooKeeper: Wait-free coordination for Internet-scale systems</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</link>
+      <pubDate>Thu, 30 May 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</guid>
+      <description>线性一致 首先要了解一个概念：线性一致 一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 执行历史 整体可以按照 一个顺</description>
+    </item>
+  </channel>
+</rss>
