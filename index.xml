@@ -7,8 +7,15 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Sat, 01 Jun 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 02 Jun 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>分布式事务: Distributed Transaction</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/</link>
+      <pubDate>Sun, 02 Jun 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/</guid>
+      <description>分布式事务主要由两部分组成。第一个是并发控制（Concurrency Control）第二个是原子提交（Atomic Commit）。 为什么要有</description>
+    </item>
     <item>
       <title>CRAQ: High-throughput chain replication for read-mostly workloads</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/craq/note/</link>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-cn" dir="ltr">
+<head>
+  <title>分布式事务: Distributed Transaction - Sky_Lee 的个人博客</title>
+  
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta
+  name="description"
+  content="分布式事务主要由两部分组成。第一个是并发控制（Concurrency Control）第二个是原子提交（Atomic Commit）。 为什么要有"
+/>
+<meta
+  name="keywords"
+  content="Sky_Lee, 博客, blogs"
+/>
+<meta name="robots" content="noodp" />
+<meta property="og:title" content="分布式事务: Distributed Transaction" />
+<meta property="og:description" content="分布式事务的介绍与实现方式" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/" /><meta property="article:section" content="posts" />
+<meta property="article:published_time" content="2024-06-02T00:00:00+00:00" />
+<meta property="article:modified_time" content="2024-06-02T00:00:00+00:00" />
+
+<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="分布式事务: Distributed Transaction"/>
+<meta name="twitter:description" content="分布式事务的介绍与实现方式"/>
+
+
+<link rel="canonical" href="https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/" />
+
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="stylesheet" href="/css/index.min.34171dbe77d81f5e42f37a2347d103495b3a01fff5f218c44b0122b7fea127d6.css">
+
+
+
+
+
+
+
+
+
+  
+</head>
+<body class="flex flex-col min-h-screen w-full bg-slate-50 dark:bg-gray-800">
+  <header class="flex flex-none justify-center z-10">
+    <div class="flex flex-row gap justify-between w-full max-w-4xl lg:max-w-5xl h-12 mt-3">
+  <div class="flex-none ml-2 md:ml-0">
+    <a href="/" class="">
+      <img class="h-12 w-12 rounded-full object-cover bg-gray-100" src="http://images.bluebell.skylee.top/bluebell%2Favatar%2F0ae39267eb81693c01509301b7278638d9e540dc18e99e64c071ad0f1c705f60" alt="logo">
+    </a>
+  </div>
+  <div class="flex-1"></div>
+  <div class="flex-none">
+    
+
+
+
+<nav class="h-full static">
+  <button id="navbar-menu-toggle" type="button" class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg md:hidden" aria-controls="navbar-menu" aria-expanded="false">
+    <span class="sr-only">Open main menu</span>
+    <i class="w-8 h-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-menu-2" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M4 6l16 0" />
+  <path d="M4 12l16 0" />
+  <path d="M4 18l16 0" />
+</svg>
+
+    </i>
+  </button>
+  <div class="absolute md:static top-16 left-0 right-0 z-50 hidden w-full md:block md:w-auto" id="navbar-menu">
+    <ul class="flex flex-col mx-2 md:mx-0 md:flex-row md:border-0 rounded-sm md:rounded-full px-3 text-base font-medium text-slate-800 dark:text-slate-200 shadow-lg bg-white dark:bg-gray-600 shadow-slate-800/5 dark:shadow-slate-200/5 ring-1 ring-slate-900/5 dark:ring-slate-100/5">
+    
+        <li id="about" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600"
+            href="/about/" title="About">About</a>
+        </li>
+      
+    
+        <li id="post" class="">
+          <a class="block px-3 py-3 hover:text-emerald-600 text-emerald-600"
+            href="/posts/" title="Post">Post</a>
+        </li>
+      
+    
+    </ul>
+  </div>
+</nav>
+
+
+  </div>
+  
+  <div class="flex-none mx-1"></div>
+  
+  <div class="flex-none md:hidden">
+    <a href=/search/ class="inline-flex items-center p-2 text-sm text-slate-800 dark:text-slate-200 rounded-lg" aria-controls="navbar-menu" aria-expanded="false">
+      <span class="sr-only">Search</span>
+      <i class="w-8 h-8">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+    <path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" />
+    <path d="M21 21l-6 -6" />
+</svg>
+
+      </i>
+    </a>
+  </div>
+  <div class="darkmode-toggle flex flex-none mr-2 md:mr-0">
+    <label for="darkmode-toggle" class="flex items-center px-3 cursor-pointer rounded-full bg-gray-100 dark:bg-gray-600" title="Toggle dark mode">
+      <input name="darkmode-toggle" id="darkmode-toggle" type="checkbox" class="sr-only peer" aria-label="Toggle dark mode">
+      <div class="group flex flex-row gap-1 justify-center h-8 px-1 rounded-full bg-white dark:bg-gray-700">
+        <i class="h-6 w-6 flex-none rounded-full bg-yellow-400 place-self-center peer-checked:group-[]:invisible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brightness-down" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0"></path>
+   <path d="M12 5l0 .01"></path>
+   <path d="M17 7l0 .01"></path>
+   <path d="M19 12l0 .01"></path>
+   <path d="M17 17l0 .01"></path>
+   <path d="M12 19l0 .01"></path>
+   <path d="M7 17l0 .01"></path>
+   <path d="M5 12l0 .01"></path>
+   <path d="M7 7l0 .01"></path>
+</svg>
+
+        </i>
+        <i class="h-6 w-6 flex-none rounded-full place-self-center invisible peer-checked:group-[]:visible">
+          <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-moon-stars" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"></path>
+   <path d="M17 4a2 2 0 0 0 2 2a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2a2 2 0 0 0 2 -2"></path>
+   <path d="M19 11h2m-1 -1v2"></path>
+</svg>
+
+        </i>
+      </div>
+    </label>
+  </div>
+</div>
+
+  </header>
+  <main class="flex flex-auto justify-center">
+    
+<div class="w-full max-w-4xl lg:max-w-5xl">
+  <div class="flex flex-col gap-y-3 p-6 mt-6 mx-2 md:mx-0 rounded-lg shadow-md bg-white dark:bg-gray-700">
+    <h1 class="text-4xl font-semibold text-slate-800 dark:text-slate-100">
+      <a href="/posts/distributed-system/mit-6.824/distributed-transaction/note/">分布式事务: Distributed Transaction</a>
+    </h1>
+
+    
+    <h2 class="my-4 text-large text-slate-600 dark:text-slate-300">
+      分布式事务的介绍与实现方式
+    </h2>
+    
+    
+  <ul class="flex flex-row flex-wrap text-slate-500 dark:text-slate-300">
+    
+      
+      <li>
+        <a href="/categories/distributed-system/"
+          class="text-sm mr-2 px-2 py-1 rounded border border-emerald-800 bg-emerald-800 text-slate-50">
+          Distributed-System
+        </a>
+      </li>
+      
+    
+    
+      
+      <li>
+        <a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">分布式</span>
+        </a>
+      </li>
+      
+      <li>
+        <a href="/tags/mit-6.824/"
+          class="flex flex-row text-sm mr-2 py-1">
+          <i class="h-5 w-5 flex-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M5 9l14 0"></path>
+   <path d="M5 15l14 0"></path>
+   <path d="M11 4l-4 16"></path>
+   <path d="M17 4l-4 16"></path>
+</svg>
+
+          </i>
+          <span class="ml-0">MIT-6.824</span>
+        </a>
+      </li>
+      
+    
+  </ul>
+
+
+
+    <div class="flex flex-col gap-y-1 md:flex-row md:gap-y-0 md:gap-x-4 text-slate-500 dark:text-slate-300">
+  
+  
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"></path>
+   <path d="M16 3v4"></path>
+   <path d="M8 3v4"></path>
+   <path d="M4 11h16"></path>
+   <path d="M11 15h1"></path>
+   <path d="M12 15v3"></path>
+</svg>
+
+    </i>
+    <time datetime="2024-06-02T00:00:00&#43;00:00">
+      2024-06-02
+    </time>
+  </div>
+
+  <div class="flex flex-row text-base gap-x-1">
+    <i class="h-6 w-6 flex-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hourglass-high" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M6.5 7h11"></path>
+   <path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"></path>
+   <path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"></path>
+</svg>
+
+    </i>
+    <span>
+      10 minutes to read
+    </span>
+  </div>
+</div>
+
+
+    
+      
+      <section class="prose prose-slate dark:prose-invert w-full max-w-4xl lg:max-w-5xl mt-6">
+        <h2>Table of Contents</h2>
+        <aside><nav id="TableOfContents">
+  <ul>
+    <li><a href="#为什么要有分布式事务">为什么要有分布式事务</a></li>
+    <li><a href="#先后原子性before-or-after-atomicity">先后原子性（Before-or-After Atomicity）</a></li>
+    <li><a href="#并发控制">并发控制</a></li>
+    <li><a href="#原子提交">原子提交</a>
+      <ul>
+        <li><a href="#角色">角色</a></li>
+        <li><a href="#阶段">阶段</a></li>
+        <li><a href="#执行过程">执行过程</a></li>
+      </ul>
+    </li>
+    <li><a href="#故障恢复">故障恢复</a>
+      <ul>
+        <li><a href="#worker-崩溃">Worker 崩溃</a></li>
+        <li><a href="#coordinator-崩溃">Coordinator 崩溃</a></li>
+      </ul>
+    </li>
+    <li><a href="#总结">总结</a></li>
+    <li><a href="#参考资料">参考资料</a></li>
+  </ul>
+</nav></aside>
+      </section>
+      
+    
+
+    <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
+      <p>分布式事务主要由两部分组成。第一个是并发控制（Concurrency Control）第二个是原子提交（Atomic Commit）。</p>
+<h2 id="为什么要有分布式事务">为什么要有分布式事务</h2>
+<blockquote>
+<p>之所以提及分布式事务，是因为对于拥有大量数据的人来说，他们通常会将数据进行分割或者分片到许多不同的服务器上。假设你运行了一个银行，你一半用户的账户在一个服务器，另一半用户的账户在另一个服务器，这样的话可以同时满足负载分担和存储空间的要求。对于其他的场景也有类似的分片，比如说对网站上文章的投票，或许有上亿篇文章，那么可以在一个服务器上对一半的文章进行投票，在另一个服务器对另一半进行投票。</p>
+</blockquote>
+<p>如果执行事务时，涉及到的数据存放在不同的服务器上面，那么这个事务就上升为「分布式事务」了</p>
+<h2 id="先后原子性before-or-after-atomicity">先后原子性（Before-or-After Atomicity）</h2>
+<p>我们用一个「转账」案例来描述 <strong>先后原子性</strong> 的定义</p>
+<p>定义「转账」的过程如下：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl"><span class="c1"># TRANSFER(A, B, 10): A 向 B 转 10 元</span>
+</span></span><span class="line"><span class="cl">procedure TRANSFER <span class="o">(</span>reference debit_account, reference credit_account, amount<span class="o">)</span>
+</span></span><span class="line"><span class="cl">debit_account ← debit_account - amount
+</span></span><span class="line"><span class="cl">credit_account ← credit_account + amount
+</span></span></code></pre></div><p>假设 debit_account 和 credit_account 被分片，即存放在不同的服务器上</p>
+<p>此时，有两个客户端分别执行（A 初始值为 300，B 初始值为 100）：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">TRANSFER <span class="o">(</span>A, B, <span class="nv">$10</span><span class="o">)</span>
+</span></span></code></pre></div><p>和</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-shell" data-lang="shell"><span class="line"><span class="cl">TRANSFER <span class="o">(</span>B, C, <span class="nv">$25</span><span class="o">)</span>
+</span></span></code></pre></div><p>那么，最终结果可能有以下几种：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-02-14-38-02-990.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>上图展示了可能发生的几种时间序列，容易发现，case1 和 case2 是合法的，剩下的几个 case 都是不合法的</p>
+<p>我们的目标是确保前两个时间序列之一实际发生。实现这一目标的一种方法是使步骤 1-1 和 1-2 具有原子性，步骤 2-1 和 2-2 同样具有原子性。在原始程序中</p>
+<p>也就是说：当执行 TRANSFER 操作时，我们希望它是一个 <strong>事务</strong>，因为我们不希望将 debit_account、credit_account 的中间值暴露给其它任何人看到</p>
+<p><strong>先后原子性</strong> 是一种更为普遍的约束，即 <strong>同时</strong> 操作 <strong>相同</strong> 数据的多个动作 <strong>不应相互干扰</strong></p>
+<blockquote>
+<p>Concurrent actions have the before-or-after property if their effect from the point of view of their invokers is the same as if the actions occurred either completely before or completely after one another.</p>
+</blockquote>
+<p>由于我们对先后原子性的定义是每个先后动作的行为就像它在其他先后动作之前或之后完全运行一样，因此先后原子性直接导致了这种正确性概念。</p>
+<p>换句话说，先后原子性的效果是 <strong>将动作串行化</strong>，因此先后原子性保证了协调的正确性。</p>
+<p>另一种表达这一思想的方式是说，当并发动作具有先后属性时，它们是可串行化的：<em>存在某种串行顺序，如果遵循该顺序，将导致相同的最终状态。</em> 因此在图 9.2 中，case1 和 case2 的顺序可以从串行顺序得到，但 case3 到 case6 的动作不能。</p>
+<h2 id="并发控制">并发控制</h2>
+<p>数据库的事务处理系统会使用锁，在事务使用任何数据之前，它需要获得数据的锁。</p>
+<p>如果一些其他的事务已经在使用这里的数据，锁会被它们持有，当前事务必须等待这些事务结束，之后当前事务才能获取到锁。</p>
+<p>下面讨论一种很常见的锁：两阶段锁（Two-Phase Locking）</p>
+<p>两阶段锁分为两个阶段：</p>
+<ul>
+<li>获取锁</li>
+<li>事务结束前一直持有锁</li>
+</ul>
+<p>当一个事务开始后，在访问任何数据前，都要获取该数据对应的锁（可能是行锁，也可能是粒度更大的锁）</p>
+<p>在事务执行中，必须持有锁，直到事务提交或终止</p>
+<p>例如对于之前提到的转账案例：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// thread-1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nf">Begin</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="c1">// 阶段一
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">GetLock</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Write</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Write</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="c1">// 阶段二
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">Unlock</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Unlock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// thread-1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span>
+</span></span><span class="line"><span class="cl"><span class="nf">Begin</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Write</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Write</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Unlock</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Unlock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span></code></pre></div><p>两阶段锁的本质实际上就是「迫使」事务 <strong>串行</strong> 执行，以满足「先后原子性」</p>
+<blockquote>
+<p>为什么要提交或终止事务以后，才释放锁？</p>
+<p>假设读取或写入一条数据 A 以后，接下来不会读取或写入 A，为什么不能立即释放 A 的锁？</p>
+<p>这样并发能力不是更强吗？</p>
+</blockquote>
+<p>如果在提交或终止事务前，释放锁，这种方式类似 MySQL 的 Read Uncommitted 事务隔离级别，会读取到其它事务没有提交的数据，不满足「先后原子性」</p>
+<blockquote>
+<p>两阶段锁很容易死锁，怎么解决？</p>
+</blockquote>
+<p>例如：</p>
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// thread-1
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">Begin</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Unlock</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" class="chroma"><code class="language-c" data-lang="c"><span class="line"><span class="cl"><span class="c1">// thread-2
+</span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="nf">Begin</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">GetLock</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Read</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl"><span class="nf">Commit</span><span class="p">()</span>
+</span></span><span class="line"><span class="cl"><span class="nf">Unlock</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">)</span>
+</span></span></code></pre></div><p>如果 thread1 持有锁 A，thread 2 持有锁 B：</p>
+<ul>
+<li>当 thread1 想要获取锁 B 时，发现已经被占用，等待</li>
+<li>当 thread2 想要获取锁 A 时，发现已经被占用，等待</li>
+</ul>
+<p>陷入死锁，怎么解决？</p>
+<p>一般来说，数据库都会「识别」到死锁的情况，通常的解决方案是：让其中一个事务回滚（后面重试即可），这样另一个事务就能获取到锁，打破局面</p>
+<h2 id="原子提交">原子提交</h2>
+<p>单个机器上的事务提交很简单，但是扩展到多个机器，也就是分布式事务的提交，就比较麻烦了</p>
+<p>因为在分布式的环境下，一些机器可能出现故障，或者网络出现问题等等</p>
+<p>如何保证即使出现错误，也能保证我们的 <strong>事务提交操作也是原子的</strong>，是分布式事务的一大挑战</p>
+<p>常用的解决方案是：<strong>两阶段提交（2PC）</strong></p>
+<h3 id="角色">角色</h3>
+<p>在 2PC 中，有两种角色：</p>
+<ul>
+<li>参与者（worker）</li>
+<li>协调者（coordinator）</li>
+</ul>
+<p>参与者是实际的事务执行者，负责执行协调者发来的事务请求</p>
+<h3 id="阶段">阶段</h3>
+<p>两阶段提交，分为：</p>
+<ul>
+<li>事务准备阶段</li>
+<li>事务提交阶段</li>
+</ul>
+<h3 id="执行过程">执行过程</h3>
+<p>假设多事务由协调者 Alice 请求 Worker Bob、Charles 和 Dawn 分别执行组件事务 X、Y 和 Z。</p>
+<p>首先，客户端开启一个新的事务，对 X、Y、Z 执行读取或者写入操作</p>
+<p>这会要求协调者 Alice 向 Bob 发送：</p>
+<pre tabindex="0"><code>From:Alice
+
+To: Bob
+
+Re: my transaction 271
+
+    Please do X as part of my transaction
+</code></pre><p>类似的消息也发送给 Charles 和 Dawn，也提及事务 271，并请求他们分别执行 Y 和 Z。</p>
+<p>像普通的 RPC 一样，如果 Alice 在合理的时间内没有收到一个或多个 Worker 的响应，她会向未响应的 Worker 重新发送消息，尽可能多次地 <strong>重新发送</strong> 以引起响应。</p>
+<p>Worker 在收到这样的请求时，会 <strong>检查是否有重复请求</strong>，然后，它进行请求动作的预提交部分，向 Alice 报告这一部分已经顺利完成：</p>
+<pre tabindex="0"><code>From:Bob
+
+To: Alice
+
+Re: your transaction 271
+
+    My part X is ready to commit.
+</code></pre><p>假设客户端要执行的事务就这些，此时客户端 <strong>想要提交事务</strong>，于是客户端会告诉协调者 Alice，请帮我提交事务 271</p>
+<p>Alice 收到客户端的请求后，开始事务提交过程，也就是 <strong>2PC 的第一阶段</strong></p>
+<p>协调者会给所有参与者发送一条 <strong>Prepare</strong> 消息：</p>
+<pre tabindex="0"><code>Two-phase-commit message #1:
+From:Alice
+
+To: Bob
+
+Re: my transaction 271
+
+    PREPARE to commit X.
+</code></pre><p>参与者收到 Prepare 消息后，如果自己能够提交事务，那么会返回一个 <strong>YES</strong> 消息给协调者：</p>
+<pre tabindex="0"><code>Two-phase-commit message #2:
+From:Bob
+To:Alice
+Re: your transaction 271
+    I am PREPARED to commit my part. Have you decided to commit yet? Regards.
+</code></pre><p>当协调者收到了所有参与者的响应后，进入 <strong>2PC 的第二阶段</strong></p>
+<p>协调者会给所有参与者发送一条 <strong>Commit</strong> 消息，要求各参与者提交自己部分的事务：</p>
+<pre tabindex="0"><code>Two-phase-commit message #3
+From:Alice
+To:Bob
+Re: my transaction 271
+    My transaction committed. Thanks for your help.
+</code></pre><p>参与者收到 Commit 消息后，会提交自己部分的事务，并 <strong>释放所有锁</strong></p>
+<blockquote>
+<p>为了遵循「两阶段锁」原则，参与者在开启子事务时，操作任何数据前都要获取锁</p>
+<p>直到协调者发来一条 Commit 或者 Abort 消息，然后提交或者终止子事务后，才会释放所有锁</p>
+</blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="https://images.blogs.skylee.top/2024-06-02-08-59-26-347.png"
+      alt="" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>大部分 2PC 的实现要求参与者在 Commit 或 About 一个事务后，给协调者发送一条 <strong>ACK</strong>，进而让协调者 <strong>安全地删除部分数据</strong>（这部分数据是啥后面会讲）</p>
+<h2 id="故障恢复">故障恢复</h2>
+<p>来看看几个故障的场景：</p>
+<h3 id="worker-崩溃">Worker 崩溃</h3>
+<p><strong>情况 1: Worker 在发送 YES 消息前崩溃</strong></p>
+<p>这种情况，Coordinator 会尝试 <strong>重发</strong> Prepare 消息给 Worker，直到 Worker 响应，才能进入 2PC 的第二阶段</p>
+<p>当 Worker 重启以后，收到了 Prepare 消息，但是自己却没有办法发送 YES，因为重启后，内存的数据被清除了</p>
+<p>此时 Worker 被授予 <strong>单方面 Abort 事务的权限</strong>，可以直接返回一个 No 给 Coordinator</p>
+<p>当然，一个 Worker 的重启可能会花费较长的时间，为了避免无限等待，Coordinator 也可以单方面 Abort 事务</p>
+<p><strong>情况 2: Worker 在发送 YES 消息后崩溃</strong></p>
+<p>这种情况，Coordinator 可以收到全部的 YES 消息，并进入 2PC 的第二阶段</p>
+<p>Coordinator 给所有 Worker 发送 Commit 消息，但有一个 Worker 由于宕机正在重启，无法及时响应</p>
+<p>Coordinator 必须 <strong>重发</strong> Commit 消息给 Worker，直到 Worker 响应</p>
+<p>当 Worker 重启以后，收到了 Commit 消息，此时 Worker 还能单方面 Abort 事务吗？</p>
+<p>显然不能，因为其它 Worker 已经提交了子事务，宕机的 Worker 也必须提交自己的子事务</p>
+<p>因此，Worker 必须 <strong>在发送 YES 消息前</strong>，将「事务的状态记录」<strong>持久化</strong> 到磁盘</p>
+<p><strong>情况 3: Worker 在发送 ACK 后崩溃</strong></p>
+<p>Worker 有可能在处理完 Commit 之后就崩溃了。但是这样的话，子事务已经提交。这样的话，故障重启就不需要做任何事情，因为事务已经完成了。</p>
+<p>因为没有收到 ACK，事务协调者会再次发送 Commit 消息。当 Worker 重启之后，收到了 Commit 消息时，它可能已经将 Log 中的修改写入到自己的持久化存储中、释放了锁、<strong>并删除了有关事务的 Log</strong>。</p>
+<p>所以我们需要关心，如果 Worker 收到了同一个 Commit 消息两次，该怎么办？</p>
+<p>这里 Worker 可以记住事务的信息，但是这 <strong>会消耗内存</strong>，所以实际上 Worker <strong>会完全忘记已经在磁盘上持久化存储的事务的信息</strong>。对于一个它不知道事务的 Commit 消息，Worker 会 <strong>无条件 ACK</strong> 这条消息</p>
+<p>总结下来：</p>
+<ul>
+<li>Worker 必须 <strong>在发送 YES 消息前</strong>，将「事务的状态记录」<strong>持久化</strong> 到磁盘</li>
+<li>一个 Worker 的重启可能会花费较长的时间，为了避免无限等待，Coordinator 也可以单方面 Abort 事务</li>
+<li>为了及时释放内存和磁盘空间，当 Worker 提交了子事务后，需要删除磁盘上持久化存储的事务的信息</li>
+<li>对于一个它不知道事务的 Commit 消息，Worker 会 <strong>无条件 ACK</strong> 这条消息</li>
+</ul>
+<h3 id="coordinator-崩溃">Coordinator 崩溃</h3>
+<p><strong>情况 1: Coordinator 在发送 Prepare 时崩溃</strong></p>
+<p>这个情况又可以细分为：</p>
+<ul>
+<li>发送 Prepare 前</li>
+<li>发送了若干个 Prepare</li>
+<li>所有 Prepare 均发送完毕</li>
+</ul>
+<p>无论哪种情况，客户端在超时没有收到 Coordinator 响应，会尝试重发「事务提交」请求</p>
+<p>当 Coordinator 重启后，收到了客户端的「事务提交」请求后，再发送 Prepare 就行</p>
+<p>但这要求 Worker 具有辨别重复请求的能力</p>
+<p><strong>情况 2: Coordinator 在发送 Commit 后崩溃</strong></p>
+<p>这种情况会导致某个 Worker 一直收不到 Coordinator 的 Commit 消息</p>
+<p>如果 Worker 收到了 Prepare 消息，并回复了 Yes，在等待了 10 秒钟或者 10 分钟之后还没有收到 Commit 消息，它能单方面的决定 Abort 事务吗？</p>
+<p><strong>不能</strong></p>
+<p>因为其它 Worker 有可能已经提交了自己的子事务，所以，Worker 在这里 <strong>必须无限等待</strong>，直到收到 Coordinator 的 Commit 消息</p>
+<p>这种场景也被叫做 <strong>「Block」</strong>，是 2PC <strong>最大的弊端</strong>，决定了 2PC 本身的可用性</p>
+<blockquote>
+<p>这里的 Block 行为是两阶段提交里非常重要的一个特性，并且它不是一个好的属性。因为它意味着，在特定的故障中，你会很容易的陷入到一个需要等待很长时间的场景中，在等待过程中，你会一直持有锁，并阻塞其他的事务。所以，人们总是尝试在两阶段提交中，将这个区间尽可能快的完成，这样可能造成 Block 的时间窗口也会尽可能的小。所以人们尽量会确保协议中这部分尽可能轻量化，甚至对于一些变种的协议，对于一些特定的场景都不用等待。</p>
+</blockquote>
+<p>也就是说，要想打破这个 block 的局面，只能等待 Coordinator 重启后重发 Commit 消息</p>
+<p>因此，Coordinator 在开启 2PC 前，必须 <strong>持久化</strong> 事务相关元数据，发送 Commit 前，需要在磁盘中标记 &ldquo;Commit 未完成&rdquo; 状态（具体怎么实现我也不清楚，但应该有一个类似的步骤）</p>
+<p>那什么时候，Coordinator 可以安全删除这部分持久化的元数据呢？</p>
+<p>当 Coordiantor 收到所有 Worker 的 ACK 后，说明所有子事务均已提交，此时可以删除这部分元数据</p>
+<h2 id="总结">总结</h2>
+<p>使用 <strong>两阶段锁 + 两阶段提交</strong>，可以满足事务的「先后原子性」</p>
+<p>两阶段提交实现了原子提交。它在大量的将数据分割在多个服务器上的分片数据库或者存储系统中都有使用。</p>
+<p>两阶段提交可以支持读写多条记录，一些更特殊的存储系统不允许你在多条记录上支持事务。对于这些不支持事务中包含多条数据的系统，你就不需要两阶段提交。但是如果你需要在事务中支持多条数据，并且你将数据分片在多台服务器之上，那么你必须支持两阶段提交。</p>
+<blockquote>
+<p>为什么 2PC 这么慢?</p>
+</blockquote>
+<ul>
+<li>大量的网络请求：对于 N 个 Worker，一次事务提交，最理想的情况，也需要 4N 个 RPC call</li>
+<li>磁盘写入：2PC 要求 Coordinator 和 Worker 需要 <strong>持久化</strong> 相关数据以实现错误恢复</li>
+<li>存在 Block 的情况：如果发生 Block，只能等待 Coordinator 恢复</li>
+</ul>
+<blockquote>
+<p>与 Raft 对比</p>
+</blockquote>
+<p>下面的分析来自 <a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-12-distributed-transaction/12.5-zong-jie" target="_blank" rel="noopener">Robert 教授的总结部分</a>
+</p>
+<p>两阶段提交的架构中，本质上是有一个 Leader（事务协调者），将消息发送给 Follower（事务参与者），Leader 只能在收到了足够多 Follower 的回复之后才能继续执行。这与 Raft 非常像，但是，这里协议的属性与 Raft 又非常的不一样。这两个协议解决的是完全不同的问题。</p>
+<p>因为 Raft 的每个 Server 做的都是相同的事，存放的也是几乎相同的数据；而 2PC，每个 Worker 存放的数据是完全不同的</p>
+<p>所以，Raft 通过复制可以不用每一个参与者都在线，而两阶段提交每个参与者都做了不同的工作，并且每个参与者的工作都必须完成，所以两阶段提交对于可用性没有任何帮助。Raft 完全就是可用性，而两阶段提交完全不是高可用的，系统中的任何一个部分出错了，系统都有可能等待直到这个部分修复。</p>
+<blockquote>
+<p>怎么结合 Raft 实现 2PC 的高可用</p>
+</blockquote>
+<p>一图胜千言：</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-02-17-03-38-792.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>每个集群通过 Raft 实现冗余复制，保证可用性</p>
+<h2 id="参考资料">参考资料</h2>
+<ul>
+<li><a href="https://mit-public-courses-cn-translatio.gitbook.io/mit6-824/lecture-12-distributed-transaction" target="_blank" rel="noopener">Lecture 12 - Distributed Transaction</a>
+</li>
+<li><a href="https://ocw.mit.edu/courses/res-6-004-principles-of-computer-system-design-an-introduction-spring-2009/de2b7c59e413f58e51eac60acd52efef_atomicity_open_5_0.pdf" target="_blank" rel="noopener">9.1.5 Before-or-After Atomicity: Coordinating Concurrent Threads</a>
+</li>
+<li><a href="https://ocw.mit.edu/courses/res-6-004-principles-of-computer-system-design-an-introduction-spring-2009/de2b7c59e413f58e51eac60acd52efef_atomicity_open_5_0.pdf" target="_blank" rel="noopener">9.6.3 Multiple-Site Atomicity: Distributed Two-Phase Commit</a>
+</li>
+</ul>
+
+    </article>
+
+    
+
+
+
+  </div>
+</div>
+
+  </main>
+  <footer class="flex flex-none justify-center">
+    <section class="flex flex-col md:flex-row mx-2 md:mx-0 gap-2 md:gap-0 justify-between w-full max-w-4xl lg:max-w-5xl py-6 text-slate-500 dark:text-slate-300">
+  <div class="flex flex-row">
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    <a href="https://github.com/SkyLee424" target="_blank" title="Github" class="flex flex-row mr-2">
+      <span class="hidden">Github</span>
+      <i class="h-6 w-6 flex-none"> <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-github" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5"></path>
+</svg>
+ </i>
+    </a>
+  
+  
+  
+    <a href="https://leetcode.cn/u/sky_lee/" target="_blank" title="LeetCode" class="flex flex-row mr-2">
+      <span class="hidden">LeetCode</span>
+      <i class="h-6 w-6 flex-none"> <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="96" height="96" viewBox="0 0 96 96" enable-background="new 0 0 24 24" xml:space="preserve">  <image id="image0" width="24" height="24" x="0" y="-1"
+    href="data:image/png;base64,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" ></image>
+</svg>
+ </i>
+    </a>
+  
+  
+
+
+  </div>
+  <div class="grow"></div>
+  <div class="flex flex-row">
+    <i class="h-6 w-6 flex-none"><svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+   <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+   <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path>
+   <path d="M14 9.75a3.016 3.016 0 0 0 -4.163 .173a2.993 2.993 0 0 0 0 4.154a3.016 3.016 0 0 0 4.163 .173"></path>
+</svg>
+</i> 2024 Sky_Lee
+    
+  </div>
+  
+</section>
+
+  </footer>
+  <script src="/main.min.c6372b6836971865bd94bfde974748aca8415824a2facab6ccd66a87384bfacb.js"></script>
+
+<div class="hidden top-1 right-1" id="code-copy">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copy" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+  <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+</svg>
+
+  </i>
+</div>
+<div class="hidden top-1 right-1" id="code-copy-done">
+  <i class="h-6 w-6 block">
+    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M5 12l5 5l10 -10" />
+</svg>
+
+  </i>
+</div><script src="/code-copy.min.4be95a7068ec721962fd0df64ce1c8673df8035fde465874f1e6e67e2aac7f71.js"></script>
+
+
+
+
+
+</body>
+</html>
