@@ -236,7 +236,7 @@
 
     </i>
     <span>
-      10 minutes to read
+      11 minutes to read
     </span>
   </div>
 </div>
@@ -264,6 +264,7 @@
         <li><a href="#coordinator-崩溃">Coordinator 崩溃</a></li>
       </ul>
     </li>
+    <li><a href="#为什么要-2pc">为什么要 2PC？</a></li>
     <li><a href="#总结">总结</a></li>
     <li><a href="#参考资料">参考资料</a></li>
   </ul>
@@ -520,6 +521,28 @@ Re: my transaction 271
 <p>因此，Coordinator 在开启 2PC 前，必须 <strong>持久化</strong> 事务相关元数据，发送 Commit 前，需要在磁盘中标记 &ldquo;Commit 未完成&rdquo; 状态（具体怎么实现我也不清楚，但应该有一个类似的步骤）</p>
 <p>那什么时候，Coordinator 可以安全删除这部分持久化的元数据呢？</p>
 <p>当 Coordiantor 收到所有 Worker 的 ACK 后，说明所有子事务均已提交，此时可以删除这部分元数据</p>
+<h2 id="为什么要-2pc">为什么要 2PC？</h2>
+<p>为什么要两阶段提交？只使用一个阶段不行吗？</p>
+<p>更具体的说：Coordinator 收到客户端的 Commit 请求后，<strong>不需要 Prepare 阶段</strong>，而是直接要求 Worker「提交」子事务不可以吗？</p>
+<p>先来看看网上主流的说法：</p>
+<blockquote>
+<p>2PC 保证了一致性和原子性：</p>
+<p>一致性：2PC 的第一阶段（准备阶段）确保所有参与者都同意提交事务之前，协调者不会进行实际的提交操作。这确保了如果任何参与者不能提交事务（由于检查失败、资源不足等原因），整个事务将被回滚，从而保证了全局一致性。</p>
+<p>原子性：通过两个阶段，2PC 能够确保事务的提交要么在所有参与者上成功执行，要么在所有参与者上回滚，没有中间状态。单独使用一个阶段无法实现这种全局原子性。</p>
+</blockquote>
+<p>我个人认为，主要是 <strong>性能原因</strong></p>
+<p>Worker 可能由于各种原因（例如内存、磁盘空间不足，网络问题）导致 <strong>无法提交事务</strong></p>
+<p>假设采用 <strong>一阶段提交</strong>，即 Coordinator 直接给所有 Worker 发送 Commit 请求</p>
+<ul>
+<li>如果某个 Worker 超时未响应，为了保证一致性和原子性，Coordinator 需要 <strong>阻塞</strong> 等待，直到该 Worker 响应（因为其它 Worker 已经提交子事务）</li>
+<li>如果某个 Worker 由于某种原因返回 Abort，Coordinator 需要要求其它 Worker 回滚子事务，但是此前 Worker 已经提交（应用）了子事务，想要 <strong>回滚很困难</strong></li>
+</ul>
+<p>因此，需要使用两阶段提交，可以在 Prepare 阶段：</p>
+<ul>
+<li>排除某个 Worker 的网络问题（如果一直没有响应，Coordinator 有权回滚整个事务）</li>
+<li>排除某个 Worker 要求 Abort 的情况</li>
+</ul>
+<p>这样，阻塞的可能性大大降低，性能自然得到提升</p>
 <h2 id="总结">总结</h2>
 <p>使用 <strong>两阶段锁 + 两阶段提交</strong>，可以满足事务的「先后原子性」</p>
 <p>两阶段提交实现了原子提交。它在大量的将数据分割在多个服务器上的分片数据库或者存储系统中都有使用。</p>

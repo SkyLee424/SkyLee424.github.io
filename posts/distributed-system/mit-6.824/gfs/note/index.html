@@ -446,7 +446,6 @@
 <h2 id="gfs-的局限性">GFS 的局限性</h2>
 <p>GFS 最严重的问题在于：<strong>只有一个 Master 节点</strong></p>
 <ul>
-<li>Master 会维护 FileName、Chunk、ChunkServer、Version 等等元数据，而这些元数据运行时会在内存存储，因此内存，存在瓶颈</li>
 <li>只有一个 Master，应对大量的 Client 的请求，可能处理不过来</li>
 <li>Master 挂了，故障转移是手动的</li>
 <li>Client 很难发现自己读取的数据可能是「错误」的</li>

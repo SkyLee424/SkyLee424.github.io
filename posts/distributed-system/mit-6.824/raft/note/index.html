@@ -380,7 +380,7 @@
 <blockquote>
 <p>Follower 看起来仅仅只是将 Log 存储在本地，还没有执行 Command？</p>
 </blockquote>
-<p>下一次 Leader 向 Follower 发起 AE 请求时，会顺带上 AppendIdx 和 CommitIdx</p>
+<p>下一次 Leader 向 Follower 发起 AE 请求时，会顺带上 CommitIdx</p>
 <p>Follower 可以根据 CommitIdx，来判断哪些日志已经被提交，并执行这些已经提交的日志</p>
 <p>这个特性，决定了 Raft 协议中，Follower 应用的数据 <strong>不总是最新的</strong>，因此，客户端实际的 <strong>读写操作应该都在 Leader 进行</strong></p>
 <h3 id="fail">Fail</h3>
