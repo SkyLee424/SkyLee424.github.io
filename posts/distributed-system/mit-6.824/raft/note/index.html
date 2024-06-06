@@ -260,7 +260,7 @@
 
     </i>
     <span>
-      13 minutes to read
+      17 minutes to read
     </span>
   </div>
 </div>
@@ -283,6 +283,12 @@
     </li>
     <li><a href="#持久化">持久化</a></li>
     <li><a href="#日志压缩">日志压缩</a></li>
+    <li><a href="#集群成员变更">集群成员变更</a>
+      <ul>
+        <li><a href="#直接更新-config-有什么问题">直接更新 Config 有什么问题</a></li>
+        <li><a href="#如何处理集群成员变更">如何处理集群成员变更</a></li>
+      </ul>
+    </li>
     <li><a href="#raft-怎么处理脑裂的-分布式系统应该如何应对脑裂">Raft 怎么处理脑裂的？=&gt; 分布式系统应该如何应对脑裂？</a>
       <ul>
         <li><a href="#分布式系统应该如何应对脑裂">分布式系统应该如何应对脑裂</a></li>
@@ -565,6 +571,103 @@
     >
   </figure></div>
 </p>
+<h2 id="集群成员变更">集群成员变更</h2>
+<p>在某些时候，我们希望对 Raft 集群做 <strong>扩缩容</strong>，即向集群中添加或者删除若干个节点，此时应该怎么做呢？</p>
+<h3 id="直接更新-config-有什么问题">直接更新 Config 有什么问题</h3>
+<p>你可能会想：扩缩容，直接修改每个节点的 config 不就好了吗？</p>
+<p>然而，直接修改 config 存在一个问题：<strong>某一个 Term 内，集群存在两个 Leader</strong>，即脑裂</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-06-08-42-43-712.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>因为我们不可能同时修改每个节点的 config，这就意味着在某一时刻，一些节点使用的是旧的 config，一些节点使用的是新的 config</p>
+<p>例如上图中，存在一个时间段，Server-1 与 Server-2 持有旧 config，Server-3、Server-4、Server-5 持有新的 config</p>
+<p>如果在这个时间段内发生了 Leader 选举，那么：</p>
+<ul>
+<li>Server-1 与 Server-2 之间会选出一个 Leader（其中一个获得两票，满足旧 config 的 majority）</li>
+<li>Server-3、Server-4、Server-5 之间也会选出一个 Leader（其中一个获得三票，满足新 config 的 majority）</li>
+</ul>
+<p>整个集群就出现了两个 Term 相同的 Leader，这违背了 Raft 协议</p>
+<h3 id="如何处理集群成员变更">如何处理集群成员变更</h3>
+<h4 id="停机手动修改每个节点的-config">停机，手动修改每个节点的 config</h4>
+<p>这种方式非常简单，但是存在一个问题：config 修改期间，整个集群是无法对外提供服务的</p>
+<h4 id="单节点变更">单节点变更</h4>
+<p>这种方式要求：一次性只能添加或删除 <strong>一个</strong> 节点，只有当新配置被 <strong>apply</strong> 以后，才能添加或删除下一个节点</p>
+<p>为什么单节点变更，可以保证任意时刻，不会出现脑裂现象呢？</p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-06-08-56-13-739.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<blockquote>
+<p>原有集群奇偶数节点情况下，分别添加和删除一个节点。在上图中可以看出，如果每次只增加和删除一个节点，那么 Cold 的 Majority 和 Cnew 的 Majority 之间一定 <strong>存在交集</strong>，也就说是在同一个 Term 中，Cold 和 Cnew 中交集的那一个节点只会进行一次投票，要么投票给 Cold，要么投票给 Cnew，这样就避免了同一 Term 下出现两个 Leader。</p>
+</blockquote>
+<p>但是这种方式变更效率不高，一次只能变更一个节点，如果我们希望一次变更多个节点怎么办呢？</p>
+<h4 id="多节点变更联合共识joint-consensus">多节点变更：联合共识（joint consensus）</h4>
+<p>Raft 引入了 <strong>联合共识（joint consensus）</strong> 的概念来处理集群节点变更的情况</p>
+<p>简单来说，除了旧配置 Cold 与新配置 Cnew 以外，还额外引入了一个 <strong>联合共识配置</strong>：C(old,new)</p>
+<blockquote>
+<p>C(old,new) 是新旧配置的并集，例如：</p>
+<ul>
+<li>Cold 中有 [A, B, C, D] 四个节点</li>
+<li>Cnew 中有 [B, C, D, E] 四个节点</li>
+</ul>
+<p>那么 C(old,new) 中有 [A, B, C, D, E] 五个节点</p>
+</blockquote>
+<p>采用联合共识：</p>
+<ul>
+<li>日志条目被复制给集群中处于新、老配置的所有节点</li>
+<li>新、旧配置的节点都可能成为 leader</li>
+<li>达成一致（针对选举和提交）需要 <strong>分别得到在两种配置上过半的支持</strong></li>
+</ul>
+<p>当 Leader 收到客户端的集群变更请求后</p>
+<ul>
+<li>根据新旧配置生成一个联合共识配置</li>
+<li>采用日志复制的方式同步联合共识配置</li>
+<li>任何节点收到一个描述配置的日志条目时，<strong>无需等待提交，立即应用新配置</strong></li>
+<li>当联合共识配置被 Commit 并 Apply 后，Leader 可以安全的生成新配置 Cnew</li>
+<li>采用日志复制的方式同步 Cnew</li>
+<li>当 Cnew 被 Commit 并 Apply 后，Cold 就没有作用了，此时集群完全采用新的配置</li>
+</ul>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-06-09-26-30-481.jpg"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<p>上图描述了使用联合共识更新配置文件的全过程，共分为三个阶段：</p>
+<ul>
+<li>阶段 1: C(old,new) 创建后，commit 前：此时只有处于 Cold 配置的节点可以当选 Leader（因为 Cold 是 majority）</li>
+<li>阶段 2: C(old,new) commit 后，Cnew commit 前：此时只有处于 C(old, new) 配置的阶段可以当选 Leader（因为 C(old, new) 是 majority）</li>
+<li>阶段 3: Cnew commit 后：此时只有处于 Cnew 配置的节点可以当选 Leader（因为 Cnew 是 majority）</li>
+</ul>
+<p>可以发现：使用联合共识，可以保证任意阶段，最多只有一个 Leader，确保了配置更新的安全性</p>
+<p>但是使用联合共识会引入额外的复杂度，带来一些问题：</p>
+<p><strong>新的节点需要追赶日志条目</strong></p>
+<blockquote>
+<p>引入新身份：Learner</p>
+</blockquote>
+<p>新的节点可能在一开始并没有存储任何的日志条目。当这些节点以这种状态加入到集群中的时候，它们需要一段时间来更新自己的日志，以便赶上其他节点，在这个时间段里面它们是不可能提交一个新的日志条目的。</p>
+<p>为了避免因此造成的系统短时间的不可用，Raft 在配置变更前引入了一个额外的阶段。在该阶段中，新的节点以 <strong>没有投票权身份（Leaner）</strong> 加入到集群中来（leader 会把日志复制给它们，但是考虑过半的时候不需要考虑它们）。</p>
+<p>一旦新节点的日志已经赶上了集群中的其他节点，那么配置变更就可以按照之前描述的方式进行了。</p>
+<p><strong>Leader 有可能不是新配置中的一员</strong></p>
+<p>为了解决这个问题，Leader 一旦 <strong>提交</strong> 了 Cnew 日志条目，它就会退位为 Follower</p>
+<p><strong>移除的节点扰乱集群</strong></p>
+<p>新配置中，可能移除了部分节点，新的 Leader 不会给这些节点发送心跳</p>
+<p>在这部分节点下线前，由于收不到 Leader 的心跳，会开始 Leader 选举过程</p>
+<p>它们会发送带有新任期号的 RequestVote RPC，这样会导致当前的 Leader 回到 Follower 状态，然后选出一个新的 Leader。但是这些被移除的节点还是会收不到心跳，然后再次超时，再次循环这个过程，导致系统的可用性很差。</p>
+<p>为了解决这个问题，一个节点在处理另一个节点的投票请求时，如果它认为已经有一个 Leader 存在，那么它会 <strong>忽略</strong> 投票请求</p>
+<p>具体来说，如果一个节点在最小选举超时时间内收到一个 RequestVote RPC，它会忽略这个请求</p>
+<p>这种方式有效避免了 Term 爆炸增长的问题</p>
 <h2 id="raft-怎么处理脑裂的-分布式系统应该如何应对脑裂">Raft 怎么处理脑裂的？=&gt; 分布式系统应该如何应对脑裂？</h2>
 <p>脑裂主要是 <strong>网络分区问题</strong> 产生的</p>
 <p>当旧 Leader 所在网络分区出现问题，无法与部分 Follower 建立心跳，那么这一部分 Follower 会开始选举</p>
