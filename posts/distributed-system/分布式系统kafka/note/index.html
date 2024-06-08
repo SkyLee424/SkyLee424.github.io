@@ -432,7 +432,7 @@
 <p>让 Leader 推 Msg 给 Follower，如果推送数据太快，Follower 的写压力会很大</p>
 <p>而 Follower 也是一个 Broker，<strong>它可能也是若干个 Partition 的 Leader</strong>，如果 Follower 把大量资源分配给同步数据上，那么它所 Lead 的 Partition 可能读写性能就不太理想了</p>
 <p>因此，采取「拉取」这种策略，<strong>将同步速率决定权交给 Follower</strong>，优先保证 Follower 可以处理它所 Lead 的 Partition 的读写请求</p>
-<p><strong>这实际上是优先保证了可用性，而放弃一些一致性保障</strong>（如果 Leader 挂了，那么会丢失一些数据）</p>
+<p><strong>这实际上是优先保证了可用性，而放弃一些一致性保障</strong>（如果 Leader 挂了，并且 ACK != all，那么会丢失一些数据）</p>
 <h2 id="故障转移">故障转移</h2>
 <p>Kafka 的 failover 是一个可以聊很多的话题</p>
 <p>故障的产生，不一定是节点本身宕机，也有可能是网络原因</p>
@@ -486,7 +486,7 @@
 <p>如果一段时间内，这个 DOWN 掉的 Broker 还没有没有恢复连接或重新注册，ZooKeeper 会删除对应的 <code>brokers</code> 目录（例如 <code>brokers/ids/1</code>）</p>
 <p>这一过程会被 Controller 监听到，于是 Controller 就知道哪个 Broker 出现了 Failure</p>
 <h4 id="转移-1">转移</h4>
-<p>Controller 会在 <strong>ISR 集合</strong> 中选择一个 Broker</p>
+<p>Controller 会在 <strong>AR 集合</strong> 中按顺序选择一个 Broker，如果该 Broker 在该 Partition 的 <strong>ISR 集合</strong> 中，那么该 Broker 被选中</p>
 <p>被选中的 Broker 就会成为这个 Partition 新的 Leader，故障转移就完成了</p>
 <p><strong>当然这里又可以在 C、A 之间做 trade-off：</strong></p>
 <p>Kafka 有一个配置项，允许 <strong>Unclean Election</strong></p>
