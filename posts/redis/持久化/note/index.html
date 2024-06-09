@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta
   name="description"
-  content="AOF 日志 介绍 AOF（append-only file）是 Redis 持久化数据的一种策略 由于 Redis 的数据都存在内存，如果不做持久化，重启后数据就丢失了 AOF 的机制"
+  content="2024.06.08 更新 补充了思维导图： AOF 日志 介绍 AOF（append-only file）是 Redis 持久化数据的一种策略 由于 Redis 的数据都存在内存，如果不做持久化，重启"
 />
 <meta
   name="keywords"
@@ -280,7 +280,19 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h2 id="aof-日志">AOF 日志</h2>
+      <blockquote>
+<p>2024.06.08 更新</p>
+<p>补充了思维导图：</p>
+</blockquote>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-08-16-58-25-733.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="aof-日志">AOF 日志</h2>
 <h3 id="介绍">介绍</h3>
 <p>AOF（append-only file）是 Redis 持久化数据的一种策略</p>
 <p>由于 Redis 的数据都存在内存，如果不做持久化，重启后数据就丢失了</p>

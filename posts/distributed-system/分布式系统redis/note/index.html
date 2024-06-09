@@ -243,7 +243,7 @@
 
     </i>
     <span>
-      8 minutes to read
+      9 minutes to read
     </span>
   </div>
 </div>
@@ -470,8 +470,13 @@
 </ul>
 <p>副本迁移可以进一步减少整个集群不可用的情况</p>
 <h2 id="如何实现分布式事务">如何实现分布式事务</h2>
-<p>Redis 原生不支持事务，就更不用说分布式事务了</p>
-<p>如果要实现分布式事务，就只能使用第三方的中间件了</p>
+<p>分两种情况：</p>
+<ul>
+<li>如果事务内涉及的 Key 均在同一个节点上</li>
+<li>如果事务内涉及的 Key 不在同一个节点上</li>
+</ul>
+<p>对于第一种情况，比较简单，使用 Redis 原生的事务就可以</p>
+<p>对于第二种情况，只能引入第三方中间件，来实现多节点要么同时成功，要么同时失败</p>
 <h2 id="总结-1">总结</h2>
 <p>作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster）</p>
 <p>要想进一步了解 Redis Cluster，可以看看这篇文章：<a href="https://blogs.skylee.top/posts/redis/%e9%ab%98%e5%8f%af%e7%94%a8/%e9%9b%86%e7%be%a4/note/" target="_blank" rel="noopener">Redis 集群</a>
