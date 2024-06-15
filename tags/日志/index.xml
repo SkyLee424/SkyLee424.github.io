@@ -14,7 +14,7 @@
       <link>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
       <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
-      <description>日志 MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我</description>
+      <description>MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我们执</description>
     </item>
   </channel>
 </rss>

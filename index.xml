@@ -322,14 +322,14 @@
       <link>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</link>
       <pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</guid>
-      <description>Buffer Pool 什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要</description>
+      <description>什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要读取</description>
     </item>
     <item>
       <title>MySQL 日志</title>
       <link>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
       <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
       <guid>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
-      <description>日志 MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我</description>
+      <description>MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我们执</description>
     </item>
     <item>
       <title>MySQL 有哪些锁？</title>

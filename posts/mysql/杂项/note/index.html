@@ -249,6 +249,7 @@
       <ul>
         <li><a href="#查询过程">查询过程</a></li>
         <li><a href="#更新过程">更新过程</a></li>
+        <li><a href="#change-buffer">change buffer</a></li>
         <li><a href="#总结">总结</a></li>
       </ul>
     </li>
@@ -323,7 +324,15 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h2 id="冷热分离">冷热分离</h2>
+      <p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-15-14-43-02-413.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="冷热分离">冷热分离</h2>
 <h3 id="冷数据与热数据">冷数据与热数据</h3>
 <p>冷数据指不经常访问，但是需要长期保存的数据</p>
 <p>可以按照两个常见维度来区分冷数据与热数据：</p>
@@ -391,37 +400,17 @@
 <li>如果不在内存中，<strong>需要将该数据页从磁盘读取到内存</strong>，然后在内存中更新（回写操作可以在后台执行）</li>
 </ul>
 <p>可以发现，如果数据页不在磁盘中，就会涉及到 <strong>随机读 IO</strong>，这对性能的影响是很大的</p>
-<h4 id="change-buffer">change buffer</h4>
+<h3 id="change-buffer">change buffer</h3>
 <p>那么，引入 change buffer，在使用 <strong>普通索引</strong> 的条件下，就可以解决这个问题</p>
 <p>来看看引入 change buffer 的更新数据页的操作：</p>
 <ul>
 <li>如果数据页在内存中就直接更新</li>
 <li>如果不在内存中，在不影响数据一致性的前提下，InnoDB 会将这些更新操作 <strong>缓存在 change buffer 中</strong>。</li>
 </ul>
-<p>也就是说，使用 change buffer，<strong>避免了大量随机读 IO</strong></p>
+<p>也就是说，使用 change buffer，<strong>避免了大量随机读 IO</strong>，如果能够将更新操作先记录在 change buffer，减少读磁盘，语句的执行速度会得到明显的提升。而且，数据读入内存是需要占用 buffer pool 的，所以这种方式还能够避免占用内存，提高内存利用率。</p>
 <p>change buffer 是 <strong>可以持久化</strong> 的数据。在内存中有拷贝，也会被写入到磁盘上</p>
 <p>change buffer 用的是 buffer pool 里的内存，change buffer 的大小，可以通过参数 <code>innodb_change_buffer_max_size</code> 来动态设置。这个参数设置为 50 的时候，表示 change buffer 的大小最多只能占用 buffer pool 的 50%。</p>
-<blockquote>
-<p>change buffer 一开始是在内存的，如果掉电，会不会导致 change buffer 丢失？</p>
-</blockquote>
-<p>不会，分两种情况讨论：</p>
-<p>change buffer 的操作会被记录到 redo log 里</p>
-<p>如果 redo log 已经落盘，那么重启可以根据 redo log 来恢复 change buffer</p>
-<p>如果 redo log 还没来得及落盘，重启后，会因为 redo log 没有落盘而回滚事务，丢失了 change buffer 也没关系</p>
-<blockquote>
-<p>change buffer 的操作会被记录到 redo log 里，有了 redo log，为什么还要将 change buffer 持久化到磁盘？</p>
-</blockquote>
-<p>其实我也不太清楚，但感觉有点类似 Linux 的 Swap 机制？</p>
-<p>如果执行更新操作以后，一直没有 merge，那么 change buffer 的剩余空间会越来越少</p>
-<p>于是可以将 change buffer 持久化到磁盘，为新的更新操作流出空间，就好像 Linux 的 Swap 一样</p>
-<blockquote>
-<p>为什么唯一索引的更新不能使用 change buffer？</p>
-</blockquote>
-<p>唯一索引在更新数据时，需要 <strong>先判断更新的数据会不会与现有数据冲突</strong>，如果待更新数据页不在内存，会 <strong>不可避免的读取磁盘到内存</strong> 来判断</p>
-<p>既然数据都已经读到内存了，也就没有使用 change buffer 的必要了</p>
-<blockquote>
-<p>使用 change buffer，什么时候更新磁盘的数据呢？</p>
-</blockquote>
+<h4 id="使用-change-buffer什么时候更新磁盘的数据呢">使用 change buffer，什么时候更新磁盘的数据呢？</h4>
 <p>我们将 change buffer 中的操作应用到原数据页上，得到最新结果的过程，称为 <strong>merge</strong></p>
 <p>merge 的时机：</p>
 <ul>
@@ -429,14 +418,30 @@
 <li>数据库正常关闭，merge</li>
 <li><strong>访问该数据页的时候，会触发 merge</strong></li>
 </ul>
-<blockquote>
-<p>什么时候用 change buffer？</p>
-</blockquote>
+<h4 id="change-buffer-一开始是在内存的如果掉电会不会导致-change-buffer-丢失">change buffer 一开始是在内存的，如果掉电，会不会导致 change buffer 丢失？</h4>
+<p>不会，分两种情况讨论：</p>
+<p>change buffer 的操作会被记录到 redo log 里</p>
+<p>如果 redo log 已经落盘，那么重启可以根据 redo log 来恢复 change buffer</p>
+<p>如果 redo log 还没来得及落盘，重启后，会因为 redo log 没有落盘而回滚事务，丢失了 change buffer 也没关系</p>
+<h4 id="change-buffer-的操作会被记录到-redo-log-里有了-redo-log为什么还要将-change-buffer-持久化到磁盘">change buffer 的操作会被记录到 redo log 里，有了 redo log，为什么还要将 change buffer 持久化到磁盘？</h4>
+<p>其实我也不太清楚，但感觉有点类似 Linux 的 Swap 机制？</p>
+<p>如果执行更新操作以后，一直没有 merge，那么 change buffer 的剩余空间会越来越少</p>
+<p>于是可以将 change buffer 持久化到磁盘，为新的更新操作流出空间，就好像 Linux 的 Swap 一样</p>
+<h4 id="为什么唯一索引的更新不能使用-change-buffer">为什么唯一索引的更新不能使用 change buffer？</h4>
+<p>唯一索引在更新数据时，需要 <strong>先判断更新的数据会不会与现有数据冲突</strong>，如果待更新数据页不在内存，会 <strong>不可避免的读取磁盘到内存</strong> 来判断</p>
+<p>既然数据都已经读到内存了，也就没有使用 change buffer 的必要了</p>
+<h4 id="什么时候用-change-buffer">什么时候用 change buffer？</h4>
 <p>在一个数据页做 merge 之前，change buffer <strong>记录的变更越多，收益就越大</strong>。</p>
 <p>对于 <strong>写多读少</strong> 的业务来说，页面在写完以后马上被访问到的概率比较小，此时 change buffer 的使用效果最好。这种业务模型常见的就是账单类、日志类的系统。</p>
 <p>反过来，假设一个业务的更新模式是 <strong>写入之后马上会做查询</strong>，那么即使满足了条件，将更新先记录在 change buffer，但之后由于马上要访问这个数据页，<strong>会立即触发 merge 过程</strong>。</p>
 <p>这样 <strong>随机访问 IO 的次数不会减少，反而增加了 change buffer 的维护代价</strong>。所以，对于这种业务模式来说，change buffer 反而起到了副作用。</p>
 <p>因此是否使用 change buffer，还需要结合业务需求</p>
+<h4 id="与-redo-log-对比">与 redo log 对比</h4>
+<p>你可能会问：redo log 的 WAL 机制，不也是减少随机 IO 吗，还要 change buffer 干嘛</p>
+<p>实际上，使用 redo log，可以将事务执行期间涉及到的 <strong>随机写 IO</strong> 转换成 <strong>顺序写 IO</strong>，真正的随机 IO 被推迟到后台线程进行</p>
+<p>但使用 <strong>redo log 不能减少随机读 IO</strong>：增删改一个数据还是要先从磁盘读取到内存</p>
+<p>而对于非唯一索引，在有 change buffer 的前提下，增删改就可以不从磁盘读取到内存，而是直接记录到 change buffer 中，减少的是 <strong>随机读 IO</strong></p>
+<p>用一句话简单总结：<strong>redo log 主要节省的是随机写磁盘的 IO 消耗（转成顺序写），而 change buffer 主要节省的则是随机读磁盘的 IO 消耗。</strong></p>
 <h3 id="总结">总结</h3>
 <p>将数据从磁盘读入内存涉及随机 IO 的访问，是数据库里面成本最高的操作之一。</p>
 <p>change buffer 因为减少了随机磁盘读取，所以对更新性能的提升很明显。</p>
@@ -691,7 +696,6 @@
 <li>保证 id 连续自增</li>
 <li>删除数据时，采用逻辑删除</li>
 </ul>
-<p>当然采取逻辑删除，查询时，需要额外判断数据是否删除，如果删除，跳过</p>
 <p><strong>方案二</strong></p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-sql" data-lang="sql"><span class="line"><span class="cl"><span class="c1">-- 获取行数 c
 </span></span></span><span class="line"><span class="cl"><span class="c1"></span><span class="k">select</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="o">@</span><span class="k">C</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t</span><span class="p">;</span><span class="w">
@@ -824,7 +828,7 @@
 <li>对 t0 的每一行数据，在 t1 根据 idx_a 去查询，看看有没有符合条件的行，如果有，扔到结果集</li>
 <li>返回结果给客户端</li>
 </ul>
-<p>总扫描行数为 100 + 100，整个过程的时间复杂度为 <code>100 * log(1000)</code></p>
+<p>总扫描行数近似为 <code>100 + 100 * log(100)</code>，整个过程的时间复杂度为 <code>100 * log(1000)</code></p>
 <p>如果不使用 join，而是：</p>
 <ul>
 <li>应用程序执行 <code>select * from t0;</code></li>
@@ -993,6 +997,14 @@
   </figure></div>
 </p>
 <p>因此，最直接的方法就是给 group by 的字段 <strong>创建索引</strong></p>
+<p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-15-14-42-24-675.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
 <p>如果创建索引的代价太大呢？</p>
 <ul>
 <li>可以适当调大 tmp_table_size，避免转换为磁盘临时表</li>

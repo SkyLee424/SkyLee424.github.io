@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta
   name="description"
-  content="Buffer Pool 什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要"
+  content="什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要读取"
 />
 <meta
   name="keywords"
@@ -256,7 +256,14 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h1 id="buffer-pool">Buffer Pool</h1>
+      <p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-13-20-21-21-934.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
 <h2 id="什么是-buffer-pool">什么是 Buffer Pool</h2>
 <p>如果每次增删查改都要直接操作磁盘，会严重拖慢性能</p>
 <p>因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能</p>

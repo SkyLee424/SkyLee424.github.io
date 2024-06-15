@@ -288,7 +288,15 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h2 id="全局锁">全局锁</h2>
+      <p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-06-14-11-13-15-489.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="全局锁">全局锁</h2>
 <p>全局锁就是 <strong>对整个数据库实例加锁</strong>，加锁后整个实例就处于 <strong>只读状态</strong>，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 <strong>阻塞</strong> 。</p>
 <p>全局锁的使用场景是在对 DB 做全量备份，对所有的表进行锁定，从而获取一致性视图，保证数据的完整性。</p>
 <p>基本语法：</p>
