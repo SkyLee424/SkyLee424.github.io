@@ -14,15 +14,22 @@
   content="Sky_Lee, 博客, blogs"
 />
 <meta name="robots" content="noodp" />
-<meta property="og:title" content="TCP 杂项知识点" />
-<meta property="og:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &ldquo;114514&rdquo; 经过分片后，" />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-01-28T00:00:00+00:00" />
-<meta property="article:modified_time" content="2024-01-28T00:00:00+00:00" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/">
+  <meta property="og:site_name" content="Sky_Lee 的个人博客">
+  <meta property="og:title" content="TCP 杂项知识点">
+  <meta property="og:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 “114514” 经过分片后，">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-01-28T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-01-28T00:00:00+00:00">
+    <meta property="article:tag" content="Network">
+    <meta property="article:tag" content="TCP">
 
-<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="TCP 杂项知识点"/>
-<meta name="twitter:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &ldquo;114514&rdquo; 经过分片后，"/>
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="TCP 杂项知识点">
+  <meta name="twitter:description" content="如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 “114514” 经过分片后，">
 
 
 <link rel="canonical" href="https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/" />
@@ -32,6 +39,9 @@
 
 
 
+
+
+  
 
 
 
@@ -305,7 +315,15 @@
     
 
     <article class="mt-6 w-full max-w-4xl lg:max-w-5xl prose prose-slate dark:prose-invert prose-quoteless post-content">
-      <h2 id="如何理解-tcp-面向字节流">如何理解 TCP 面向字节流？</h2>
+      <p><div class="not-prose">
+<figure>
+    <img src="http://images.blogs.skylee.top/2024-07-09-18-44-50-985.png"
+      alt="image" 
+      loading="lazy"
+    >
+  </figure></div>
+</p>
+<h2 id="如何理解-tcp-面向字节流">如何理解 TCP 面向字节流？</h2>
 <p>由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片</p>
 <p>举个例子：原数据为一个字符串 &ldquo;114514&rdquo;</p>
 <p>经过分片后，接收方可能收到多个 TCP 报文，假设为：</p>
@@ -872,7 +890,7 @@
 <p>可以使用 tc 查看某个设备是否因为流量控制丢包：</p>
 <div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl"><span class="o">[</span>skylee@localhost Test<span class="o">]</span>$ tc -s qdisc show dev ens33
 </span></span><span class="line"><span class="cl">qdisc pfifo_fast 0: root refcnt <span class="m">2</span> bands <span class="m">3</span> priomap  <span class="m">1</span> <span class="m">2</span> <span class="m">2</span> <span class="m">2</span> <span class="m">1</span> <span class="m">2</span> <span class="m">0</span> <span class="m">0</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span> <span class="m">1</span>
-</span></span><span class="line"><span class="cl"> Sent <span class="m">6092849</span> bytes <span class="m">20768</span> pkt <span class="o">(</span>dropped 0, overlimits <span class="m">0</span> requeues 1<span class="o">)</span> 
+</span></span><span class="line"><span class="cl"> Sent <span class="m">6092849</span> bytes <span class="m">20768</span> pkt <span class="o">(</span>dropped 0, overlimits <span class="m">0</span> requeues 1<span class="o">)</span>
 </span></span><span class="line"><span class="cl"> backlog 0b 0p requeues <span class="m">1</span>
 </span></span></code></pre></div><h3 id="网卡丢包">网卡丢包</h3>
 <p>接收数据时，网卡会先将数据放到 ringbuffer 中</p>

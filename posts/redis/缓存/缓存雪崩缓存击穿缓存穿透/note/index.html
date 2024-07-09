@@ -14,15 +14,22 @@
   content="Sky_Lee, 博客, blogs"
 />
 <meta name="robots" content="noodp" />
-<meta property="og:title" content="缓存雪崩、缓存击穿、缓存穿透" />
-<meta property="og:description" content="缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定" />
-<meta property="og:type" content="article" />
-<meta property="og:url" content="https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/" /><meta property="article:section" content="posts" />
-<meta property="article:published_time" content="2024-03-10T00:00:00+00:00" />
-<meta property="article:modified_time" content="2024-03-10T00:00:00+00:00" />
+<meta property="og:url" content="https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/">
+  <meta property="og:site_name" content="Sky_Lee 的个人博客">
+  <meta property="og:title" content="缓存雪崩、缓存击穿、缓存穿透">
+  <meta property="og:description" content="缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定">
+  <meta property="og:locale" content="zh_cn">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2024-03-10T00:00:00+00:00">
+    <meta property="article:modified_time" content="2024-03-10T00:00:00+00:00">
+    <meta property="article:tag" content="Redis">
+    <meta property="article:tag" content="Cache">
 
-<meta name="twitter:card" content="summary"/><meta name="twitter:title" content="缓存雪崩、缓存击穿、缓存穿透"/>
-<meta name="twitter:description" content="缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定"/>
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="缓存雪崩、缓存击穿、缓存穿透">
+  <meta name="twitter:description" content="缓存雪崩 缓存雪崩指的是大量 key 几乎同时过期，导致大量请求直接打到 DB，导致 DB 服务不可用，进而导致其它服务也不可用，就像雪崩一样 应对方式 给 Key 指定">
 
 
 <link rel="canonical" href="https://blogs.skylee.top/posts/redis/%E7%BC%93%E5%AD%98/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9%E7%BC%93%E5%AD%98%E5%87%BB%E7%A9%BF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/note/" />
@@ -32,6 +39,9 @@
 
 
 
+
+
+  
 
 
 
