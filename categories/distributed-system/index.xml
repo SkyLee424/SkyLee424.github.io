@@ -7,8 +7,15 @@
     <generator>Hugo</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Sun, 02 Jun 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 17 Jul 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/categories/distributed-system/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>分布式锁</title>
+      <link>https://blogs.skylee.top/posts/distributed-system/distributed-lock/note/</link>
+      <pubDate>Wed, 17 Jul 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/distributed-system/distributed-lock/note/</guid>
+      <description>定义 分布式锁是一种用于在分布式系统环境中控制并发访问共享资源的机制。在分布式系统中的多个进程或节点可能会竞争访问同一个资源时，分布式锁可以确</description>
+    </item>
     <item>
       <title>分布式事务: Distributed Transaction</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/</link>
