@@ -7,8 +7,15 @@
     <generator>Hugo</generator>
     <language>zh-cn</language>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Wed, 17 Jul 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 15 Dec 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>For Backend Beginers</title>
+      <link>https://blogs.skylee.top/posts/forbeginers/note/</link>
+      <pubDate>Sun, 15 Dec 2024 00:00:00 +0000</pubDate>
+      <guid>https://blogs.skylee.top/posts/forbeginers/note/</guid>
+      <description>什么是后端？ 简而言之，后端是支撑 App、网站等前端展示内容的“幕后英雄”。它负责处理数据、存储数据、业务逻辑等，确保前端能够顺利地展示出用户</description>
+    </item>
     <item>
       <title>分布式锁</title>
       <link>https://blogs.skylee.top/posts/distributed-system/distributed-lock/note/</link>
