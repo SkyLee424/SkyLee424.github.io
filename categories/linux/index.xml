@@ -6,48 +6,50 @@
     <description>Recent content in Linux on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Mon, 26 Jun 2023 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/categories/linux/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux 多线程</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E5%A4%9A%E7%BA%BF%E7%A8%8B/note/</link>
-      <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E5%A4%9A%E7%BA%BF%E7%A8%8B/note/</guid>
       <description>Linux 线程概念 在 Linux 系统中，进程实际上是由线程来实现的，没有独立的、与线程完全分离的进程实体。实际上，进程可以被视为线程的容器，线程是进程的执行单</description>
     </item>
     <item>
       <title>Linux 守护进程</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/note/</link>
-      <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 26 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E5%AE%88%E6%8A%A4%E8%BF%9B%E7%A8%8B/note/</guid>
       <description>守护进程（Daemon Process）是在 后台运行 的一种特殊类型的进程。它独立于终端会话，并且在系统启动时启动，并持续运行以提供特定的服务或</description>
     </item>
     <item>
       <title>Linux 进程信号</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E4%BF%A1%E5%8F%B7/note/</link>
-      <pubDate>Sun, 18 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 18 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E4%BF%A1%E5%8F%B7/note/</guid>
       <description>查看信号列表的方式 可以使用 kill -l指令查看信号列表： 信号的产生 通过终端按键产生信号 常见的按键组合和相应的信号： Ctrl+C (SIGINT): 发送SIGINT信号 Ctrl+(SIGQUIT): 发送S</description>
     </item>
     <item>
       <title>Linux 进程通信</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/note/</link>
-      <pubDate>Wed, 14 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 14 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1/note/</guid>
       <description>管道 管道是一种特殊的进程间通信机制，它可以用于将一个进程的输出直接传递给另一个进程的输入，从而实现它们之间的数据传输。 匿名管道 pipe 系统调用 pi</description>
     </item>
     <item>
       <title>Linux 基础 IO</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/</link>
-      <pubDate>Tue, 13 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 13 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/</guid>
       <description>文件描述符（fd） 文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述</description>
     </item>
     <item>
       <title>Linux 进程控制</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/note/</link>
-      <pubDate>Mon, 12 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 12 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/note/</guid>
       <description>fork 在 C 语言中，fork 函数是一个创建新进程的系统调用。它通过复制当前进程创建一个新的子进程，使得父进程和子进程在不同的执行路径上同时运行。 fork</description>
     </item>

@@ -6,146 +6,148 @@
     <description>Recent content in 分布式 on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Wed, 17 Jul 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/%E5%88%86%E5%B8%83%E5%BC%8F/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>分布式锁</title>
       <link>https://blogs.skylee.top/posts/distributed-system/distributed-lock/note/</link>
-      <pubDate>Wed, 17 Jul 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 17 Jul 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/distributed-lock/note/</guid>
       <description>定义 分布式锁是一种用于在分布式系统环境中控制并发访问共享资源的机制。在分布式系统中的多个进程或节点可能会竞争访问同一个资源时，分布式锁可以确</description>
     </item>
     <item>
       <title>分布式事务: Distributed Transaction</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/</link>
-      <pubDate>Sun, 02 Jun 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 02 Jun 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/distributed-transaction/note/</guid>
       <description>分布式事务主要由两部分组成。第一个是并发控制（Concurrency Control）第二个是原子提交（Atomic Commit）。 为什么要有</description>
     </item>
     <item>
       <title>CRAQ: High-throughput chain replication for read-mostly workloads</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/craq/note/</link>
-      <pubDate>Sat, 01 Jun 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 01 Jun 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/craq/note/</guid>
       <description>CR(Chain Replication) CR 是一种分布式存储协议，具有与 Raft 不一样的特性 基本原理 从名字可以看出，CR 的网络拓扑就像一条「链」一样： 每个节点以「链」的方式排列，类似双</description>
     </item>
     <item>
       <title>ZooKeeper APIs</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</link>
-      <pubDate>Fri, 31 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 31 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/apis/note/</guid>
       <description>APIs ZK 的使用场景 ZK 主要用于 单个数据中心 内： 管理集群的配置信息 选举 Leader Test-And-Set 服务的实现 &amp;hellip; Znode Zookeeper 的 API 某种程度上来说像是一个文件系统。它有一个层级化的目录结</description>
     </item>
     <item>
       <title>ZooKeeper: Wait-free coordination for Internet-scale systems</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</link>
-      <pubDate>Thu, 30 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 30 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/zookeeper/basic/note/</guid>
       <description>线性一致 首先要了解一个概念：线性一致 一个系统的执行历史是一系列的客户端请求，或许这是来自多个客户端的多个请求。如果 执行历史 整体可以按照 一个顺</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 4B: Key/value service with snapshots</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</link>
-      <pubDate>Wed, 29 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 29 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</guid>
       <description>Lab4B 整体比较简单，要求实现 KVServer 重启宕机后，仍能 快速恢复 之前的状态，因此，Service 需要创建快照，并发送给 Raft Server 快照内容 快照应该包含以下内容： 状</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 4A: Key/value service without snapshots</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</link>
-      <pubDate>Mon, 27 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 27 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</guid>
       <description>Lab4A 核心是要实现「线性化」语义 Client Client 必须在 RPC 超时，或者 Server 返回自己不是 Leader 的情况下，自动切换到下一个 Server： 向「Leader」发送 RPC 检查响应结</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3D: log compaction</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</link>
-      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</guid>
       <description>Server State type Raft struct { snapshot []byte } Snapshot 依赖 Raft 的 Service 层会定期调用 Snapshot 方法，以要求 Raft 实例创建快照： func (rf *Raft) Snapshot(index int, snapshot []byte) { } 具体实现： 检查 index 是否合法，index 必须大于等于 rf.logs[0].Index</description>
     </item>
     <item>
       <title>Raft --- The famous distributed consensus protocol</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</link>
-      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</guid>
       <description>角色 Raft 协议包含三种角色： Leader Follower Candidate 选举计时器超时（Leader 超时没有发送心跳） 选举成功（获得半数以上投票） 选举失败（投票数不够，或者有了新的 L</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3C: persistence</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</link>
-      <pubDate>Sun, 19 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 19 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</guid>
       <description>Lab3C 整体实现非常简单，实现 Raft 的持久化功能，帮助宕机重启的 Raft 实例快速恢复 持久化哪些内容 Logs CurrentTerm VoteFor 怎么持久化 Raft 的测试程序无法真正让一个 Raft 实例宕机，而是</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3B: log</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</link>
-      <pubDate>Sun, 12 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 12 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</guid>
       <description>Server State 要实现日志复制，Server 需要维护以下状态： type Raft struct { // ... commitIndex int // index of highest log entry known to be committed applyIndex int // index of highest log entry to be applied nextIndex []int // for each server, index of the next log entry to send to that</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3A: leader election</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</link>
-      <pubDate>Sat, 27 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 27 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</guid>
       <description>Server State type Raft struct { mu sync.Mutex // Lock to protect shared access to this peer&amp;#39;s state peers []*labrpc.ClientEnd // RPC end points of all peers persister *Persister // Object to hold this peer&amp;#39;s persisted state me int // this peer&amp;#39;s index into peers[] dead int32 // set by Kill() // Your data here (3A, 3B, 3C). // Look at the paper&amp;#39;s Figure 2 for a description of what</description>
     </item>
     <item>
       <title>GFS --- The Google File System</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</link>
-      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/gfs/note/</guid>
       <description>分布式存储的难点 为什么要分布式存储？因为提升单台计算机的能力是有限的，要想存储大量的数据，不得不引入 多台 计算机，提高 性能 但是，计算机是不可靠</description>
     </item>
     <item>
       <title>VMWare-FT</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</link>
-      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 21 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/vmware-ft/note/</guid>
       <description>容错方案：复制 设计分布式系统，必须要考虑的一个点就是容错（Fault Tolerance） 常见的容错方案就是 复制，提供多个副本，如果其中一个副</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 2: Key/Value Server</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab2/note/</link>
-      <pubDate>Fri, 19 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 19 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab2/note/</guid>
       <description>实验要求 直接看这个链接：https://pdos.csail.mit.edu/6.824/labs/lab-kvsrv.html 实现 本次实验</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 1: MapReduce</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab1/note/</link>
-      <pubDate>Wed, 17 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 17 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab1/note/</guid>
       <description>MapReduce MapReduce 是一种分布式编程模型，用于大规模数据处理。它由 Google 开发，用于处理 Google 搜索引擎索引的网页数据。 MapReduce 利用了 分布式计算 的优势，将大规模数据分成小的块</description>
     </item>
     <item>
       <title>分布式系统——Kafka</title>
       <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/</link>
-      <pubDate>Mon, 15 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 15 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fkafka/note/</guid>
       <description>作为 MQ 的代表，Kafka 天生就是分布式的，支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转移、分布式事务 结构 每个 Topic 的 Partition 在多个</description>
     </item>
     <item>
       <title>分布式系统——MySQL</title>
       <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</link>
-      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</guid>
       <description>作为传统关系型数据库，MySQL 的分布式倾向于存储方面：将数据分散存储到各个节点，减少单个节点的读写压力、存储压力 同时，MySQL 原生支持了</description>
     </item>
     <item>
       <title>分布式系统——Redis</title>
       <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/</link>
-      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fredis/note/</guid>
       <description>作为 K-V 存储的代表，Redis 原生支持了集群模式（Redis Cluster），支持服务注册、发现、请求动态路由、数据自动分片、主从复制、故障转</description>
     </item>
     <item>
       <title>分布式系统</title>
       <link>https://blogs.skylee.top/posts/distributed-system/intro/note/</link>
-      <pubDate>Sat, 13 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 13 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/intro/note/</guid>
       <description>分布式系统是由 多个 独立的计算机或者节点组成的系统，这些计算机通过网络进行通信和协作，共同完成特定的任务或提供服务。 分布式系统的设计目标是：提</description>
     </item>

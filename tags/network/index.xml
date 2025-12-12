@@ -6,69 +6,71 @@
     <description>Recent content in Network on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 08 Feb 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/network/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux Network IO</title>
       <link>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
-      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>为什么要有 DMA？ 传统的方式，要发送一个数据包，实现方式如下： 用户调用 read，读取待发送的数据 用户调用 write，写入待发送的数据 图片来自</description>
     </item>
     <item>
       <title>IP 协议基础</title>
       <link>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</link>
-      <pubDate>Wed, 31 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 31 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/ip/%E5%9F%BA%E7%A1%80/</guid>
       <description>IP 分类的优缺点 优点：简单、选路方便 缺点： 同一网络下，没有层次 不能很好与现实匹配（对于 B 类地址，主机号太多，一个企业难以用完，造成浪费；对于 C</description>
     </item>
     <item>
       <title>TCP 杂项知识点</title>
       <link>https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</link>
-      <pubDate>Sun, 28 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 28 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/tcp/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>如何理解 TCP 面向字节流？ 由于 TCP 的滑动窗口机制（发送窗口会动态变化），在发送数据时，原数据可能发生分片 举个例子：原数据为一个字符串 &amp;ldquo;114514&amp;rdquo; 经过分片后，</description>
     </item>
     <item>
       <title>TCP 的优化</title>
       <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</link>
-      <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E4%BC%98%E5%8C%96/note/</guid>
       <description>TCP 三次握手优化 客户端 客户端优化的手段主要是控制 SYN 报文的重传次数 比如，在公司内网，或者服务之间相互调用，不需要多次重传（网络环境比较好），就可</description>
     </item>
     <item>
       <title>TCP 的半连接队列和全连接队列</title>
       <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</link>
-      <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 27 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E7%9A%84%E5%8D%8A%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97%E5%92%8C%E5%85%A8%E8%BF%9E%E6%8E%A5%E9%98%9F%E5%88%97/note/</guid>
       <description>什么是半连接队列？什么是全连接队列？ 半连接队列是指：用于存储处于 SYN_RECV 状态的连接的队列 当内核收到一个 SYN 报文，就将该连接放到半连接队列，并发送 ACK 给</description>
     </item>
     <item>
       <title>TCP 三次握手/四次挥手</title>
       <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</link>
-      <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B-%E5%9B%9B%E6%AC%A1%E6%8C%A5%E6%89%8B/note/</guid>
       <description>TCP 基本认识 什么是 TCP ？ TCP 是一种 面向连接、可靠、基于字节流的协议 什么是 TCP 连接？ Socket + Seq + WindowSize Socket：IP + Port Seq：序列号 WindowSize</description>
     </item>
     <item>
       <title>TCP 重传机制、滑动窗口、流量控制、拥塞控制</title>
       <link>https://blogs.skylee.top/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</link>
-      <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 26 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/tcp/tcp-%E9%87%8D%E4%BC%A0%E6%9C%BA%E5%88%B6%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E6%8B%A5%E5%A1%9E%E7%AA%97%E5%8F%A3%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6/note/</guid>
       <description>重传机制 超时重传 发送完一个 TCP 报文后，发送方会启动重传计时器 若在超时时间内，都没有收到 ack，就会触发超时重传，以保证可靠传输 重传时间 RTO 的确定</description>
     </item>
     <item>
       <title>HTTP 协议基础</title>
       <link>https://blogs.skylee.top/posts/network/http/note/</link>
-      <pubDate>Thu, 25 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 25 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/http/note/</guid>
       <description>HTTP 是啥 HTTP 是一种在 两个设备 间，用于传输文字、图片、音频等 超文本内容 的协议 常见状态码 200 304 403 404 500 502 常见字段 Host Content-Length Content-Type Content-Encoding GET 与 POST 都是安全和幂等的吗？ 一般来</description>
     </item>
     <item>
       <title>网络基础</title>
       <link>https://blogs.skylee.top/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</link>
-      <pubDate>Wed, 24 Jan 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jan 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/network/%E5%9F%BA%E7%A1%80%E7%AF%87/note/</guid>
       <description>以 “键入 URL 到网页显示，发生了什么？” 来跑一遍整个 TCP/IP 体系 Linux 接收数据的过程 发送数据的过程类似，但是要注意发送数据的拷贝次数 发送网络数据的时候，涉</description>
     </item>

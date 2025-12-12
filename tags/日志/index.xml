@@ -6,13 +6,15 @@
     <description>Recent content in 日志 on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Sat, 24 Feb 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/%E6%97%A5%E5%BF%97/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>MySQL 日志</title>
       <link>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
-      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
       <description>MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我们执</description>
     </item>

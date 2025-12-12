@@ -6,69 +6,71 @@
     <description>Recent content in MySQL on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Sun, 14 Apr 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/mysql/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>分布式系统——MySQL</title>
       <link>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</link>
-      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 14 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9Fmysql/note/</guid>
       <description>作为传统关系型数据库，MySQL 的分布式倾向于存储方面：将数据分散存储到各个节点，减少单个节点的读写压力、存储压力 同时，MySQL 原生支持了</description>
     </item>
     <item>
       <title>MySQL 杂项</title>
       <link>https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/</link>
-      <pubDate>Mon, 04 Mar 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 04 Mar 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E6%9D%82%E9%A1%B9/note/</guid>
       <description>冷热分离 冷数据与热数据 冷数据指不经常访问，但是需要长期保存的数据 可以按照两个常见维度来区分冷数据与热数据： 时间维度：按照时间来区分冷热数据，</description>
     </item>
     <item>
       <title>MySQL 主从复制、读写分离、分库分表</title>
       <link>https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</link>
-      <pubDate>Mon, 26 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 26 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E4%B8%8E%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/note/</guid>
       <description>主从复制 常见主从模型 常见的主从模型有以下几种： 一主一从 一主多从 互为主从 主从复制原理 简单来说，就是从库的 IO_Thread 将主库发来的 binlog 写到本地的 relay log，然</description>
     </item>
     <item>
       <title>InnoDB Buffer Pool</title>
       <link>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</link>
-      <pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 25 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/buffer-pool/note/</guid>
       <description>什么是 Buffer Pool 如果每次增删查改都要直接操作磁盘，会严重拖慢性能 因此 InnoDB 引入了 Buffer Pool，用于提高 DB 的读写性能 有了 Buffer Pool 以后： 读取数据，可以看看要读取</description>
     </item>
     <item>
       <title>MySQL 日志</title>
       <link>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</link>
-      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 24 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E6%97%A5%E5%BF%97/note/</guid>
       <description>MySQL 有哪些日志？ 错误日志 查询日志 慢查询日志 事务日志 二进制日志 undo log 什么是 undo log？ undo log 是一种「逻辑日志」，用于记录数据修改前的信息 例如，当我们执</description>
     </item>
     <item>
       <title>MySQL 有哪些锁？</title>
       <link>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</link>
-      <pubDate>Thu, 22 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 22 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E9%94%81/note/</guid>
       <description>全局锁 全局锁就是 对整个数据库实例加锁，加锁后整个实例就处于 只读状态，后续的 DML 的写语句，DDL 语句，已经更新操作的事务提交语句都将被 阻塞 。 全局</description>
     </item>
     <item>
       <title>MySQL 事务机制</title>
       <link>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</link>
-      <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 21 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E4%BA%8B%E5%8A%A1/note/</guid>
       <description>事务的四大基本特性 事务的四大基本特性指：A（Atomicity）、C（Consistency）、I（Isolation）、D（Durabil</description>
     </item>
     <item>
       <title>MySQL 索引</title>
       <link>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</link>
-      <pubDate>Tue, 20 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 20 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E7%B4%A2%E5%BC%95/note/</guid>
       <description>索引有哪些？ B+ 树索引、Hash 索引、Full-Text 索引、聚集索引、二级索引、主键索引、唯一索引、普通索引、前缀索引、单列索引、联合索引&amp;</description>
     </item>
     <item>
       <title>MySQL 基础</title>
       <link>https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/</link>
-      <pubDate>Mon, 19 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 19 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/mysql/%E5%9F%BA%E7%A1%80/note/</guid>
       <description>执行一个 SQL 语句，发生了什么？ SQL 语句 在 MySQL 的大致执行流程 先来看看整体流程： 图片来自小林 coding Client 先与 Server 建立连接，确定 Client 的权限，后续请求的权限都基于此 执</description>
     </item>

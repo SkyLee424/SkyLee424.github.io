@@ -6,13 +6,15 @@
     <description>Recent content in 进程管理 on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 08 Feb 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>OS 进程管理</title>
       <link>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</link>
-      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/os/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/note/</guid>
       <description>一个进程最多创建多少个线程？ 由于每个线程都有自己独立的栈空间，因此，创建的线程数量会受到栈空间大小的限制 我们使用 ulimit -s 查看栈的大小： [root@localhost test]# ulimit -s 8192</description>
     </item>
