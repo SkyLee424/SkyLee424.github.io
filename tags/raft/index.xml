@@ -6,55 +6,57 @@
     <description>Recent content in Raft on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Wed, 29 May 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/raft/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>MIT-6.824: Lab 4B: Key/value service with snapshots</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</link>
-      <pubDate>Wed, 29 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 29 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4b/note/</guid>
       <description>Lab4B 整体比较简单，要求实现 KVServer 重启宕机后，仍能 快速恢复 之前的状态，因此，Service 需要创建快照，并发送给 Raft Server 快照内容 快照应该包含以下内容： 状</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 4A: Key/value service without snapshots</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</link>
-      <pubDate>Mon, 27 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 27 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab4/lab4a/note/</guid>
       <description>Lab4A 核心是要实现「线性化」语义 Client Client 必须在 RPC 超时，或者 Server 返回自己不是 Leader 的情况下，自动切换到下一个 Server： 向「Leader」发送 RPC 检查响应结</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3D: log compaction</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</link>
-      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3d/note/</guid>
       <description>Server State type Raft struct { snapshot []byte } Snapshot 依赖 Raft 的 Service 层会定期调用 Snapshot 方法，以要求 Raft 实例创建快照： func (rf *Raft) Snapshot(index int, snapshot []byte) { } 具体实现： 检查 index 是否合法，index 必须大于等于 rf.logs[0].Index</description>
     </item>
     <item>
       <title>Raft --- The famous distributed consensus protocol</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</link>
-      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 23 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/raft/note/</guid>
       <description>角色 Raft 协议包含三种角色： Leader Follower Candidate 选举计时器超时（Leader 超时没有发送心跳） 选举成功（获得半数以上投票） 选举失败（投票数不够，或者有了新的 L</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3C: persistence</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</link>
-      <pubDate>Sun, 19 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 19 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3c/note/</guid>
       <description>Lab3C 整体实现非常简单，实现 Raft 的持久化功能，帮助宕机重启的 Raft 实例快速恢复 持久化哪些内容 Logs CurrentTerm VoteFor 怎么持久化 Raft 的测试程序无法真正让一个 Raft 实例宕机，而是</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3B: log</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</link>
-      <pubDate>Sun, 12 May 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 12 May 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3b/note/</guid>
       <description>Server State 要实现日志复制，Server 需要维护以下状态： type Raft struct { // ... commitIndex int // index of highest log entry known to be committed applyIndex int // index of highest log entry to be applied nextIndex []int // for each server, index of the next log entry to send to that</description>
     </item>
     <item>
       <title>MIT-6.824: Lab 3A: leader election</title>
       <link>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</link>
-      <pubDate>Sat, 27 Apr 2024 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 27 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/distributed-system/mit-6.824/lab3/lab3a/note/</guid>
       <description>Server State type Raft struct { mu sync.Mutex // Lock to protect shared access to this peer&amp;#39;s state peers []*labrpc.ClientEnd // RPC end points of all peers persister *Persister // Object to hold this peer&amp;#39;s persisted state me int // this peer&amp;#39;s index into peers[] dead int32 // set by Kill() // Your data here (3A, 3B, 3C). // Look at the paper&amp;#39;s Figure 2 for a description of what</description>
     </item>

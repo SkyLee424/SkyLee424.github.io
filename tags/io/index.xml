@@ -6,20 +6,22 @@
     <description>Recent content in IO on Sky_Lee 的个人博客</description>
     <generator>Hugo</generator>
     <language>zh-cn</language>
+    <managingEditor>user@example.com (Hugo Author)</managingEditor>
+    <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
     <lastBuildDate>Thu, 08 Feb 2024 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/tags/io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Linux Network IO</title>
       <link>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</link>
-      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 08 Feb 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/os/%E7%BD%91%E7%BB%9C%E7%B3%BB%E7%BB%9F/note/</guid>
       <description>为什么要有 DMA？ 传统的方式，要发送一个数据包，实现方式如下： 用户调用 read，读取待发送的数据 用户调用 write，写入待发送的数据 图片来自</description>
     </item>
     <item>
       <title>Linux 基础 IO</title>
       <link>https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/</link>
-      <pubDate>Tue, 13 Jun 2023 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 13 Jun 2023 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/linux/linux-%E5%9F%BA%E7%A1%80-io/note/</guid>
       <description>文件描述符（fd） 文件描述符（File Descriptor）是一个用于标识和操作打开文件的整数值。在UNIX和类UNIX操作系统中，文件描述</description>
     </item>
