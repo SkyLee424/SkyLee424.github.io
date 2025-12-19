@@ -9,14 +9,21 @@
     <managingEditor>user@example.com (Hugo Author)</managingEditor>
     <webMaster>user@example.com (Hugo Author)</webMaster>
     <copyright>Sky_Lee</copyright>
-    <lastBuildDate>Sun, 15 Dec 2024 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 19 Dec 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>For Backend Beginers</title>
-      <link>https://blogs.skylee.top/posts/forbeginers/note/</link>
-      <pubDate>Sun, 15 Dec 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
-      <guid>https://blogs.skylee.top/posts/forbeginers/note/</guid>
-      <description>什么是后端？ 简而言之，后端是支撑 App、网站等前端展示内容的“幕后英雄”。它负责处理数据、存储数据、业务逻辑等，确保前端能够顺利地展示出用户</description>
+      <title>后端开发地图：写给大一新生的一张入门导览</title>
+      <link>https://blogs.skylee.top/posts/forbeginners/part0/note/</link>
+      <pubDate>Fri, 19 Dec 2025 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
+      <guid>https://blogs.skylee.top/posts/forbeginners/part0/note/</guid>
+      <description>什么是后端开发？ 如果把一个 App 或网站比作一家店： 前端，是你看到的页面、按钮、动画； 后端，是库存系统、订单系统、账号系统、账本和规则。 举个最直观</description>
+    </item>
+    <item>
+      <title>后端开发地图：一份写给进阶学习者的后端全景图</title>
+      <link>https://blogs.skylee.top/posts/forbeginners/part1/note/</link>
+      <pubDate>Thu, 18 Dec 2025 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
+      <guid>https://blogs.skylee.top/posts/forbeginners/part1/note/</guid>
+      <description>什么是后端？ 简而言之，后端是支撑 App、网站等前端展示内容的「幕后英雄」。它负责 处理数据、存储数据、业务逻辑 等，确保前端能够顺利地展示出用户</description>
     </item>
     <item>
       <title>分布式锁</title>
