@@ -12,6 +12,13 @@
     <lastBuildDate>Fri, 19 Dec 2025 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://blogs.skylee.top/index.xml" rel="self" type="application/rss+xml" />
     <item>
+      <title>关于</title>
+      <link>https://blogs.skylee.top/about/</link>
+      <pubDate>Fri, 19 Dec 2025 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
+      <guid>https://blogs.skylee.top/about/</guid>
+      <description>关于我 一名后端方向的开发者。 写代码的时间不算短，也谈不上资深。经历过从「学会写」到「开始关心为什么这么写」的阶段转变，也逐渐意识到—— 系统真</description>
+    </item>
+    <item>
       <title>后端开发地图：写给大一新生的一张入门导览</title>
       <link>https://blogs.skylee.top/posts/forbeginners/part0/note/</link>
       <pubDate>Fri, 19 Dec 2025 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
@@ -185,13 +192,6 @@
       <pubDate>Sat, 06 Apr 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
       <guid>https://blogs.skylee.top/posts/algorithm/binary-tree/lc.1483.-%E6%A0%91%E8%8A%82%E7%82%B9%E7%9A%84%E7%AC%AC-k-%E4%B8%AA%E7%A5%96%E5%85%88/note/</guid>
       <description>链接 常规解法 容易想到使用记忆化搜索： type TreeAncestor struct { memo [][]int // memo[node][k] parent []int n int } func Constructor(n int, parent []int) TreeAncestor { memo := make([][]int, n) for i := 0; i &amp;lt; n; i++{ memo[i] = make([]int, n) for j := 0; j &amp;lt; n; j++ { memo[i][j] = -2 } } return TreeAncestor{</description>
-    </item>
-    <item>
-      <title>关于</title>
-      <link>https://blogs.skylee.top/about/</link>
-      <pubDate>Sun, 24 Mar 2024 00:00:00 +0000</pubDate><author>user@example.com (Hugo Author)</author>
-      <guid>https://blogs.skylee.top/about/</guid>
-      <description>个人简介 平平无奇的大二码农&amp;hellip; 目前的目标是进入大厂实习 记录这些博客，主要是为了后续查阅（好记性不如烂笔头），当然能够帮助到你就更</description>
     </item>
     <item>
       <title>Go: Single Flight</title>
